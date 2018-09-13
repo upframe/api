@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const app = express()
 
 /* Configs */
-app.use(cors({ credentials: true, origin: `https://connect.upframe.io` }));
+app.use(cors({ credentials: true, origin: 'https://connect.upframe.io' }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
