@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/ulissesferreira/api.svg?token=xmikXYDzu8Ho8PZicgqF&branch=master)](https://travis-ci.com/ulissesferreira/api)
+
 # api
 🔥 The API for our platform and services.
 
