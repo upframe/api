@@ -1,14 +1,14 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "main": "index.js",
   "repository": "https://github.com/ulissesferreira/api.git",
   "author": "Upframe <webmaster@upframe.io>",
   "license": "GPL-3.0-or-later",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev": "nodemon"
   },
   "dependencies": {
     "bcrypt": "^3.0.0",
