@@ -12,7 +12,13 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
 /* Router */
-const usersRouter = require('./routes/users');
-app.use('/users', usersRouter)
+const authRouter = require('./routes/auth');
+const mentorRouter = require('./routes/mentor');
+const profileRouter = require('./routes/profile');
+const searchRouter = require('./routes/search');
+app.use('/auth', authRouter)
+app.use('/mentor', mentorRouter)
+app.use('/profile', profileRouter)
+app.use('/search', searchRouter)
 
 app.listen(port, () => { console.log('API listening on port ' + port)})
