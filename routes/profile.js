@@ -28,9 +28,14 @@ router.post('/me', verifyToken, (req, res) => {
   let dribbble = req.body.dribbble ? `dribbble='${req.body.dribbble}', ` : ''
   let favoritePlaces = req.body.favoritePlaces ? `favoritePlaces='${req.body.favoritePlaces}', ` : ''
   let googleAccessToken = req.body.googleAccessToken ? `googleAccessToken='${req.body.googleAccessToken}', ` : ''
-  let googleRefreshToken = req.body.googleRefreshToken ? `googleRefreshToken='${req.body.googleRefreshToken}' ` : ''
+  let googleRefreshToken = req.body.googleRefreshToken ? `googleRefreshToken='${req.body.googleRefreshToken}', ` : ''
 
   let sql = `UPDATE users SET ${email} ${password} ${name} ${role} ${company} ${location} ${tags} ${bio} ${freeSlots} ${profilePic} ${twitter} ${linkedin} ${github} ${facebook} ${dribbble} ${favoritePlaces} ${googleAccessToken} ${googleRefreshToken} WHERE email='${req.userEmail}'`
+  
+  //TODO FIx this dirty hack! Not cool but I was lazy xD
+  var pos = sql.lastIndexOf(',');
+  sql = sql.substring(0, pos) + '' + sql.substring(pos + 1)
+  // Basically I remove the last occurence of a comma otherwise the SQL query would not work
   console.log(sql)
   db.query(sql, (err, result) => {
     if (err)
