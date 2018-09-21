@@ -12,7 +12,8 @@ router.get('/full', (req, res) => {
 })
 
 router.get('/tags', (req, res) => {
-  res.status(200).send('Tudo correu bem')
+  let tags = ['User Research', 'Event Marketing', 'Communities', 'Business Models', 'Ideation', 'B2B', 'B2C']
+  res.status(200).send(tags)
 })
 
 module.exports = router;
