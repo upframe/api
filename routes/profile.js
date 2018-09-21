@@ -4,8 +4,8 @@ const db = require('../services/db.js')
 const verifyToken = require('../services/token.js')
 
 router.get('/me', verifyToken, (req, res) => {
-  let sql = `SELECT * FROM users WHERE email = '${req.userEmail}'`
-  db.query(sql, (err, result) => {
+  let sql = 'SELECT * FROM users WHERE email = ?'
+  db.query(sql, req.userEmail, (err, result) => {
     res.status(200).send(result)
   })
 })
