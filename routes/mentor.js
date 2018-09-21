@@ -19,7 +19,10 @@ router.get('/random', (req, res) => {
 })
 
 router.get('/info', (req, res) => {
-  res.status(200).send('Tudo correu bem')
+  let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ?'
+  db.query(sql, req.query.keycode ,(err, result) => {
+    res.status(200).send(result)
+  })
 })
 
 router.get('/verify', (req, res) => {
