@@ -3,10 +3,9 @@ const router = express.Router()
 const db = require('../services/db.js')
 
 router.get('/', (req, res) => {
-  let sql = 'SELECT * FROM users'
-  db.query(sql, (err, result) => {  
-    console.log(result)
-    res.status(200).send('Tudo bem')
+  let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ?'
+  db.query(sql, req.query.keycode, (err, result) => {
+    res.status(200).send(result)
   })
 })
 
@@ -15,13 +14,6 @@ router.get('/random', (req, res) => {
   db.query(sql, (err, result) => {
     console.log(result)
     res.status(200).send(shuffle(result))
-  })
-})
-
-router.get('/info', (req, res) => {
-  let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ?'
-  db.query(sql, req.query.keycode ,(err, result) => {
-    res.status(200).send(result)
   })
 })
 
