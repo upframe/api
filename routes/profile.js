@@ -44,7 +44,6 @@ router.post('/me', verifyToken, (req, res) => {
   })
 })
 
-
 router.post('/image', verifyToken, (req, res) => {
   res.status(200).send('Tudo correu bem')
 })
