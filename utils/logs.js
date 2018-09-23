@@ -9,13 +9,13 @@ let logger = createLogger({
   transports: [
     new transports.Console({
       silent: process.env.NODE_ENV !== 'dev',
-      level: 'debug',
+      level: 'info',
       handleExceptions: true,
       json: false,
       format: combine(colorize(), timestamp(), printFormat)
     }),
     new transports.File({
-      level: 'info',
+      level: 'debug',
       filename: 'app.log',
       handleExceptions: true,
       json: true,

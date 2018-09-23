@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const db = require('../services/db.js')
+const db = require('../services/database.js')
+
+let app;
 
 router.get('/', (req, res) => {
   let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ?'
@@ -33,4 +35,8 @@ function shuffle(a) {
   return a;
 }
 
-module.exports = router;
+module.exports = router
+module.exports.init = (appRef) => {
+  app = appRef
+  app.get('logger').verbose('Mentor router loaded')
+}

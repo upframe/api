@@ -4,6 +4,11 @@ const searchRouter = require('./search')
 const profileRouter = require('./profile')
 
 exports.init = (app) => {
+  authRouter.init(app)
+  mentorRouter.init(app)
+  searchRouter.init(app)
+  profileRouter.init(app)
+
   app.use('/auth', authRouter)
   app.use('/mentor', mentorRouter)
   app.use('/search', searchRouter)

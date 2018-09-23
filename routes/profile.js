@@ -1,7 +1,9 @@
 const express = require('express')
 const router = express.Router()
-const db = require('../services/db.js')
+const db = require('../services/database.js')
 const verifyToken = require('../services/token.js')
+
+let app;
 
 router.get('/me', verifyToken, (req, res) => {
   let sql = 'SELECT * FROM users WHERE email = ?'
@@ -48,4 +50,8 @@ router.post('/image', verifyToken, (req, res) => {
   res.status(200).send('Tudo correu bem')
 })
 
-module.exports = router;
+module.exports = router
+module.exports.init = (appRef) => {
+  app = appRef
+  app.get('logger').verbose('Profile router loaded')
+}

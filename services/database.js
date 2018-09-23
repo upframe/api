@@ -1,8 +1,9 @@
 const mysql = require('mysql2');
 let db;
 
-function connectDatabase() {
-  if (!db) {
+
+class database {
+  constructor(app) {
     db = mysql.createPool({
       host : process.env.DB_HOST,
       user : process.env.DB_USER,
@@ -12,13 +13,15 @@ function connectDatabase() {
 
     db.getConnection(function (err) {
       if (!err) {
-        console.log('Database is connected!');
+        app.get('logger').info('Connected to the database successfully.')
       } else {
-        console.log('Error connecting database!');
+        app.get('logger').error('Error connecting to the database.')
+        setTimeout(() => {
+          process.exit(1)
+        }, 2500)
       }
     });
   }
-  return db;
 }
 
-module.exports = connectDatabase(); 
+module.exports = database 

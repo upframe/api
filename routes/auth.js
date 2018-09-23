@@ -1,9 +1,10 @@
-const express = require('express')
-const router = express.Router()
-const db = require('../services/db.js')
+const router = require('express').Router()
+const db = require('../services/database.js')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs'); //If we have any problem we can change to 'bcrypt'
 //I dunno why but one of the modules is having trouble... Both work for me though
+
+let app;
 
 router.post('/login', (req, res) => {
   if (!req.body.password || !req.body.email) {
@@ -55,3 +56,7 @@ router.post('/register', (req, res) => {
 })
 
 module.exports = router;
+module.exports.init = (appRef) => {
+  app = appRef
+  app.get('logger').verbose('Authentication router loaded')
+};

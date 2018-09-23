@@ -6,8 +6,9 @@ const bodyParser = require('body-parser')
 const app = express()
 
 const morgan = require('morgan')
-const logger = require('./utils/logs')
+const logger = require('./utils').logger;
 
+const services = require('./services')
 const routers = require('./routes')
 
 /* Middleware configuration */
@@ -17,6 +18,10 @@ app.use(bodyParser.json())
 
 /* Logs configuration */
 app.use(morgan('dev'))
+app.set('logger', logger)
+
+/* Services */
+services.init(app);
 
 /* Routing */
 routers.init(app)
