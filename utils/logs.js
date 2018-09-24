@@ -8,14 +8,19 @@ let printFormat = printf(info => {
 let logger = createLogger({
   transports: [
     new transports.Console({
-      silent: process.env.NODE_ENV !== 'dev',
+      silent: process.env.NODE_ENV !== 'production',
       level: 'info',
+      format: combine(colorize(), timestamp(), printFormat)
+    }),
+    new transports.Console({
+      silent: process.env.NODE_ENV !== 'dev',
+      level: 'debug',
       handleExceptions: true,
       json: false,
       format: combine(colorize(), timestamp(), printFormat)
     }),
     new transports.File({
-      level: 'debug',
+      level: 'silly',
       filename: 'app.log',
       handleExceptions: true,
       json: true,

@@ -8,6 +8,7 @@ exports.init = (app) => {
   mentorRouter.init(app)
   searchRouter.init(app)
   profileRouter.init(app)
+  app.get('logger').verbose('Routers loaded')
 
   app.use('/auth', authRouter)
   app.use('/mentor', mentorRouter)
