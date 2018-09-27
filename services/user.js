@@ -13,7 +13,7 @@ class User {
         ok: 1
       }
     
-    this.database.getPool().getConnection((err, conn) => {
+    this.database.getConnection((err, conn) => {
       conn.query(sql, req.query.userEmail, (err, result) => {
         if(err) res.status(500)
         
@@ -21,17 +21,17 @@ class User {
         res.status(response.code).send(response)
       })
 
-      conn.release()
+      this.database.releaseConnection(conn)
     })
   }
 
   update(req, res) {
     let sql = 'UPDATE users SET',
-        email = '',
-        response = {
-          code: 200,
-          ok: 1
-        }
+      email = '',
+      response = {
+        code: 200,
+        ok: 1
+      }
 
     for(let prop in req.body) {
       sql += ` ${prop}="${req.body[prop]}",`
