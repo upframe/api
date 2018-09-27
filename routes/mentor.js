@@ -5,6 +5,7 @@ const db = require('../services/database.js')
 let app, services;
 
 router.get('/', (req, res) => {
+  services.mentor.get(req, res)
   let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ?'
   db.query(sql, req.query.keycode, (err, result) => {
     res.status(200).send(result)
