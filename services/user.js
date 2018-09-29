@@ -3,7 +3,36 @@ class User {
   constructor(app) {
     this.database = app.get('db').getPool()
     this.logger = app.get('logger')
+
     if(this.logger) this.logger.verbose('User service loaded')
+  }
+
+  create(req, res) {
+    let sql = "INSERT INTO users (email, password, keycode, name) VALUES(?, ?, ?, ?)",
+      response = {
+        code: 200,
+        ok: 1
+      },
+      params = []
+    
+    for(let param in req.body) params.push(req.body[param])
+    
+    this.database.getConnection((err, conn) => {
+      conn.query(sql, params, (err, result) => {
+        if(err) {
+          // duplicate entry
+          if(err.errno === 1062) {
+            response.code = 400;
+            response.message = 'Cannot insert duplicate entry'
+          }
+
+          res.status(response.code).json(response)
+          return
+        }
+
+        res.status(response.code).json(response)
+      })
+    })
   }
 
   get(req, res) {
