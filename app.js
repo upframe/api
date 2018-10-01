@@ -3,6 +3,7 @@ require('dotenv').config(); //Podemos usar .env para as variables
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
 const app = express()
 
 const morgan = require('morgan')
@@ -15,6 +16,7 @@ const routers = require('./routes')
 app.use(cors({ credentials: true, origin: 'https://connect.upframe.io' }))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+app.use(cookieParser())
 
 /* Logs configuration */
 app.use(morgan('dev'))

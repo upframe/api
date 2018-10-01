@@ -1,37 +1,38 @@
 const express = require('express')
 const router = express.Router()
-const verifyToken = require('../services/token.js')
 const formidable = require('formidable')
 const AWS = require('aws-sdk')
 const fs = require('fs')
 
 let app, services, logger;
 
-router.get('/me', verifyToken, (req, res) => {
-  services.user.get(req, res)
-})
-
-router.patch('/me', verifyToken, (req, res) => {
-  services.user.update(req,res)
-})
-
-router.post('/image', verifyToken, (req, res) => {
-  var form = new formidable.IncomingForm();
-
-  form.parse(req);
-
-  form.on('fileBegin', function (name, file) {
-    file.path = './uploads/' + file.name;
-  });
-
-  form.on('file', function (name, file) {
-    uploadToS3UsingStream(
-      res, //Response so we can answer when we are done 
-      req.userEmail, //file name
-      fs.createReadStream('./uploads/' + file.name) //stream to upload
-    )
-  });
-})
+function setRouters() {
+  router.get('/me', services.auth.verifyToken, (req, res) => {
+    services.user.get(req, res)
+  })
+  
+  router.patch('/me', services.auth.verifyToken, (req, res) => {
+    services.user.update(req,res)
+  })
+  
+  router.post('/image', services.auth.verifyToken, (req, res) => {
+    var form = new formidable.IncomingForm();
+  
+    form.parse(req);
+  
+    form.on('fileBegin', function (name, file) {
+      file.path = './uploads/' + file.name;
+    });
+  
+    form.on('file', function (name, file) {
+      uploadToS3UsingStream(
+        res, //Response so we can answer when we are done 
+        req.userEmail, //file name
+        fs.createReadStream('./uploads/' + file.name) //stream to upload
+      )
+    });
+  })
+}
 
 /*
 Uploads a file to our S3 Storage Bucket for profile pictures
@@ -66,11 +67,13 @@ function uploadToS3UsingStream(res, filename, stream) {
   })
 }
 
-module.exports = router
 module.exports.init = (appRef) => {
   app = appRef
   services = app.get('services')
   logger = app.get('logger')
 
   logger.verbose('Profile router loaded')
+
+  setRouters()
+  return router
 }

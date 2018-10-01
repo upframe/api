@@ -1,3 +1,6 @@
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+
 class User {
 
   constructor(app) {
@@ -8,17 +11,26 @@ class User {
   }
 
   create(req, res) {
-    let sql = "INSERT INTO users (email, password, keycode, name) VALUES(?, ?, ?, ?)",
+    let sql = 'INSERT INTO users (email, password, keycode, name) VALUES(?, ?, ?, ?)',
       response = {
         code: 200,
         ok: 1
       },
       params = []
     
-    for(let param in req.body) params.push(req.body[param])
+    for(let param in req.body) {
+      if(param !== 'password') params.push(req.body[param])
+      else {
+        // create password
+        let salt = bcrypt.genSaltSync(10)
+        let hash = bcrypt.hashSync(req.body[param], salt)
+
+        params.push(hash)
+      }
+    }
     
     this.database.getConnection((err, conn) => {
-      conn.query(sql, params, (err, result) => {
+      conn.query(sql, params, (err) => {
         if(err) {
           // duplicate entry
           if(err.errno === 1062) {
@@ -40,12 +52,13 @@ class User {
       response = {
         code: 200,
         ok: 1
-      }
-    
+      },
+      token = jwt.decode(req.headers['authorization'].split('Bearer ')[1])
+
     this.database.getConnection((err, conn) => {
-      conn.query(sql, req.query.userEmail, (err, result) => {
+      conn.query(sql, token.email, (err, result) => {
         if(err) res.status(500)
-        
+
         response.user = result[0]
         res.status(response.code).send(response)
       })

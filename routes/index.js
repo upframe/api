@@ -7,11 +7,11 @@ exports.init = (app) => {
   authRouter.init(app)
   mentorRouter.init(app)
   searchRouter.init(app)
-  profileRouter.init(app)
+  let profile = profileRouter.init(app)
   app.get('logger').verbose('Routers loaded')
 
   app.use('/auth', authRouter)
   app.use('/mentor', mentorRouter)
   app.use('/search', searchRouter)
-  app.use('/profile', profileRouter)
+  app.use('/profile', profile)
 }
