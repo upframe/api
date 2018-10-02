@@ -69,7 +69,7 @@ class User {
 
   update(req, res) {
     let sql = 'UPDATE users SET',
-      email = '',
+      email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email,
       response = {
         code: 200,
         ok: 1
