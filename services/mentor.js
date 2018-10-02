@@ -51,7 +51,7 @@ function shuffle(a) {
     [a[i], a[j]] = [a[j], a[i]];
   }
 
-  return a;
+  return a.slice(0, 2);
 }
 
 module.exports = Mentor
