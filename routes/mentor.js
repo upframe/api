@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const db = require('../services/database.js')
 
 let app, services;
 
