@@ -1,16 +1,27 @@
 const Database = require('./database')
+const Mailer = require('./mailer')
 
-const User = require('./user')
 const Auth = require('./auth')
 const Mentor = require('./mentor')
+const User = require('./user')
 
 module.exports.init = (app) => {
+  /**
+   *  Independent services 
+   *  that work 100% alone
+   **/
   app.set('db', new Database(app))
+  app.set('mailer', new Mailer(app))
 
-  let services = {}
-  services.user = new User(app)
+  /**
+   *  Dependent services 
+   *  that need other 
+   *  services to work
+   **/
+  let services = {}  
   services.auth = new Auth(app)
   services.mentor = new Mentor(app)
+  services.user = new User(app)
 
   app.set('services', services)
   app.get('logger').verbose('Services loaded')
