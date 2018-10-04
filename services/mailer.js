@@ -27,7 +27,6 @@ class Mailer {
       html: this.getTemplate('resetPassword')
     }
 
-    
     return this.mailgun.messages().send(data)
       .then(data => {
         if(data.message !== '' && data.id !== '') return 0
