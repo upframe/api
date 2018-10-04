@@ -2,6 +2,7 @@
 require('dotenv').config()
 
 const mailgun = require('mailgun-js')
+const fs = require('fs')
 
 class Mailer {
   constructor(app) {
@@ -11,17 +12,22 @@ class Mailer {
     if(this.logger) this.logger.verbose('Mail service loaded')
   }
 
+  getTemplate(name) {
+    return fs.readFileSync(`assets/${name}.html`, 'utf8')
+  }
+
   /**
    * @param {string} toAddress 
    */
-  sendPasswordReset(toAddress) {
+  async sendPasswordReset(toAddress) {
     let data = {
       from: 'noreply@upframe.io',
       to: toAddress,
       subject: 'Password reset',
-      html: 'Test email'
+      html: this.getTemplate('resetPassword')
     }
 
+    
     return this.mailgun.messages().send(data)
       .then(data => {
         if(data.message !== '' && data.id !== '') return 0
