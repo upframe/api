@@ -3,6 +3,7 @@ const router = express.Router()
 const formidable = require('formidable')
 const AWS = require('aws-sdk')
 const fs = require('fs')
+const jwt = require('jsonwebtoken')
 
 let app, services, logger;
 
