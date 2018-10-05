@@ -16,24 +16,39 @@ function setRouters() {
     services.user.update(req,res)
   })
   
+  // router.post('/image', services.auth.verifyToken, (req, res) => {
+  //   var form = new formidable.IncomingForm();
+  //   email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email
+  
+  //   form.parse(req);
+  
+  //   form.on('fileBegin', function (name, file) {
+  //     file.path = './uploads/' + file.name;
+  //   });
+  
+  //   form.on('file', function (name, file) {
+  //     uploadToS3UsingStream(
+  //       res, //Response so we can answer when we are done 
+  //       email, //file name
+  //       fs.createReadStream('./uploads/' + file.name) //stream to upload
+  //     )
+  //   });
+  // })
+
   router.post('/image', services.auth.verifyToken, (req, res) => {
-    var form = new formidable.IncomingForm();
     email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email
-  
-    form.parse(req);
-  
-    form.on('fileBegin', function (name, file) {
-      file.path = './uploads/' + file.name;
-    });
-  
-    form.on('file', function (name, file) {
+    req.pipe(req.busboy);
+    req.busboy.on('file', (fieldname, file, filename) => {
+      console.log(`Upload of '${filename}' started`);
+
       uploadToS3UsingStream(
-        res, //Response so we can answer when we are done 
-        email, //file name
-        fs.createReadStream('./uploads/' + file.name) //stream to upload
+        res,
+        email,
+        file
       )
-    });
+    })
   })
+
 }
 
 /*
@@ -59,7 +74,7 @@ function uploadToS3UsingStream(res, filename, stream) {
   }
   s3.upload(params, (err, data) => {
     if (err) {
-      res.status(404).send('Upload Falhou')
+      res.status(404).send(err)
     } else {
       res.status(200).send('Feito Link Publico: ' + data.Location)
       fs.unlink('./uploads/' + filename, (err) => {

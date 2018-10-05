@@ -2,7 +2,10 @@ require('dotenv').config(); //Podemos usar .env para as variables
 
 const express = require('express')
 const cors = require('cors')
+
 const bodyParser = require('body-parser')
+const busboy = require('connect-busboy');
+
 const cookieParser = require('cookie-parser')
 const app = express()
 
@@ -16,6 +19,11 @@ const routers = require('./routes')
 app.use(cors({ credentials: true, origin: 'https://connect.upframe.io' }))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+
+app.use(busboy({
+  highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
+}));
+
 app.use(cookieParser())
 
 /* Logs configuration */
