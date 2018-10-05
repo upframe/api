@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const formidable = require('formidable')
 const AWS = require('aws-sdk')
 const fs = require('fs')
 const jwt = require('jsonwebtoken')
@@ -36,7 +35,7 @@ function setRouters() {
   // })
 
   router.post('/image', services.auth.verifyToken, (req, res) => {
-    email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email
+    let email = jwt.decode(req.headers['Authorization'].split('Bearer ')[1]).email
     req.pipe(req.busboy);
     req.busboy.on('file', (fieldname, file, filename) => {
       console.log(`Upload of '${filename}' started`);
