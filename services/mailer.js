@@ -32,27 +32,23 @@ class Mailer {
     let [rows] = await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress)
 
     if(rows[0]['COUNT(*)']) {
-      try {
-        let data = {
+      let data = {
           from: 'noreply@upframe.io',
           to: toAddress,
           subject: 'Password reset'
         },
         token = crypto.randomBytes(20).toString('hex')
-  
-        data.html = this.getTemplate('resetPassword', {'RESETURL': token})
-        let [rows] = await this.database.query('INSERT INTO resetPassword VALUES(?,?)', [toAddress, token])
-        if(rows.affectedRows) {
-          return this.mailgun.messages().send(data)
+      data.html = this.getTemplate('resetPassword', { 'RESETURL': token })
+      
+      let [rows] = await this.database.query('INSERT INTO resetPassword VALUES(?,?)', [toAddress, token])
+      if (rows.affectedRows) {
+        return this.mailgun.messages().send(data)
           .then(data => {
-            if(data.message !== '' && data.id !== '') return 0
+            if (data.message !== '' && data.id !== '') return 0
             else throw 1
-          }).catch(() => {        
+          }).catch(() => {
             return 1
           }) 
-        }
-      } catch (err) {
-
       }
     } else return 1
   }
