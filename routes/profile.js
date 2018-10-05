@@ -17,6 +17,7 @@ function setRouters() {
   
   router.post('/image', services.auth.verifyToken, (req, res) => {
     var form = new formidable.IncomingForm();
+    email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email
   
     form.parse(req);
   
@@ -27,7 +28,7 @@ function setRouters() {
     form.on('file', function (name, file) {
       uploadToS3UsingStream(
         res, //Response so we can answer when we are done 
-        req.userEmail, //file name
+        email, //file name
         fs.createReadStream('./uploads/' + file.name) //stream to upload
       )
     });
