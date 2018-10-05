@@ -1,16 +1,15 @@
 const mysql = require('mysql2');
-let pool;
 
 class database {
   constructor(app) {
-    pool = mysql.createPool({
+    let pool = mysql.createPool({
       host : process.env.DB_HOST,
       user : process.env.DB_USER,
       password : process.env.DB_PASSWORD,
       database : process.env.DB_NAME
-    });
+    })
 
-    pool.getConnection(function (err) {
+    pool.getConnection((err) => {
       if (!err) {
         app.get('logger').info('Connected to the database successfully.')
       } else {
@@ -20,12 +19,16 @@ class database {
         }, 2500)
       }
     });
+    
+    this.pool = pool.promise()
   }
 
+  /**
+   * @returns {connectionPool}
+   */
   getPool() {
-    return pool;
+    return this.pool;
   }
-
 }
 
 module.exports = database 
