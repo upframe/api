@@ -80,6 +80,53 @@ class Auth {
       })
     })
   }
+
+  async resetPassword(req, res) {
+    let response = {
+      ok: 1,
+      code: 200
+    }
+
+    if(req.body.token) {
+      try {
+        // verify if token is valid
+        let result = (await this.database.query('SELECT COUNT(*) FROM resetPassword WHERE token = ?', req.body.token))[0]
+        if (!result[0]['COUNT(*)']) throw 403
+        
+        let params = [],
+          sql = 'UPDATE users SET password = ? WHERE email = ?'
+        params.push(bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10)), req.body.email)
+        result = (await this.database.query(sql, params))[0]
+
+        sql = 'DELETE FROM resetPassword WHERE token = ?'
+        params = [req.body.token];
+        result = (await this.database.query(sql, params))[0]
+
+        res.status(response.code).json(response)
+      } catch (err) {
+        response.ok = 0
+        response.code = 400
+
+        if(err == 403) {
+          response.code = err
+          response.message = 'Token is invalid'
+        }
+
+        res.status(response.code).json(response)
+      }
+    } else {
+      // result = 1 means email was sent
+      // result = 0 means email was NOT sent
+      let result = await this.mailer.sendPasswordReset(req.body.email)
+      
+      if(result != 0) {
+        response.ok = 0
+        response.code = 400
+      }
+
+      res.status(response.code).json(response)
+    }
+  }
 }
 
 module.exports = Auth

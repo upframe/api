@@ -12,6 +12,10 @@ router.post('/register', (req, res) => {
   services.user.create(req, res)
 })
 
+router.post('/forgotmypassword', (req, res) => {
+  services.auth.resetPassword(req, res)
+})
+
 module.exports = router;
 module.exports.init = (appRef) => {
   app = appRef
