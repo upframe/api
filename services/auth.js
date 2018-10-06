@@ -127,6 +127,56 @@ class Auth {
       res.status(response.code).json(response)
     }
   }
+
+  /**
+   * @description changes account's email
+   */
+  async changeEmail(req, res) {
+    let response = {
+      ok: 1,
+      code: 200
+    }
+
+    if(req.body.token) {
+      try {
+        // verify if token is valid
+        let result = (await this.database.query('SELECT COUNT(*) FROM emailChange WHERE token = ?', req.body.token))[0]
+        if (!result[0]['COUNT(*)']) throw 403
+        
+        let params = [],
+          sql = 'UPDATE users SET email = ? WHERE email = ?'
+        params.push(req.body.newEmail, req.body.email)
+        result = (await this.database.query(sql, params))[0]
+
+        sql = 'DELETE FROM emailChange WHERE token = ?'
+        params = [req.body.token];
+        result = (await this.database.query(sql, params))[0]
+
+        res.status(response.code).json(response)
+      } catch (err) {
+        response.ok = 0
+        response.code = 400
+
+        if(err == 403) {
+          response.code = err
+          response.message = 'Token is invalid'
+        }
+
+        res.status(response.code).json(response)
+      }
+    } else {
+      // result = 1 means email was sent
+      // result = 0 means email was NOT sent
+      let result = await this.mailer.sendEmailChange(req.body.email)
+      
+      if(result != 0) {
+        response.ok = 0
+        response.code = 400
+      }
+
+      res.status(response.code).json(response)
+    }
+  }
 }
 
 module.exports = Auth
