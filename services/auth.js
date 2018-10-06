@@ -84,13 +84,13 @@ class Auth {
     let salt = bcrypt.genSaltSync(10)
     json.password = bcrypt.hashSync(req.body.password, salt)
     // generate keycode
-    json.keycode = json.name.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(new RegExp(' ', 'g'), '.').toLowerCase()
+    json.keycode = json.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(new RegExp(' ', 'g'), '.').toLowerCase()
 
     let [partial, params] = sql.createSQLPlaceholderFromJSON(json)
     sqlQuery += partial
     
     try {
-      let [rows] = await this.database.query(sqlQuery, params)
+      await this.database.query(sqlQuery, params)
     } catch (err) {
       response.ok = 0
       response.code = 400

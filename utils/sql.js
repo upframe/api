@@ -1,5 +1,5 @@
 
-createSQLPlaceholderFromJSON = (json) => {
+function createSQLPlaceholderFromJSON(json) {
   let partial = '('
   let params = []
 
