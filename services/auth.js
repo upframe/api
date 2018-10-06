@@ -4,6 +4,8 @@ require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 
+const { sql } = require('../utils')
+
 class Auth {
   constructor(app) {
     // inject independent services
@@ -50,35 +52,55 @@ class Auth {
         code: 200
       }
     
-    this.database.getConnection((err, conn) => {
-      conn.query(sql, req.body.email, (err, result) => {
-        try {
-          if (!result.length) throw 404
+    let [rows] = await this.database.query(sql, req.body.email)
+    if(rows.length) {
+      try {
+        if(bcrypt.compareSync(req.body.password, rows[0].password)) {
+          response.token = this.createToken({ email: rows[0].email })
+        } else throw 401
+      } catch (err) {
+        response.ok = 0
+        response.code = 400
 
-          if (bcrypt.compareSync(req.body.password, result[0].password)) {
-            let token = this.createToken({ email: result[0].email })
+        if(err === 401) response.message = 'The email or password didn\'t match'
+      }
+    } else {
+      response.ok = 0
+      response.code = 404
+    }
 
-            response.token = token
-          } else {
-            response.code = 0
-            response.code = 401
-            response.message = 'Wrong username/password'
-          }
+    res.status(response.code).json(response)
+  }
 
-          res.status(response.code).json(response)
-        } catch (err) {
-          response.ok = 0;
-          response.code = 400
+  async register(req, res) {
+    let sqlQuery = 'INSERT INTO users ',
+      response = {
+        code: 200,
+        ok: 1
+      },
+      json = Object.assign({}, req.body)
 
-          if (err == 404) {
-            response.code = 404
-          }
+    // hash password
+    let salt = bcrypt.genSaltSync(10)
+    json.password = bcrypt.hashSync(req.body.password, salt)
+    // generate keycode
+    json.keycode = json.name.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(new RegExp(' ', 'g'), '.').toLowerCase()
 
-          res.status(response.code).json(response)
-          return
-        }
-      })
-    })
+    let [partial, params] = sql.createSQLPlaceholderFromJSON(json)
+    sqlQuery += partial
+    
+    try {
+      let [rows] = await this.database.query(sqlQuery, params)
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+
+      if(err.errno == 1062 && err.sqlState == 23000) {
+        response.message = 'There is already an account using that email'
+      }
+    }
+
+    res.status(response.code).json(response)
   }
 
   async resetPassword(req, res) {
