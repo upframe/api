@@ -70,6 +70,12 @@ class Mailer {
       data.html = this.getTemplate('emailChange', { 'RESETURL': token })
       
       let [rows] = await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token])
+          subject: 'Password reset'
+        },
+        token = crypto.randomBytes(20).toString('hex')
+      data.html = this.getTemplate('emailChange', { 'RESETURL': token })
+      
+      let [rows] = await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token])
       if (rows.affectedRows) {
         return this.mailgun.messages().send(data)
           .then(data => {
