@@ -149,7 +149,7 @@ class Auth {
       res.status(response.code).json(response)
     }
   }
-
+  
   /**
    * @description changes account's email
    */
