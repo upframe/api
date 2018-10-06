@@ -52,6 +52,35 @@ class Mailer {
       }
     } else return 1
   }
+
+  /**
+   * 
+   * @param {string} toAddress 
+   */
+  async sendEmailChange(toAddress) {
+    let [rows] = await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress)
+
+    if(rows[0]['COUNT(*)']) {
+      let data = {
+          from: 'noreply@upframe.io',
+          to: toAddress,
+          subject: 'Email change'
+        },
+        token = crypto.randomBytes(20).toString('hex')
+      data.html = this.getTemplate('emailChange', { 'RESETURL': token })
+      
+      let [rows] = await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token])
+      if (rows.affectedRows) {
+        return this.mailgun.messages().send(data)
+          .then(data => {
+            if (data.message !== '' && data.id !== '') return 0
+            else throw 1
+          }).catch(() => {
+            return 1
+          }) 
+      }
+    } else return 1
+  }
 }
 
 module.exports = Mailer

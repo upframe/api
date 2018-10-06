@@ -16,6 +16,11 @@ router.post('/forgotmypassword', (req, res) => {
   services.auth.resetPassword(req, res)
 })
 
+
+router.post('/changemyemail', (req, res) => {
+  services.auth.changeEmail(req, res)
+})
+
 module.exports = router;
 module.exports.init = (appRef) => {
   app = appRef
