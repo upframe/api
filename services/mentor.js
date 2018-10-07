@@ -7,7 +7,7 @@ class Mentor {
     if(this.logger) this.logger.verbose('Mentor service loaded')
   }
 
-  get(req, res) {
+  async get(req, res) {
     if(req.params.keycode === 'random') {
       this.getRandom(req, res)
       return;
@@ -19,29 +19,47 @@ class Mentor {
         code: 200
       }
     
-    this.database.getConnection((err, conn) => {
-      conn.query(sql, req.params.keycode, (err, result) => {
+    try {
+      let [rows] = await this.database.query(sql, [req.params.keycode])
+      if(!rows.length) throw 404
 
-        response.mentor = result[0]
-        res.status(response.code).send(response)
-      })
-    })
+      response.mentor = rows[0]
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+
+      if(err === 404) {
+        response.code = err
+        response.message = 'Mentor not found'
+      }
+
+    }
+
+    res.status(response.code).json(response)
   }
 
-  getRandom(req, res) {
-    let sql = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users',
+  async getRandom(req, res) {
+    let sql = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5',
       response = {
         ok: 1,
         code: 200
       }
-    
-    this.database.getConnection((err, conn) => {
-      conn.query(sql, (err, result) => {
-        response.mentor = shuffle(result)
 
-        res.status(response.code).send(response)
-      })
-    })
+    try {
+      let [rows] = await this.database.query(sql)
+      if(!rows.length) throw 404
+
+      response.mentor = shuffle(rows)
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+
+      if(err === 404) {
+        response.code = err
+      }
+    }
+
+    res.status(response.code).json(response)
   }
 }
 
