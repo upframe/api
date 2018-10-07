@@ -17,18 +17,23 @@ class User {
       },
       token = jwt.decode(req.headers['authorization'].split('Bearer ')[1])
     
-    let [rows] = await this.database.query(sql, token.email)
-    if(rows.length) {
-      response.user = rows[0]
-    } else {
+    try {
+      let [rows] = await this.database.query(sql, token.email)
+      if(!rows.length) throw 404
+    } catch (err) {
       response.ok = 0
-      response.code = 404
+      response.code = 400
+
+      if(err === 404) {
+        response.code = err
+        response.message = 'User not found'
+      }
     }
 
     res.status(response.code).json(response)
   }
 
-  update(req, res) {
+  async update(req, res) {
     let sql = 'UPDATE users SET',
       email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email,
       response = {
@@ -44,19 +49,22 @@ class User {
     // get email/uid from JWT token
     sql += ' WHERE email = ?'
 
-    this.database.getConnection((err, conn) => {
-      if(err) res.status(500)
-      
-      conn.query(sql, email, (err, result) => {
-        if(err) res.status(500)
-        
-        if(result.changedRows) response.code = 202
-        else response.code = 409
+    try {
+      let [rows] = await this.database.query(sql, email)
 
-        res.status(response.code).send(response)
-        this.database.releaseConnection(conn)
-      })
-    })
+      if(rows.changedRows) response.code = 202
+      else throw 409
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+
+      if(err === 404) {
+        response.code = err
+        response.message = 'User not found'
+      } else if(err === 409) response.code = err
+    }
+
+    res.status(response.code).json(response)
   }
 
 }
