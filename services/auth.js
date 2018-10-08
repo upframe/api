@@ -77,8 +77,7 @@ class Auth {
   }
 
   async register(req, res) {
-    let sqlQuery = 'INSERT INTO users ',
-      response = {
+    let response = {
         code: 200,
         ok: 1
       },
@@ -92,8 +91,7 @@ class Auth {
     // generate unique account id
     json.uid = crypto.randomBytes(20).toString('hex')
 
-    let [partial, params] = sql.createSQLPlaceholderFromJSON(json)
-    sqlQuery += partial
+    let [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
     
     try {
       await this.database.query(sqlQuery, params)

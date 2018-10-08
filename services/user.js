@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken')
 
+const { sql } = require('../utils')
+
 class User {
 
   constructor(app) {
@@ -34,27 +36,22 @@ class User {
   }
 
   async update(req, res) {
-    let sql = 'UPDATE users SET',
-      email = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).email,
+    let uid = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).uid,
       response = {
         code: 200,
         ok: 1
-      }
-
-    for(let prop in req.body) {
-      sql += ` ${prop}="${req.body[prop]}",`
-    }
-    sql = sql.slice(0, -1)
+      },
+      json = Object.assign({}, req.body)
     
-    // get email/uid from JWT token
-    sql += ' WHERE email = ?'
+    let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid: uid})
 
     try {
-      let [rows] = await this.database.query(sql, email)
+      let [rows] = await this.database.query(sqlQuery, params)
 
       if(rows.changedRows) response.code = 202
       else throw 409
     } catch (err) {
+      
       response.ok = 0
       response.code = 400
 
@@ -63,7 +60,7 @@ class User {
         response.message = 'User not found'
       } else if(err === 409) response.code = err
     }
-
+    
     res.status(response.code).json(response)
   }
 
