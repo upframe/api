@@ -9,7 +9,7 @@ router.post('/login', (req, res) => {
 })
 
 router.post('/register', (req, res) => {
-  services.user.create(req, res)
+  services.auth.register(req, res)
 })
 
 router.post('/forgotmypassword', (req, res) => {
