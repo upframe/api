@@ -7,8 +7,6 @@ const crypto = require('crypto')
 
 const { sql } = require('../utils')
 
-const { sql } = require('../utils')
-
 class Auth {
   constructor(app) {
     // inject independent services
