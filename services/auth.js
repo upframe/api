@@ -3,6 +3,7 @@ require('dotenv').config()
 
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 
 const { sql } = require('../utils')
 
@@ -56,7 +57,10 @@ class Auth {
     if(rows.length) {
       try {
         if(bcrypt.compareSync(req.body.password, rows[0].password)) {
-          response.token = this.createToken({ email: rows[0].email })
+          response.token = this.createToken({
+            email: rows[0].email,
+            uid: rows[0].uid
+          })
         } else throw 401
       } catch (err) {
         response.ok = 0
@@ -85,6 +89,8 @@ class Auth {
     json.password = bcrypt.hashSync(req.body.password, salt)
     // generate keycode
     json.keycode = json.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(new RegExp(' ', 'g'), '.').toLowerCase()
+    // generate unique account id
+    json.uid = crypto.randomBytes(20).toString('hex')
 
     let [partial, params] = sql.createSQLPlaceholderFromJSON(json)
     sqlQuery += partial
