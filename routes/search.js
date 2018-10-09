@@ -1,25 +1,25 @@
-const express = require('express')
-const router = express.Router()
-//const db = require('../services/db.js')             - enable when you start working
-//const verifyToken = require('../services/token.js') - enable when you start working
+const router = require('express').Router()
 
-let app;
+let app, 
+    services;
 
 router.get('/quick', (req, res) => {
-  res.status(200).send('Tudo correu bem')
+  services.search.quick(req, res)
 })
 
 router.get('/full', (req, res) => {
-  res.status(200).send('Tudo correu bem')
+  services.search.full(req, res)
 })
 
 router.get('/tags', (req, res) => {
-  let tags = ['User Research', 'Event Marketing', 'Communities', 'Business Models', 'Ideation', 'B2B', 'B2C']
-  res.status(200).send(tags)
+  services.search.tags(req, res)
 })
 
-module.exports = router
+module.exports = router;
 module.exports.init = (appRef) => {
   app = appRef
-  app.get('logger').verbose('Search router loaded')
-}
+  services = app.get('services')
+  logger = app.get('logger')
+
+  logger.verbose('Search router loaded')
+};

@@ -4,6 +4,7 @@ const Mailer = require('./mailer')
 const Auth = require('./auth')
 const Mentor = require('./mentor')
 const User = require('./user')
+const Search = require('./search')
 
 module.exports.init = (app) => {
   /**
@@ -22,6 +23,7 @@ module.exports.init = (app) => {
   services.auth = new Auth(app)
   services.mentor = new Mentor(app)
   services.user = new User(app)
+  services.search = new Search(app)
 
   app.set('services', services)
   app.get('logger').verbose('Services loaded')
