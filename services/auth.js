@@ -118,15 +118,17 @@ class Auth {
         // verify if token is valid
         let result = (await this.database.query('SELECT COUNT(*) FROM resetPassword WHERE token = ?', req.body.token))[0]
         if (!result[0]['COUNT(*)']) throw 403
-        
-        let params = [],
-          sql = 'UPDATE users SET password = ? WHERE email = ?'
-        params.push(bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10)), req.body.email)
-        result = (await this.database.query(sql, params))[0]
 
-        sql = 'DELETE FROM resetPassword WHERE token = ?'
+        let json = { password: bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10)) },
+          whereJson = { email: req.body.email }
+
+        let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, whereJson)
+        result = (await this.database.query(sqlQuery, params))[0]
+        if(!result.affectedRows) throw 404 
+
+        sqlQuery = 'DELETE FROM resetPassword WHERE token = ?'
         params = [req.body.token];
-        result = (await this.database.query(sql, params))[0]
+        result = (await this.database.query(sqlQuery, params))[0]
 
         res.status(response.code).json(response)
       } catch (err) {
@@ -171,6 +173,7 @@ class Auth {
         
         let params = [],
           sql = 'UPDATE users SET email = ? WHERE email = ?'
+        
         params.push(req.body.newEmail, req.body.email)
         result = (await this.database.query(sql, params))[0]
 
