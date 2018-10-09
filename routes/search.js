@@ -1,7 +1,6 @@
 const router = require('express').Router()
 
-let app, 
-    services;
+let app, services, logger;
 
 router.get('/quick', (req, res) => {
   services.search.quick(req, res)
