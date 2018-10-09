@@ -27,7 +27,7 @@ class Search {
 
   async full(req, res) {
     //Queremos pesquisar usando a informacao e devolver só users
-    let sql = 'SELECT * FROM users WHERE name LIKE ?'
+    let sql = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
     let [rows] = await this.database.query(sql, '%' + req.query.term + '%')
     res.status(200).send(rows)
   }
