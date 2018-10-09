@@ -64,7 +64,7 @@ class Mentor {
 
   async verify(req, res) {
     let check = req.query.keycode ? 'keycode' : 'uniqueid'
-    let value = req.query.keycode ? '\"' + req.query.keycode + '\"' : req.query.uniqueid
+    let value = req.query.keycode ? '"' + req.query.keycode + '"' : req.query.uniqueid
     let sql = `SELECT * FROM onboarding WHERE ${check} = ${value}` 
     let response = {
       ok: 1,
