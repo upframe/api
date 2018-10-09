@@ -61,6 +61,27 @@ class Mentor {
 
     res.status(response.code).json(response)
   }
+
+  async verify(req, res) {
+    let check = req.query.keycode ? 'keycode' : 'uniqueid'
+    let value = req.query.keycode ? '\"' + req.query.keycode + '\"' : req.query.uniqueid
+    let sql = `SELECT * FROM onboarding WHERE ${check} = ${value}` 
+    let response = {
+      ok: 1,
+      code: 200
+    }
+    try {
+      let [rows] = await this.database.query(sql)
+      if(!rows.length) throw 404
+
+      response.name = rows[0].name
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+    }
+    res.status(response.code).json(response)
+  }
+
 }
 
 function shuffle(a) {

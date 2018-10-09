@@ -3,16 +3,20 @@ const router = express.Router()
 
 let app, services;
 
-router.get('/:keycode', (req, res) => {
-  services.mentor.get(req, res)
-})
-
 router.get('/verify', (req, res) => {
-  res.status(200).send('Tudo correu bem')
+  services.mentor.verify(req, res)
 })
 
 router.post('/meetup', (req, res) => {
   res.status(200).send('Tudo correu bem')
+})
+
+router.get('/random', (req, res) => {
+  services.mentor.getRandom(req, res)
+})
+
+router.get('/:keycode', (req, res) => {
+  services.mentor.get(req, res)
 })
 
 module.exports = router
