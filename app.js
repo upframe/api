@@ -16,7 +16,7 @@ const services = require('./services')
 const routers = require('./routes')
 
 /* Middleware configuration */
-app.use(cors({ credentials: true, origin: 'https://connect.upframe.io' }))
+app.use(cors({ credentials: true, origin: '*' }))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
