@@ -83,18 +83,15 @@ class Auth {
       },
       json = Object.assign({}, req.body)
     try {
-    console.log(json)
-    // hash password
-    let salt = bcrypt.genSaltSync(10)
-    json.password = bcrypt.hashSync(req.body.password, salt)
-    // generate keycode
-    json.keycode = json.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(new RegExp(' ', 'g'), '.').toLowerCase()
-    // generate unique account id
-    json.uid = crypto.randomBytes(20).toString('hex')
+      // hash password
+      let salt = bcrypt.genSaltSync(10)
+      json.password = bcrypt.hashSync(req.body.password, salt)
+      // generate keycode
+      json.keycode = json.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(new RegExp(' ', 'g'), '.').toLowerCase()
+      // generate unique account id
+      json.uid = crypto.randomBytes(20).toString('hex')
 
-    let [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
-    
-    
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
       await this.database.query(sqlQuery, params)
     } catch (err) {
       response.ok = 0
