@@ -5,18 +5,22 @@ const cors = require('cors')
 
 const bodyParser = require('body-parser')
 const busboy = require('connect-busboy');
-
 const cookieParser = require('cookie-parser')
-const app = express()
-
 const morgan = require('morgan')
 const logger = require('./utils').logger;
 
 const services = require('./services')
 const routers = require('./routes')
 
+const app = express()
+
 /* Middleware configuration */
-app.use(cors({ credentials: true, origin: '*' }))
+let corsOptions = {
+  credentials: true,
+  origin: process.env.NODE_ENV == 'dev' ? '*' : 'https://connect.upframe.io'
+}
+
+app.use(cors(corsOptions))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
