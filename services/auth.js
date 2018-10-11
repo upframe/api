@@ -42,8 +42,8 @@ class Auth {
     }
   }
 
-  createToken(user) {
-    return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: 86400 * 15, audience: 'user'})
+  createToken(user, accountType) {
+    return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: 86400 * 15, audience: accountType})
   }
 
   async login(req, res) {
@@ -60,7 +60,7 @@ class Auth {
           response.token = this.createToken({
             email: rows[0].email,
             uid: rows[0].uid
-          })
+          }, rows[0].type)
         } else throw 401
       } catch (err) {
         response.ok = 0
