@@ -82,7 +82,8 @@ class Auth {
         ok: 1
       },
       json = Object.assign({}, req.body)
-
+    try {
+    console.log(json)
     // hash password
     let salt = bcrypt.genSaltSync(10)
     json.password = bcrypt.hashSync(req.body.password, salt)
@@ -93,7 +94,7 @@ class Auth {
 
     let [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
     
-    try {
+    
       await this.database.query(sqlQuery, params)
     } catch (err) {
       response.ok = 0
