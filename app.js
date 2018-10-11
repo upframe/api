@@ -23,12 +23,10 @@ let corsOptions = {
 app.use(cors(corsOptions))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-
+app.use(cookieParser())
 app.use(busboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
 }));
-
-app.use(cookieParser())
 
 /* Logs configuration */
 app.use(morgan('dev'))

@@ -18,12 +18,13 @@ class Auth {
   }
 
   verifyToken(req, res, next) {
-    let authHeader = req.headers['authorization']
+    let token = req.cookies['access_token']
 
     try {
-      if(!authHeader) throw 403;
+      if(!token) throw 403;
 
-      jwt.verify(authHeader.split('Bearer ')[1], process.env.CONNECT_PK)
+      let decoded = jwt.verify(token, process.env.CONNECT_PK)
+      req.jwt = decoded
       
       next()
     } catch (err) {
@@ -52,7 +53,7 @@ class Auth {
         ok: 1,
         code: 200
       }
-    
+
     let [rows] = await this.database.query(sql, req.body.email)
     if(rows.length) {
       try {
@@ -61,6 +62,8 @@ class Auth {
             email: rows[0].email,
             uid: rows[0].uid
           }, rows[0].type)
+
+          res.cookie('access_token', response.token, {maxAge: 86400 * 15, httpOnly: true})
         } else throw 401
       } catch (err) {
         response.ok = 0

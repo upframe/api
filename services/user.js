@@ -17,7 +17,7 @@ class User {
         code: 200,
         ok: 1
       },
-      token = jwt.decode(req.headers['authorization'].split('Bearer ')[1])
+      token = req.token
     
     try {
       let [rows] = await this.database.query(sql, token.email)
@@ -36,7 +36,7 @@ class User {
   }
 
   async update(req, res) {
-    let uid = jwt.decode(req.headers['authorization'].split('Bearer ')[1]).uid,
+    let uid = req.token.uid,
       response = {
         code: 200,
         ok: 1
