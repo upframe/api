@@ -28,6 +28,22 @@ app.use(busboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
 }));
 
+/* Avoid empty POST requests */
+app.use((req, res, next) => {
+  if(Object.keys(req.body).length === 0 && req.method == 'POST') {
+    let response = {
+      ok: 0,
+      code: 400,
+      message: 'Request body cannot be empty'
+    }
+
+    res.status(response.code).json(response)
+    return
+  }
+
+  next()
+})
+
 /* Logs configuration */
 app.use(morgan('dev'))
 app.set('logger', logger)
