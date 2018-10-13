@@ -1,5 +1,3 @@
-const jwt = require('jsonwebtoken')
-
 const { sql } = require('../utils')
 
 class User {

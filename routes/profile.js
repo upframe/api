@@ -2,7 +2,6 @@ const express = require('express')
 const router = express.Router()
 const AWS = require('aws-sdk')
 const fs = require('fs')
-const jwt = require('jsonwebtoken')
 
 let app, services, logger;
 

@@ -5,6 +5,7 @@ const Auth = require('./auth')
 const Mentor = require('./mentor')
 const User = require('./user')
 const Search = require('./search')
+const Meetup = require('./meetup')
 
 module.exports.init = (app) => {
   /**
@@ -24,6 +25,7 @@ module.exports.init = (app) => {
   services.mentor = new Mentor(app)
   services.user = new User(app)
   services.search = new Search(app)
+  services.meetup = new Meetup(app)
 
   app.set('services', services)
   app.get('logger').verbose('Services loaded')
