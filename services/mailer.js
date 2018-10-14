@@ -101,16 +101,16 @@ class Mailer {
       if(!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
 
       let data = {
-        from: 'noreply@upframe.io',
-        to: mentor.email,
-        subject: `${mentee.name} invited you for a meetup`
-      },
-      placeholders = {
-        'USER': mentee.name,
-        'LOCATION': meetup[0].location,
-        'TIME': new Date(meetup[0].start).toLocaleString(),
-        'MID': meetupID,
-      }
+          from: 'noreply@upframe.io',
+          to: mentor.email,
+          subject: `${mentee.name} invited you for a meetup`
+        },
+        placeholders = {
+          'USER': mentee.name,
+          'LOCATION': meetup[0].location,
+          'TIME': new Date(meetup[0].start).toLocaleString(),
+          'MID': meetupID,
+        }
 
       data.html = this.getTemplate('meetupInvitation', placeholders)
 
