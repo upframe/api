@@ -6,6 +6,10 @@ function setRouters() {
   router.post('/', services.auth.verifyToken, (req, res) => {
     services.meetup.create(req, res)
   })
+
+  router.get('/', services.auth.verifyToken, (req, res) => {
+    services.meetup.get(req, res)
+  })
 }
 
 module.exports.init = (appRef) => {
