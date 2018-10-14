@@ -24,8 +24,8 @@ class Auth {
       if(!token) throw 403;
 
       let decoded = jwt.verify(token, process.env.CONNECT_PK)
-      req.jwt = decoded
-      
+      req.token = decoded
+
       next()
     } catch (err) {
       let response = {
