@@ -62,10 +62,10 @@ class meetup {
    */
   async get(req, res) {
     let response = {
-      ok: 1,
-      code: 200
-    },
-    sqlQuery = 'SELECT * FROM meetups WHERE mentee = ?'
+        ok: 1,
+        code: 200
+      },
+      sqlQuery = 'SELECT * FROM meetups WHERE mentee = ?'
 
     try {
       let [rows] = await this.database.query(sqlQuery, [req.jwt.uid])
