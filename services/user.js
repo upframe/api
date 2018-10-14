@@ -19,6 +19,7 @@ class User {
     
     try {
       let [rows] = await this.database.query(sql, token.email)
+      response.me = rows[0]
       if(!rows.length) throw 404
     } catch (err) {
       response.ok = 0
