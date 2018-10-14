@@ -81,6 +81,52 @@ class Mailer {
       }
     } else return 1
   }
+
+  /**
+   * @description Sends meetup invite notification by email
+   * @param {string} meetupID
+   */
+  async sendMeetupInvitation(meetupID) {
+    try {
+      // get meetup by id
+      let [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
+      if(!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
+      
+      // get mentee name
+      let [mentee] = (await this.database.query('SELECT name FROM users WHERE uid = ?', meetup[0].mentee))[0]
+      if(!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
+      
+      // get mentor email
+      let [mentor] = (await this.database.query('SELECT email FROM users WHERE uid = ?', meetup[0].mentor))[0]
+      if(!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
+
+      let data = {
+        from: 'noreply@upframe.io',
+        to: mentor.email,
+        subject: `${mentee.name} invited you for a meetup`
+      },
+      placeholders = {
+        'USER': mentee.name,
+        'LOCATION': meetup[0].location,
+        'TIME': new Date(meetup[0].start).toLocaleString(),
+        'MID': meetupID,
+      }
+
+      data.html = this.getTemplate('meetupInvitation', placeholders)
+
+      return this.mailgun.messages().send(data)
+        .then(data => {
+          if(data.message !== '' & data.id !== '') return 0
+          else throw 1
+        })
+        .catch(() => {
+          return 1
+        })
+    } catch (err) {
+      if(err.APIerr) return err
+      else return 1
+    }
+  }
 }
 
 module.exports = Mailer
