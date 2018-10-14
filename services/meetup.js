@@ -29,7 +29,8 @@ class meetup {
       let meetup = {
         mentee: req.jwt.uid,
         mid: crypto.randomBytes(20).toString('hex'),
-        location: req.body.location
+        location: req.body.location,
+        start: req.body.start
       }
       
       // get mentor id
@@ -38,14 +39,48 @@ class meetup {
       if(!meetup.mentor) throw { APIerr: true, err: 404, msg: 'Mentor not found' }
       if(meetup.mentor === meetup.mentee) throw { APIerr: true, errorCode: 400, errorMessage: 'A user cannot set a meetup with itself'}
 
+      // insert meetup
       let [sqlQuery2, params] = await sql.createSQLqueryFromJSON('INSERT', 'meetups', meetup)
-
       let [rows] = await this.database.query(sqlQuery2, params)
       if(!rows.affectedRows) throw { APIerr: true, errorCode: 500, errorMessage: 'Internal Server Error' }
+    
+      // send email notification
+      let result = await this.mailer.sendMeetupInvitation(meetup.mid)
+      if(result) throw 500
     } catch (err) {
       response.ok = 0
       response.code = 400
 
+      if(err.APIerr) {
+        response.code = err.errorCode
+        response.message = err.errorMessage
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
+  /**
+   * @description Confirms meetup
+   * @param {Request} req 
+   * @param {Response} res 
+   */
+  async confirm(req, res) {
+    let response = {
+      ok: 1,
+      code: 200
+    }
+
+    try {
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', {status: 'confirmed'}, { mid: req.query.meetup })
+      let [rows] = await this.database.query(sqlQuery, params)
+      
+      if(rows.affectedRows && !rows.changedRows) throw { APIerr: true, errorCode: 400, errorMessage: 'Meetup arleady confirmed' }
+      else if(!rows.affectedRows) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+      
       if(err.APIerr) {
         response.code = err.errorCode
         response.message = err.errorMessage
