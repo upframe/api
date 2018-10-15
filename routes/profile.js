@@ -15,7 +15,7 @@ function setRouters() {
   })
   
   router.post('/image', services.auth.verifyToken, (req, res) => {
-    let email = req.token.email
+    let email = req.jwt.email
     req.pipe(req.busboy);
     req.busboy.on('file', (fieldname, file, filename) => {
       console.log(`Upload of '${filename}' started`);

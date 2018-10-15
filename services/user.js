@@ -15,7 +15,7 @@ class User {
         code: 200,
         ok: 1
       },
-      token = req.token
+      token = req.jwt
     
     try {
       let [rows] = await this.database.query(sql, token.email)
@@ -35,7 +35,7 @@ class User {
   }
 
   async update(req, res) {
-    let uid = req.token.uid,
+    let uid = req.jwt.uid,
       response = {
         code: 200,
         ok: 1
