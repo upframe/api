@@ -17,6 +17,18 @@ class Auth {
     if(this.logger) this.logger.verbose('Auth service loaded')
   }
 
+  isMentor(req, res, next) {
+    if(req.jwt.aud === 'mentor') next()
+    else {
+      let response = {
+        ok: 0,
+        code: 403,
+        message: 'You\'re not a mentor'
+      }
+      res.status(response.code).json(response)
+    }
+  }
+
   verifyToken(req, res, next) {
     let token = req.cookies['access_token']
 
