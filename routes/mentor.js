@@ -3,26 +3,30 @@ const router = express.Router()
 
 let app, services;
 
-router.get('/verify', (req, res) => {
-  services.mentor.verify(req, res)
-})
+function setRouters() {
+  router.get('/:keycode', (req, res, next) => {
+    services.mentor.get(req, res, next)
+  })
+  
+  router.get('/random', (req, res) => {
+    services.mentor.getRandom(req, res)
+  })
 
-router.post('/meetup', (req, res) => {
-  res.status(200).send('Tudo correu bem')
-})
-
-router.get('/random', (req, res) => {
-  services.mentor.getRandom(req, res)
-})
-
-router.get('/:keycode', (req, res) => {
-  services.mentor.get(req, res)
-})
+  router.get('/slots', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
+    services.mentor.getTimeSlots(req, res)
+  })
+  
+  router.get('/verify', (req, res) => {
+    services.mentor.verify(req, res)
+  })
+}
 
 module.exports = router
 module.exports.init = (appRef) => {
   app = appRef
   services = app.get('services')
   
+  setRouters()
   app.get('logger').verbose('Mentor router loaded')
+  return router
 }

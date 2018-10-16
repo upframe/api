@@ -7,9 +7,9 @@ class Mentor {
     if(this.logger) this.logger.verbose('Mentor service loaded')
   }
 
-  async get(req, res) {
-    if(req.params.keycode === 'random') {
-      this.getRandom(req, res)
+  async get(req, res, next) {
+    if(req.params.keycode === 'random' || req.params.keycode === 'slots') {
+      next()
       return;
     }
 
@@ -59,6 +59,53 @@ class Mentor {
       }
     }
 
+    res.status(response.code).json(response)
+  }
+
+  /**
+   * @description Returns mentor's time slots
+   * @param {Request} req 
+   * @param {Response} res 
+   */
+  async getTimeSlots(req, res) {
+    let response = {
+      ok: 1,
+      code: 200
+    }
+
+    try {
+      let startDate = req.query.start,
+        endDate = req.query.end,
+        sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+
+      /** 
+       * if startDate and endDate is not set,
+       *  return all future time slots
+       */
+      if(!startDate && !endDate) {
+        sqlQuery += ' AND start >= NOW()'
+      }
+      
+      /**
+       * set starting and ending date/time
+       */
+      if(startDate) sqlQuery += ` AND start >= TIMESTAMP("${startDate}")`
+      if(endDate) sqlQuery += ` AND start <= TIMESTAMP("${endDate}")`
+
+      let [slots] = await this.database.query(sqlQuery, [req.jwt.uid]) 
+      if(!slots.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Slots not found' }
+      
+      response.slots = slots
+    } catch (err) {
+      response.ok = 0
+      response.code = 400
+
+      if(err.APIerr) {
+        response.code = err.errorCode
+        response.message = err.errorMessage
+      }
+    }
+    
     res.status(response.code).json(response)
   }
 
