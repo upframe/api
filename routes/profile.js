@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
 const AWS = require('aws-sdk')
-const fs = require('fs')
 
 let app, services, logger;
 

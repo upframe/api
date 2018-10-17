@@ -14,8 +14,7 @@ class User {
       response = {
         code: 200,
         ok: 1
-      },
-      token = req.jwt
+      }
     
     try {
       let [rows] = await this.database.query(sqlQuery, params)
@@ -45,13 +44,10 @@ class User {
     let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid: uid})
 
     try {
-      console.log(params)
-      console.log(sqlQuery)
       let [rows] = await this.database.query(sqlQuery, params)
       if(rows.changedRows) response.code = 202
       else throw 409
     } catch (err) {
-      console.log(err)
       response.ok = 0
       response.code = 400
 
@@ -64,19 +60,26 @@ class User {
     res.status(response.code).json(response)
   }
 
-  async image(url, userEmail, res, location) {
-    let sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?'
+  async image(url, userEmail, res) {
+    let sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?',
+      response = {
+        ok: 1,
+        code: 200
+      }
+    
     try {
       let [rows] = await this.database.query(sqlQuery, [url, userEmail])
-      res.status(200).json({
-        code: 200,
-        ok: 1,
-        url: location
-      })
+      if(rows.changedRows) {
+        response.code = 202
+        
+      } else throw 409
+      response.url
     } catch (err) {
-      console.log(err)
+      response.ok = 0
+      response.code = 500
     }
     
+    res.status(response.code).json(response)
   }
 
 }
