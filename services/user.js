@@ -45,12 +45,13 @@ class User {
     let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid: uid})
 
     try {
+      console.log(params)
+      console.log(sqlQuery)
       let [rows] = await this.database.query(sqlQuery, params)
-
       if(rows.changedRows) response.code = 202
       else throw 409
     } catch (err) {
-      
+      console.log(err)
       response.ok = 0
       response.code = 400
 
@@ -61,6 +62,21 @@ class User {
     }
     
     res.status(response.code).json(response)
+  }
+
+  async image(url, userEmail, res, location) {
+    let sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?'
+    try {
+      let [rows] = await this.database.query(sqlQuery, [url, userEmail])
+      res.status(200).json({
+        code: 200,
+        ok: 1,
+        url: location
+      })
+    } catch (err) {
+      console.log(err)
+    }
+    
   }
 
 }
