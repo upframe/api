@@ -28,9 +28,12 @@ app.use(busboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
 }));
 
-/* Avoid empty POST requests */
+/* Avoid empty POST requests */ // <- By doing this you are breaking POST /profile/image.
+// Its body is considered empty because it is not JSON format but form-data
+// Let's add a special rule for it :)
 app.use((req, res, next) => {
-  if(Object.keys(req.body).length === 0 && req.method == 'POST') {
+  console.log(req)
+  if(Object.keys(req.body).length === 0 && req.method == 'POST' && req.path != '/profile/image') {
     let response = {
       ok: 0,
       code: 400,
