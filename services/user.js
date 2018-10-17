@@ -10,7 +10,7 @@ class User {
   }
 
   async get(req, res) {
-    let sql = 'SELECT * FROM users WHERE email = ?',
+    let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt),
       response = {
         code: 200,
         ok: 1
@@ -18,8 +18,8 @@ class User {
       token = req.jwt
     
     try {
-      let [rows] = await this.database.query(sql, token.email)
-      response.me = rows[0]
+      let [rows] = await this.database.query(sqlQuery, params)
+      response.user = rows[0]
       if(!rows.length) throw 404
     } catch (err) {
       response.ok = 0
