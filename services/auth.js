@@ -180,21 +180,20 @@ class Auth {
 
     if(req.body.token) {
       try {
-        // verify if token is valid
-        let result = (await this.database.query('SELECT COUNT(*) FROM emailChange WHERE token = ?', req.body.token))[0]
-        if (!result[0]['COUNT(*)']) throw 403
-        
+        // verify if token is valid by fetching it from the database
+        let [rows] = (await this.database.query('SELECT * FROM emailChange WHERE token = ?', req.body.token))
+        if (!rows.length) throw 403
+
         let params = [],
           sql = 'UPDATE users SET email = ? WHERE email = ?'
         
-        params.push(req.body.newEmail, req.body.email)
-        result = (await this.database.query(sql, params))[0]
+        params.push(req.body.email, rows[0].email)
+        await this.database.query(sql, params)
+        
 
         sql = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token];
-        result = (await this.database.query(sql, params))[0]
-
-        res.status(response.code).json(response)
+        await this.database.query(sql, params)
       } catch (err) {
         response.ok = 0
         response.code = 400
@@ -203,8 +202,6 @@ class Auth {
           response.code = err
           response.message = 'Token is invalid'
         }
-
-        res.status(response.code).json(response)
       }
     } else {
       // result = 1 means email was sent
@@ -215,9 +212,9 @@ class Auth {
         response.ok = 0
         response.code = 400
       }
-
-      res.status(response.code).json(response)
     }
+
+    res.status(response.code).json(response)
   }
 }
 
