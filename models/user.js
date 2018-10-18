@@ -1,6 +1,7 @@
 exports.userSafeFields = [
   'uid',
   'email',
+  'keycode',
   'name',
   'role',
   'company',
