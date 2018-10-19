@@ -189,7 +189,8 @@ class Auth {
         
         params.push(req.body.email, rows[0].email)
         await this.database.query(sql, params)
-        
+
+        res.clearCookie('access_token')
 
         sql = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token];
