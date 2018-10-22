@@ -15,6 +15,10 @@ function setRouters() {
   router.get('/slots', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
     services.mentor.getTimeSlots(req, res)
   })
+
+  router.post('/slots', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
+    services.mentor.updateTimeSlots(req, res)
+  })
   
   router.get('/verify', (req, res) => {
     services.mentor.verify(req, res)

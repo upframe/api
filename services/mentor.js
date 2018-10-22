@@ -109,6 +109,34 @@ class Mentor {
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Updates and creates mentor's time slots
+   * @param {Request} req 
+   * @param {Response} res 
+   */
+  async updateTimeSlots(req, res) {
+    let deletedEvents = req.body.deleted,
+      sqlQuery = '',
+      response = {
+        ok: 1,
+        code: 200
+      }
+    //let updatedEvents = req.body.updated;
+
+    sqlQuery = 'SELECT deleteSlot(?, ?)'
+    for(let eventID of deletedEvents) {
+      try {
+        await this.database.query(sqlQuery, [eventID, req.jwt.uid])
+      } catch (err) {
+        response.ok = 0
+        response.code = 400
+        response.message = 'One or more time slots couldn\'t be deleted'
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
   async verify(req, res) {
     let check = req.query.keycode ? 'keycode' : 'uniqueid'
     let value = req.query.keycode ? '"' + req.query.keycode + '"' : req.query.uniqueid
