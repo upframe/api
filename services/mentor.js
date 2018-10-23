@@ -116,21 +116,47 @@ class Mentor {
    */
   async updateTimeSlots(req, res) {
     let deletedEvents = req.body.deleted,
+      updatedEvents = req.body.updated,
       sqlQuery = '',
       response = {
         ok: 1,
-        code: 200
+        code: 200,
+        message: ''
       }
-    //let updatedEvents = req.body.updated;
+    
+    // try to update events
+    if(updatedEvents) {
+      sqlQuery = 'SELECT insertUpdateSlot(?, ?, ?, ?, ?)'
+      for (let event of updatedEvents) {
+        try {
+          let result = (await this.database.query(sqlQuery, [event.sid, req.jwt.uid, event.start, event.end, event.recurrency]))[0]
 
-    sqlQuery = 'SELECT deleteSlot(?, ?)'
-    for(let eventID of deletedEvents) {
-      try {
-        await this.database.query(sqlQuery, [eventID, req.jwt.uid])
-      } catch (err) {
-        response.ok = 0
-        response.code = 400
-        response.message = 'One or more time slots couldn\'t be deleted'
+          response.updateOK = 1
+          response.message += `All ${updatedEvents.length} events were updated.`
+        } catch (err) {
+          response.ok = 0
+          response.code = 400
+          response.message = 'One or more time slots couldn\'t be updated'
+
+          response.updateOK = 0
+        }
+      }
+    }
+
+    // try to delete events
+    if(deletedEvents) {
+      sqlQuery = 'SELECT deleteSlot(?, ?)'
+      for (let eventID of deletedEvents) {
+        try {
+          await this.database.query(sqlQuery, [eventID, req.jwt.uid])
+
+          response.deleteOK = 1
+          response.message += `All ${deletedEvents.length} were deleted`
+        } catch (err) {
+          response.ok = 0
+          response.code = 400
+          response.message = 'One or more time slots couldn\'t be deleted'
+        }
       }
     }
 
