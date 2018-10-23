@@ -129,7 +129,7 @@ class Mentor {
       sqlQuery = 'SELECT insertUpdateSlot(?, ?, ?, ?, ?)'
       for (let event of updatedEvents) {
         try {
-          let result = (await this.database.query(sqlQuery, [event.sid, req.jwt.uid, event.start, event.end, event.recurrency]))[0]
+          await this.database.query(sqlQuery, [event.sid, req.jwt.uid, event.start, event.end, event.recurrency])
 
           response.updateOK = 1
           response.message += `All ${updatedEvents.length} events were updated.`
