@@ -134,7 +134,7 @@ class Mentor {
           await this.database.query(sqlQuery, [slotID, req.jwt.uid])
 
           response.deleteOK = 1
-          response.message += `All ${deletedSlots.length} slots were deleted. `
+          response.message += ` All ${deletedSlots.length} slots were deleted. `
         } catch (err) {
           response.ok = 0
           response.code = 400
@@ -153,7 +153,7 @@ class Mentor {
           await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
 
           response.updateOK = 1
-          response.message += ` All ${updatedSlots.length} slots were updated.`
+          response.message += `All ${updatedSlots.length} slots were updated.`
         } catch (err) {
           response.ok = 0
           response.code = 400
@@ -164,6 +164,7 @@ class Mentor {
       }
     }
 
+    response.message = response.message.trim()
     res.status(response.code).json(response)
   }
 
