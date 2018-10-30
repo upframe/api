@@ -123,22 +123,23 @@ class Mentor {
       response = {
         ok: 1,
         code: 200,
-        message: ''
+        message: '',
       }
     
     // delete events
     if(deletedSlots) {
       sqlQuery = 'SELECT deleteSlot(?, ?)'
+      response.deleteOK = 1
+
       for (let slotID of deletedSlots) {
         try {
           await this.database.query(sqlQuery, [slotID, req.jwt.uid])
 
-          response.deleteOK = 1
-          response.message += ` All ${deletedSlots.length} slots were deleted. `
         } catch (err) {
           response.ok = 0
           response.code = 400
           response.message = 'One or more time slots couldn\'t be deleted'
+          response.deleteOK = 0
         }
       }
     }
@@ -146,19 +147,37 @@ class Mentor {
     // try to update events
     if(updatedSlots) {
       sqlQuery = 'SELECT insertUpdateSlot(?, ?, ?, ?, ?)'
+      response.updateOK = 1
+
       for (let slot of updatedSlots) {
         try {
           if(!slot.sid) slot.sid = crypto.randomBytes(20).toString('hex')
 
-          await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
-
-          response.updateOK = 1
-          response.message += `All ${updatedSlots.length} slots were updated.`
+          /** let's figure out if the slot is +1h
+           *  so we can divide it into multiple slots
+           */
+          let hourDiff = Math.floor(Math.abs((new Date(slot.end) - new Date(slot.start)) / 3.6e6))
+          if(hourDiff > 1) {
+            // iterator
+            let slotStart = new Date(slot.start)
+            while(hourDiff--) {
+              updatedSlots.push({
+                start: slotStart,
+                end: new Date(new Date(slotStart).setHours(new Date(slotStart).getHours() + 1)),
+                recurrency: slot.recurrency
+              })
+              
+              // next event starts at the end of the previous one
+              slotStart = new Date(new Date(slotStart).setHours(new Date(slotStart).getHours() + 1))
+            }
+            continue;
+          } else {
+            await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
+          }
         } catch (err) {
           response.ok = 0
           response.code = 400
           response.message = 'One or more time slots couldn\'t be updated'
-
           response.updateOK = 0
         }
       }
