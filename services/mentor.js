@@ -1,3 +1,5 @@
+const crypto = require('crypto')
+
 class Mentor {
 
   constructor(app) {
@@ -115,8 +117,8 @@ class Mentor {
    * @param {Response} res 
    */
   async updateTimeSlots(req, res) {
-    let deletedEvents = req.body.deleted,
-      updatedEvents = req.body.updated,
+    let deletedSlots = req.body.deleted,
+      updatedSlots = req.body.updated,
       sqlQuery = '',
       response = {
         ok: 1,
@@ -124,38 +126,40 @@ class Mentor {
         message: ''
       }
     
-    // try to update events
-    if(updatedEvents) {
-      sqlQuery = 'SELECT insertUpdateSlot(?, ?, ?, ?, ?)'
-      for (let event of updatedEvents) {
+    // delete events
+    if(deletedSlots) {
+      sqlQuery = 'SELECT deleteSlot(?, ?)'
+      for (let slotID of deletedSlots) {
         try {
-          await this.database.query(sqlQuery, [event.sid, req.jwt.uid, event.start, event.end, event.recurrency])
+          await this.database.query(sqlQuery, [slotID, req.jwt.uid])
+
+          response.deleteOK = 1
+          response.message += `All ${deletedSlots.length} slots were deleted. `
+        } catch (err) {
+          response.ok = 0
+          response.code = 400
+          response.message = 'One or more time slots couldn\'t be deleted'
+        }
+      }
+    }
+    
+    // try to update events
+    if(updatedSlots) {
+      sqlQuery = 'SELECT insertUpdateSlot(?, ?, ?, ?, ?)'
+      for (let slot of updatedSlots) {
+        try {
+          if(!slot.sid) slot.sid = crypto.randomBytes(20).toString('hex')
+
+          await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
 
           response.updateOK = 1
-          response.message += `All ${updatedEvents.length} events were updated.`
+          response.message += ` All ${updatedSlots.length} slots were updated.`
         } catch (err) {
           response.ok = 0
           response.code = 400
           response.message = 'One or more time slots couldn\'t be updated'
 
           response.updateOK = 0
-        }
-      }
-    }
-
-    // try to delete events
-    if(deletedEvents) {
-      sqlQuery = 'SELECT deleteSlot(?, ?)'
-      for (let eventID of deletedEvents) {
-        try {
-          await this.database.query(sqlQuery, [eventID, req.jwt.uid])
-
-          response.deleteOK = 1
-          response.message += `All ${deletedEvents.length} were deleted`
-        } catch (err) {
-          response.ok = 0
-          response.code = 400
-          response.message = 'One or more time slots couldn\'t be deleted'
         }
       }
     }
