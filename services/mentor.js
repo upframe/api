@@ -122,8 +122,7 @@ class Mentor {
       sqlQuery = '',
       response = {
         ok: 1,
-        code: 200,
-        message: '',
+        code: 200
       }
     
     // delete events
@@ -183,7 +182,6 @@ class Mentor {
       }
     }
 
-    response.message = response.message.trim()
     res.status(response.code).json(response)
   }
 
