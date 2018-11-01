@@ -190,7 +190,18 @@ class Auth {
         params.push(req.body.email, rows[0].email)
         await this.database.query(sql, params)
 
-        res.clearCookie('access_token')
+        // if user is logged in refresh access token
+        // clear access token otherwise
+        jwt.verify(req.cookies['access_token'], process.env.CONNECT_PK, (err, decoded) => {
+          if(decoded) {
+            response.token = this.createToken({
+              email: req.body.email,
+              uid: decoded.uid
+            }, decoded.aud)
+  
+            res.cookie('access_token', response.token, {maxAge: 86400 * 15, httpOnly: true})
+          }
+        })
 
         sql = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token];
