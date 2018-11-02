@@ -200,6 +200,9 @@ class Auth {
             }, decoded.aud)
   
             res.cookie('access_token', response.token, {maxAge: 86400 * 15, httpOnly: true})
+          } else {
+            // avoid cookie problems by deleting access_token cookie when it is not valid
+            res.clearCookie('access_token')
           }
         })
 
