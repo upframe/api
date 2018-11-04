@@ -56,7 +56,7 @@ class Auth {
   }
 
   createToken(user, accountType) {
-    return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: 86400 * 15, audience: accountType})
+    return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: 86400 * 15e3 , audience: accountType})
   }
 
   async login(req, res) {
@@ -75,7 +75,7 @@ class Auth {
             uid: rows[0].uid
           }, rows[0].type)
 
-          res.cookie('access_token', response.token, {maxAge: 86400 * 15, httpOnly: true})
+          res.cookie('access_token', response.token, {maxAge: 86400 * 15e3, httpOnly: true})
         } else throw 401
       } catch (err) {
         response.ok = 0
