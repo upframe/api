@@ -10,9 +10,7 @@ function dateDiff(eventStart, maxDate, diffUnit) {
 
   try {
     if(maxDate instanceof Date) {
-      if(new Date(eventStart).getDate() != new Date(maxDate).getDate()) {
-        num = Math.abs(moment(maxDate).diff(moment(eventStart), diffUnit)) + 1
-      }
+      num = Math.abs(moment(maxDate).diff(moment(eventStart), diffUnit))
     } else if (typeof maxDate == 'number') {
       num = maxDate
     } else throw 'Invalid maximum date'
@@ -74,6 +72,23 @@ function genWeekly(slot, end) {
   return arr
 }
 
+function genMonthly(slot, end) {
+  let num = dateDiff(slot.start, new Date(end), 'M'),
+    i = 0,
+    arr = []
+
+  while(i <= num) {
+    let newSlot = Object.assign({}, slot)
+    newSlot.start = moment(slot.start).add(i, 'M').toDate()
+    newSlot.end = moment(slot.end).add(i, 'M').toDate()
+
+    arr.push(newSlot)
+    i++
+  }
+  return arr
+}
+
+
 function automaticGenerate(slots, limitDate) {
   let arr = [];
 
@@ -84,6 +99,9 @@ function automaticGenerate(slots, limitDate) {
       break;
     case 'Weekly':
       arr = arr.concat(genWeekly(slot, new Date(limitDate)))
+      break;
+    case 'Monthly':
+      arr = arr.concat(genMonthly(slot, new Date(limitDate)))
       break;
     }
   }
