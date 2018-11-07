@@ -79,12 +79,12 @@ function automaticGenerate(slots, limitDate) {
 
   for(let slot of slots) {
     switch (slot.recurrency) {
-      case 'Daily':
-        arr = arr.concat(genDaily(slot, new Date(limitDate)))      
-        break;
-      case 'Weekly':
-        arr = arr.concat(genWeekly(slot, new Date(limitDate)))
-        break;
+    case 'Daily':
+      arr = arr.concat(genDaily(slot, new Date(limitDate)))      
+      break;
+    case 'Weekly':
+      arr = arr.concat(genWeekly(slot, new Date(limitDate)))
+      break;
     }
   }
 
