@@ -1,58 +1,97 @@
+const moment = require('moment')
+
+/**
+ * @description returns date difference given the first, the last and the frequency of events/slots
+ * @param {any} maxDate 
+ * @param {String} diffUnit - days, weeks, months, years, etc 
+ */
+function dateDiff(eventStart, maxDate, diffUnit) {
+  let num = 0
+
+  try {
+    if(maxDate instanceof Date) {
+      if(new Date(eventStart).getDate() != new Date(maxDate).getDate()) {
+        num = Math.abs(moment(maxDate).diff(moment(eventStart), diffUnit)) + 1
+      }
+    } else if (typeof maxDate == 'number') {
+      num = maxDate
+    } else throw 'Invalid maximum date'
+  } catch (err) {
+    return err
+  }
+
+  return num
+}
+
+
 /**
  * @description Generates daily slots/events until the date specified or
  * the number specified of daily events
  * @param {Object} slot 
- * @param {Date} until 
+ * @param {Date} end 
  */
 
-function genDaily(slot, until) {
-  let i = 0
+function genDaily(slot, end) {
+  let num = dateDiff(slot.start, new Date(end), 'days'),
+    i = 0,
+    arr = []
 
-  // get number of days until which to generate daily slots/events
-  if(typeof until == 'string') i = Math.ceil((new Date(until) - Date.now()) / 864e5)
-  else i = until
-
-  let slotsArr = [],
-    day = new Date(new Date(slot.start).setDate(slot.start.getDate() + i))
-
-  // create slots/events from the last to the first
-  while(i >= 0) {
+  while(i <= num) {
     let newSlot = Object.assign({}, slot)
 
-    // set start and end day
-    newSlot.start = new Date(day)
-    newSlot.end = new Date(day)
-    slotsArr.push(newSlot)
-
-    day = new Date(new Date(slot.start).setDate(slot.start.getDate() + --i))
+    // increment day
+    newSlot.start = moment(slot.start).add(i, 'd').toDate()
+    newSlot.end = moment(slot.end).add(i, 'd').toDate()
+    
+    arr.push(newSlot)
+    i++
   }
 
-  return slotsArr
+  return arr
 }
 
-function genWeekly(slot, until) {
-  let i = 0
+/**
+ * @description Generates weekly slots/events until the date specified or
+ * the number specified of weekly events
+ * @param {Object} slot 
+ * @param {Date} end
+ */
+function genWeekly(slot, end) {
+  let num = dateDiff(slot.start, new Date(end), 'w'),
+    i = 0,
+    arr = []
 
-  if(typeof until == 'string') i = Math.floor((new Date(until) - Date.now()) / 864e5 / 7)
-  else i = until
-
-  let slotsArr = []
-    day = new Date(new Date(slot.start).setDate(slot.start.getDate() + i*7))
   
-  // create slots/events from the last to the first
-  while(i >= 0) {
+  while(i <= num) {
     let newSlot = Object.assign({}, slot)
+    newSlot.start = moment(slot.start).add(i, 'w').toDate()
+    newSlot.end = moment(slot.end).add(i, 'w').toDate()
 
-    newSlot.start = new Date(day)
-    newSlot.end = new Date(day)
-    slotsArr.push(newSlot)
-
-    day = new Date(new Date(slot.start).setDate(slot.start.getDate() + (--i)*7))
+    arr.push(newSlot)
+    i++
   }
 
-  return slotsArr
+  return arr
+}
+
+function automaticGenerate(slots, limitDate) {
+  let arr = [];
+
+  for(let slot of slots) {
+    switch (slot.recurrency) {
+      case 'Daily':
+        arr = arr.concat(genDaily(slot, new Date(limitDate)))      
+        break;
+      case 'Weekly':
+        arr = arr.concat(genWeekly(slot, new Date(limitDate)))
+        break;
+    }
+  }
+
+  return arr
 }
 
 
 module.exports.generateDailySlot = genDaily;
 module.exports.generateWeeklySlot = genWeekly;
+module.exports.generateSlots = automaticGenerate;
