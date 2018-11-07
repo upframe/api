@@ -10,11 +10,6 @@ class Mentor {
   }
 
   async get(req, res, next) {
-    if(req.params.keycode === 'random' || req.params.keycode === 'slots') {
-      next()
-      return;
-    }
-
     let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ? AND type = "mentor"',
       response = {
         ok: 1,

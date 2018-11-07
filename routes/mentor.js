@@ -4,10 +4,6 @@ const router = express.Router()
 let app, services;
 
 function setRouters() {
-  router.get('/:keycode', (req, res, next) => {
-    services.mentor.get(req, res, next)
-  })
-  
   router.get('/random', (req, res) => {
     services.mentor.getRandom(req, res)
   })
@@ -22,6 +18,10 @@ function setRouters() {
   
   router.get('/verify', (req, res) => {
     services.mentor.verify(req, res)
+  })
+
+  router.get('/:keycode', (req, res, next) => {
+    services.mentor.get(req, res, next)
   })
 }
 
