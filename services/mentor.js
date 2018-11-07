@@ -9,7 +9,7 @@ class Mentor {
     if(this.logger) this.logger.verbose('Mentor service loaded')
   }
 
-  async get(req, res, next) {
+  async get(req, res) {
     let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ? AND type = "mentor"',
       response = {
         ok: 1,
