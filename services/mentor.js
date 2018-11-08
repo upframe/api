@@ -1,5 +1,7 @@
 const crypto = require('crypto')
 
+const calendar = require('../utils/calendar')
+
 class Mentor {
 
   constructor(app) {
@@ -92,7 +94,7 @@ class Mentor {
       let [slots] = await this.database.query(sqlQuery, [req.jwt.uid]) 
       if(!slots.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Slots not found' }
       
-      response.slots = slots
+      response.slots = calendar.generateSlots(slots)
     } catch (err) {
       response.ok = 0
       response.code = 400
