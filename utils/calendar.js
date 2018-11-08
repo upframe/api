@@ -92,7 +92,7 @@ function genMonthly(slot, end) {
 function automaticGenerate(slots, limitDate) {
   let arr = [];
 
-  if(!limitDate || (new Date().getTime() > new Date(limitDate).getDate()) ) {
+  if(!limitDate || (new Date().getTime() > new Date(limitDate).getTime()) ) {
     limitDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
   }
 
