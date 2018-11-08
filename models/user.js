@@ -14,5 +14,7 @@ exports.userSafeFields = [
   'github',
   'facebook',
   'dribbble',
+  'googleAccessToken',
+  'googleRefreshToken'
 ]
 
