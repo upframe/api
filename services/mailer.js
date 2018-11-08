@@ -83,7 +83,7 @@ class Mailer {
   }
 
   /**
-   * @description Sends meetup invite notification by email
+   * @description Sends meetup invite notification to mentor by email 
    * @param {string} meetupID
    */
   async sendMeetupInvitation(meetupID) {
@@ -123,11 +123,56 @@ class Mailer {
           return 1
         })
     } catch (err) {
-      console.log(err)
       if(err.APIerr) return err
       else return 1
     }
   }
-}
+
+  /**
+   * @description Sends meetup confirmation notification to mentee by email
+   * @param {String} meetupID 
+   */
+  async sendMeetupConfirmation(meetupID) {
+    try {
+      // get meetup by id
+      let [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', [meetupID])
+      if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
+
+      // get mentee email
+      let [mentee] = (await this.database.query('SELECT email FROM users WHERE uid = ?', [meetup[0].menteeUID]))[0]
+      if (!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
+
+      // get mentor name
+      let [mentor] = (await this.database.query('SELECT name FROM users WHERE uid = ?', [meetup[0].mentorUID]))[0]
+      if (!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
+
+      let data = {
+        from: 'noreply@upframe.io',
+        to: mentee.email,
+        subject: `${mentor.name} accepted to meetup with you`
+      },
+        placeholders = {
+          'MENTOR': mentor.name,
+          'LOCATION': meetup[0].location,
+          'TIME': new Date(meetup[0].start).toLocaleString(),
+          'MID': meetupID,
+        }
+
+      data.html = this.getTemplate('meetupConfirmation', placeholders)
+
+      return this.mailgun.messages().send(data)
+        .then(data => {
+          if (data.message !== '' & data.id !== '') return 0
+          else throw 1
+        })
+        .catch(() => {
+          return 1
+        })
+    } catch( err) {
+      if(err.APIerr) return err
+      else return 1
+    }
+  }
+} 
 
 module.exports = Mailer

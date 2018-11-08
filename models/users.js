@@ -1,4 +1,4 @@
-exports.userSafeFields = [
+exports.fields = [
   'uid',
   'email',
   'keycode',

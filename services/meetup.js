@@ -101,11 +101,17 @@ class meetup {
     }
 
     try {
-      let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', {status: 'confirmed'}, { mid: req.query.meetup })
-      let [rows] = await this.database.query(sqlQuery, params)
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', { mid: req.query.meetup, mentorUID: req.jwt.uid })
+      let meetup = (await this.database.query(sqlQuery, params))[0]
+      if(!meetup.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup not found' }
       
-      if(rows.affectedRows && !rows.changedRows) throw { APIerr: true, errorCode: 400, errorMessage: 'Meetup arleady confirmed' }
-      else if(!rows.affectedRows) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
+      let [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', { status: 'confirmed' }, { mid: req.query.meetup})
+      let result = (await this.database.query(sqlQuery2, params2))[0]
+      // check if the affected rows were changed
+      if(result.affectedRows && !result.changedRows) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup is already confirmed' }
+      
+      result = await this.mailer.sendMeetupConfirmation(req.query.meetup)
+      if(result) throw { APIerr: true, errorCode: 500, errorMessage: 'Error sending email confirmation' }
     } catch (err) {
       response.ok = 0
       response.code = 400
