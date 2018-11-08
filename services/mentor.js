@@ -77,24 +77,21 @@ class Mentor {
         endDate = req.query.end,
         sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
 
-      /** 
-       * if startDate and endDate is not set,
-       *  return all future time slots
-       */
-      if(!startDate && !endDate) {
-        sqlQuery += ' AND start >= NOW()'
-      }
-      
-      /**
-       * set starting and ending date/time
-       */
-      if(startDate) sqlQuery += ` AND start >= TIMESTAMP("${startDate}")`
-      if(endDate) sqlQuery += ` AND start <= TIMESTAMP("${endDate}")`
+      let [slots] = await this.database.query(sqlQuery, [req.jwt.uid])
+      let genSlots = calendar.generateSlots(slots).filter(slot => {
+        let ok = true
+        // verify if slot start is after the defined minimum start Date 
+        if (new Date(startDate)) {
+          if (new Date(startDate).getTime() > new Date(slot.start).getTime()) ok = false
+        }
+        // verify if slot end is before the defined maximum end Date
+        if (new Date(endDate)) {
+          if (new Date(endDate).getTime() < new Date(slot.end).getTime()) ok = false
+        }
+        return ok
+      })
 
-      let [slots] = await this.database.query(sqlQuery, [req.jwt.uid]) 
-      if(!slots.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Slots not found' }
-      
-      response.slots = calendar.generateSlots(slots)
+      response.slots = genSlots
     } catch (err) {
       response.ok = 0
       response.code = 400
