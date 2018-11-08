@@ -92,6 +92,10 @@ function genMonthly(slot, end) {
 function automaticGenerate(slots, limitDate) {
   let arr = [];
 
+  if(!limitDate || (new Date().getTime() > new Date(limitDate).getDate()) ) {
+    limitDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+  }
+
   for(let slot of slots) {
     switch (slot.recurrency) {
     case 'Daily':
