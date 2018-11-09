@@ -98,7 +98,8 @@ function createSelectQuery(table, whereJSON) {
   for(let fieldName of fields) {
     sqlQuery += `${fieldName}, `
   }
-  sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
+  if(table !== 'mentors') sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
+  else sqlQuery = sqlQuery.slice(0, -2) + ' FROM users WHERE '
 
   for(let prop in whereJSON) {
     if(fields.includes(prop)) {
