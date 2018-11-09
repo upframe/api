@@ -1,4 +1,4 @@
-exports.userSafeFields = [
+exports.fields = [
   'uid',
   'email',
   'keycode',
@@ -14,5 +14,7 @@ exports.userSafeFields = [
   'github',
   'facebook',
   'dribbble',
+  'googleAccessToken',
+  'googleRefreshToken'
 ]
 

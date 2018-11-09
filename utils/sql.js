@@ -55,23 +55,23 @@ function createInsertQuery(table, json) {
 /**
  * @description Creates UPDATE SQL query using table name, JSON which contains info and JSON that identifies record
  * @param {string} table 
- * @param {JSON} json 
- * @param {JSON} whereJson 
+ * @param {JSON} newJson - JSON object with the new information
+ * @param {JSON} whereJson - JSON object with the information needed to indentify record
  */
-function createUpdateQuery(table, json, whereJson) {
+function createUpdateQuery(table, newJson, whereJson) {
   let sqlQuery = `UPDATE ${table} SET `,
     params = []
 
-  for(let prop in json) {
+  for(let prop in newJson) {
     sqlQuery += prop + ' = ?, '
 
     if(prop === 'password') {
       // hash password
       let salt = bcrypt.genSaltSync(10)
-      json[prop] = bcrypt.hashSync(json[prop], salt)
+      newJson[prop] = bcrypt.hashSync(newJson[prop], salt)
     }
 
-    params.push(json[prop])
+    params.push(newJson[prop])
   }
   sqlQuery = sqlQuery.slice(0, -2) + ' WHERE '
   
@@ -91,17 +91,17 @@ function createUpdateQuery(table, json, whereJson) {
  * @param {JSON} whereJSON 
  */
 function createSelectQuery(table, whereJSON) {
-  let userFields = models.get('user').userSafeFields,
+  let fields = models.get(table).fields,
     sqlQuery = 'SELECT ',
     params = []
 
-  for(let fieldName of userFields) {
+  for(let fieldName of fields) {
     sqlQuery += `${fieldName}, `
   }
   sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
 
   for(let prop in whereJSON) {
-    if(userFields.includes(prop)) {
+    if(fields.includes(prop)) {
       sqlQuery += `${prop} = ? AND `
       params.push(whereJSON[prop])
     }

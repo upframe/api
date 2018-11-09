@@ -11,7 +11,7 @@ function setRouters() {
     services.meetup.get(req, res)
   })
 
-  router.get('/confirm', (req, res) => {
+  router.get('/confirm', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
     services.meetup.confirm(req, res)
   })
 }

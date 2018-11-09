@@ -1,7 +1,8 @@
 let models = {}
-models.user = require('./user')
+models.users = require('./users')
+models.meetups = require('./meetups')
 
-exports.user = models.user
+exports.users = models.users
 exports.get = (name) => {
   return models[name]
 }
