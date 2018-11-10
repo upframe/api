@@ -26,10 +26,11 @@ function dateDiff(eventStart, maxDate, diffUnit) {
  * @description Generates daily slots/events until the date specified or
  * the number specified of daily events
  * @param {Object} slot 
- * @param {Date} end 
+ * @param {Date} start minimum slot/event start time 
+ * @param {Date} end maximum slot/event end time
  */
 
-function genDaily(slot, end) {
+function genDaily(slot, start, end) {
   let num = dateDiff(slot.start, new Date(end), 'days'),
     i = 0,
     arr = []
@@ -45,6 +46,9 @@ function genDaily(slot, end) {
     i++
   }
 
+  arr = arr.filter(item => {
+    return (new Date(item.start).getTime() >= new Date(start).getTime())
+  })
   return arr
 }
 
@@ -52,9 +56,10 @@ function genDaily(slot, end) {
  * @description Generates weekly slots/events until the date specified or
  * the number specified of weekly events
  * @param {Object} slot 
- * @param {Date} end
+ * @param {Date} start minimum slot/event start time
+ * @param {Date} end maximum slot/event end time
  */
-function genWeekly(slot, end) {
+function genWeekly(slot, start, end) {
   let num = dateDiff(slot.start, new Date(end), 'w'),
     i = 0,
     arr = []
@@ -69,10 +74,19 @@ function genWeekly(slot, end) {
     i++
   }
 
-  return arr
+  return arr.filter(item => {
+    return (new Date(item.start).getTime() >= new Date(start).getTime())
+  })
 }
 
-function genMonthly(slot, end) {
+/**
+ * @description Generates monthly slots/events until the date specified or
+ * the number specified of mothly events
+ * @param {Object} slot 
+ * @param {Date} start minimum slot/event start time
+ * @param {Date} end maximum slot/event end time
+ */
+function genMonthly(slot, start, end) {
   let num = dateDiff(slot.start, new Date(end), 'M'),
     i = 0,
     arr = []
@@ -85,12 +99,24 @@ function genMonthly(slot, end) {
     arr.push(newSlot)
     i++
   }
-  return arr
+
+  return arr.filter(item => {
+    return (new Date(item.start).getTime() >= new Date(start).getTime())
+  })
 }
 
-
-function automaticGenerate(slots, limitDate) {
+/**
+ * 
+ * @param {Array} slots 
+ * @param {Date} startDate minimum slot/event start time
+ * @param {Date} limitDate maximum slot/event end time
+ */
+function automaticGenerate(slots, startDate, limitDate) {
   let arr = [];
+
+  if(!startDate) {
+    startDate = new Date()
+  }
 
   if(!limitDate || (new Date().getTime() > new Date(limitDate).getTime()) ) {
     limitDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
@@ -99,13 +125,13 @@ function automaticGenerate(slots, limitDate) {
   for(let slot of slots) {
     switch (slot.recurrency) {
     case 'Daily':
-      arr = arr.concat(genDaily(slot, limitDate))      
+      arr = arr.concat(genDaily(slot, startDate, limitDate))      
       break;
     case 'Weekly':
-      arr = arr.concat(genWeekly(slot, limitDate))
+      arr = arr.concat(genWeekly(slot, startDate, limitDate))
       break;
     case 'Monthly':
-      arr = arr.concat(genMonthly(slot, limitDate))
+      arr = arr.concat(genMonthly(slot, startDate, limitDate))
       break;
     }
   }
