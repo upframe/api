@@ -1,6 +1,7 @@
 const crypto = require('crypto')
+const moment = require('moment')
 
-const calendar = require('../utils/calendar')
+const { calendar, sql } = require('../utils')
 
 class Mentor {
 
@@ -12,17 +13,39 @@ class Mentor {
   }
 
   async get(req, res) {
-    let sql = 'SELECT name, role, company, location, tags, bio, freeSlots, profilePic, twitter, linkedin, github, facebook, dribbble, favoritePlaces FROM users WHERE keycode = ? AND type = "mentor"',
+    let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', { keycode: req.params.keycode, type: 'mentor'}),
       response = {
         ok: 1,
         code: 200
       }
     
     try {
-      let [rows] = await this.database.query(sql, [req.params.keycode])
+      let [rows] = await this.database.query(sqlQuery, params)
       if(!rows.length) throw 404
-
+      
       response.mentor = rows[0]
+    
+      let sqlQuery2 = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+      let [slots] = await this.database.query(sqlQuery2, [response.mentor.uid]),
+        verified = []
+      if(!slots.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Slot not found' }
+      slots = calendar.generateSlots(slots, moment().toDate(), moment().add(7, 'd').toDate())
+      
+      // let's filter available slots from all slots
+      for(let slot of slots) {
+        if(verified.includes(slot.sid)) continue;
+        
+        // check if there any meetup refering to this slot and its space in time
+        let sqlQuery = 'SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed" AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)'
+        if((await this.database.query(sqlQuery, [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()]))[0][0]['COUNT(*)']) {
+          // there is a confirmed meetup on that space in time
+          // so let's filter all the slots and remove the slot starting
+          // at that time
+          slots = slots.filter(eachSlot => eachSlot.start.getTime() != slot.start.getTime())
+        }
+      }
+
+      response.mentor.slots = slots
     } catch (err) {
       response.ok = 0
       response.code = 400
