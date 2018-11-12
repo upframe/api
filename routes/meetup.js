@@ -1,8 +1,8 @@
 const router = require('express').Router()
 
-let app, services, logger;
+function setRouters(app) {
+  let services = app.get('services')
 
-function setRouters() {
   router.post('/', services.auth.verifyToken, (req, res) => {
     services.meetup.create(req, res)
   })
@@ -14,15 +14,16 @@ function setRouters() {
   router.get('/confirm', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
     services.meetup.confirm(req, res)
   })
+
+  return router
 }
 
-module.exports.init = (appRef) => {
-  app = appRef
-  services = app.get('services')
-  logger = app.get('logger')
-
-  logger.verbose('Meetup router loaded')
-
-  setRouters()
-  return router
+module.exports.init = (app) => {
+  try {
+    let router = setRouters(app)
+    app.get('logger').verbose('Meetup router loaded')
+    return router
+  } catch(err) {
+    app.get('logger').error('Could not load meetup router')
+  }
 }

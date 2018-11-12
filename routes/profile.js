@@ -2,9 +2,9 @@ const express = require('express')
 const router = express.Router()
 const AWS = require('aws-sdk')
 
-let app, services, logger;
+function setRouters(app) {
+  let services = app.get('services')
 
-function setRouters() {
   router.get('/me', services.auth.verifyToken, (req, res) => {
     services.user.get(req, res)
   })
@@ -28,6 +28,7 @@ function setRouters() {
     })
   })
 
+  return router
 }
 
 /*
@@ -64,13 +65,12 @@ function uploadToS3UsingStream(res, filename, stream, req) {
   })
 }
 
-module.exports.init = (appRef) => {
-  app = appRef
-  services = app.get('services')
-  logger = app.get('logger')
-
-  logger.verbose('Profile router loaded')
-
-  setRouters()
-  return router
+module.exports.init = (app) => {
+  try {
+    let router = setRouters(app)
+    app.get('logger').verbose('Profile router loaded')
+    return router
+  } catch (err) {
+    app.get('logger').error('Could not load profile router')
+  }
 }

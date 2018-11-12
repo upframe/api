@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router()
 
-let app, services;
-
-function setRouters() {
+function setRouters(app) {
+  let services = app.get('services')
+  
   router.get('/random', (req, res) => {
     services.mentor.getRandom(req, res)
   })
@@ -23,14 +23,16 @@ function setRouters() {
   router.get('/:keycode', (req, res, next) => {
     services.mentor.get(req, res, next)
   })
+
+  return router
 }
 
-module.exports = router
-module.exports.init = (appRef) => {
-  app = appRef
-  services = app.get('services')
-  
-  setRouters()
-  app.get('logger').verbose('Mentor router loaded')
-  return router
+module.exports.init = (app) => {
+  try {
+    let router = setRouters(app)
+    app.get('logger').verbose('Mentor router loaded')
+    return router
+  } catch(err) {
+    app.get('logger').error('Could not load mentor router')
+  }
 }
