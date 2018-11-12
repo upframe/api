@@ -135,7 +135,7 @@ class meetup {
         ok: 1,
         code: 200
       },
-      sqlQuery = 'SELECT * FROM meetups WHERE mentee = ?'
+      sqlQuery = 'SELECT * FROM meetups WHERE menteeUID = ?'
 
     try {
       let [rows] = await this.database.query(sqlQuery, [req.jwt.uid])
@@ -143,6 +143,7 @@ class meetup {
 
       response.events = rows
     } catch (err) {
+
       response.ok = 0
       response.code = 400
 
