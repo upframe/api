@@ -20,6 +20,7 @@ function setRouters(app) {
       console.log(`Upload of '${filename}' started`);
 
       uploadToS3UsingStream(
+        services,
         res,
         email + filename.slice(-4),
         file,
@@ -40,7 +41,7 @@ the file stream directly to this function...
 I believe we need to change bodyParser to another middleware
 that supports streams... TODO
 */
-function uploadToS3UsingStream(res, filename, stream, req) {
+function uploadToS3UsingStream(services, res, filename, stream, req) {
   let s3 = new AWS.S3({
     accessKeyId: process.env.IAM_USER_KEY,
     secretAccessKey: process.env.IAM_USER_SECRET,
