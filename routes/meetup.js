@@ -15,6 +15,10 @@ function setRouters(app) {
     services.meetup.confirm(req, res)
   })
 
+  router.get('/refuse', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
+    services.meetup.refuse(req, res)
+  })
+
   return router
 }
 

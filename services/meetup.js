@@ -14,6 +14,37 @@ class meetup {
   }
 
   /**
+   * @description Returns all user's events (confirmed + pending) 
+   * @param {Request} req 
+   * @param {Response} res 
+   */
+  async get(req, res) {
+    let response = {
+        ok: 1,
+        code: 200
+      },
+      sqlQuery = 'SELECT * FROM meetups WHERE menteeUID = ?'
+
+    try {
+      let [rows] = await this.database.query(sqlQuery, [req.jwt.uid])
+      if(!rows.length) throw { APIerr: true, errorCode: 404, errorMessage: 'No events found'}
+
+      response.events = rows
+    } catch (err) {
+
+      response.ok = 0
+      response.code = 400
+
+      if(err.APIerr) {
+        response.code = err.errorCode
+        response.message = err.errorMessage
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
+  /**
    * @description Creates a pending meetup which the mentor has to confirm by email
    * @param {Request} req 
    * @param {Response} res 
@@ -101,20 +132,24 @@ class meetup {
     }
 
     try {
-      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', { mid: req.query.meetup, mentorUID: req.jwt.uid })
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', { mid: req.query.meetup, mentorUID: req.jwt.uid, status: 'pending' })
       let meetup = (await this.database.query(sqlQuery, params))[0]
-      if(!meetup.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup not found' }
+      if(!meetup.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup not found or has already been confirmed' }
       
       let [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', { status: 'confirmed' }, { mid: req.query.meetup})
       let result = (await this.database.query(sqlQuery2, params2))[0]
-      // check if the affected rows were changed
-      if(result.affectedRows && !result.changedRows) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup is already confirmed' }
       
       result = await this.mailer.sendMeetupConfirmation(req.query.meetup)
       if(result) throw { APIerr: true, errorCode: 500, errorMessage: 'Error sending email confirmation' }
     } catch (err) {
       response.ok = 0
       response.code = 400
+
+      if(err.errorCode == 404) {
+        response.ok = 0
+        response.code = 404
+        response.message = err.errorMessage
+      }
       
       if(err.APIerr) {
         response.code = err.errorCode
@@ -124,30 +159,30 @@ class meetup {
 
     res.status(response.code).json(response)
   }
-
+  
   /**
-   * @description Returns all user's events (confirmed + pending) 
+   * 
    * @param {Request} req 
    * @param {Response} res 
    */
-  async get(req, res) {
+  async refuse(req, res) {
     let response = {
-        ok: 1,
-        code: 200
-      },
-      sqlQuery = 'SELECT * FROM meetups WHERE menteeUID = ?'
+      ok: 1,
+      code: 200
+    }
 
     try {
-      let [rows] = await this.database.query(sqlQuery, [req.jwt.uid])
-      if(!rows.length) throw { APIerr: true, errorCode: 404, errorMessage: 'No events found'}
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', { mid: req.query.meetup, mentorUID: req.jwt.uid, status: 'pending' })
+      let meetup = (await this.database.query(sqlQuery, params))[0]
+      if(!meetup.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup not found or has already been refused' }
 
-      response.events = rows
+      let [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', { status: 'refused' }, { mid: req.query.meetup })
+      await this.database.query(sqlQuery2, params2)
     } catch (err) {
-
       response.ok = 0
       response.code = 400
 
-      if(err.APIerr) {
+      if(err.errorCode == 404) {
         response.code = err.errorCode
         response.message = err.errorMessage
       }
