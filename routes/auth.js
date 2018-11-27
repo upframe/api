@@ -15,7 +15,6 @@ function setRouters(app) {
     services.auth.resetPassword(req, res)
   })
   
-  
   router.post('/changemyemail', (req, res) => {
     services.auth.changeEmail(req, res)
   })

@@ -129,17 +129,18 @@ class Auth {
     if(req.body.token) {
       try {
         // verify if token is valid
-        let result = (await this.database.query('SELECT COUNT(*) FROM resetPassword WHERE token = ?', req.body.token))[0]
-        if (!result[0]['COUNT(*)']) throw 403
+        let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'passwordReset', { token: req.body.token })
+        let result = (await this.database.query(sqlQuery, params))[0]
+        if(!result.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Token was not found or has already been used' }
+        else result = result[0]
 
-        let json = { password: bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10)) },
-          whereJson = { email: req.body.email }
+        let whereJson = { email: result.email }
 
-        let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, whereJson)
-        result = (await this.database.query(sqlQuery, params))[0]
+        let [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'users', { password: req.body.password }, whereJson)
+        result = (await this.database.query(sqlQuery2, params2))[0]
         if(!result.affectedRows) throw 404 
 
-        sqlQuery = 'DELETE FROM resetPassword WHERE token = ?'
+        sqlQuery = 'DELETE FROM passwordReset WHERE token = ?'
         params = [req.body.token];
         result = (await this.database.query(sqlQuery, params))[0]
 
