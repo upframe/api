@@ -22,5 +22,4 @@ yarn start
 
 # License
 
-[MIT © Upframe](../master/LICENSE)
-
+[GPL © Upframe](../master/LICENSE)
