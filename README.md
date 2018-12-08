@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/ulissesferreira/api.svg?token=xmikXYDzu8Ho8PZicgqF&branch=master)](https://travis-ci.com/ulissesferreira/api)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/32579c94a2034a149187e1b352810646)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ulissesferreira/api&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/4e8c21bef65d479990a8aa8219976218)](https://www.codacy.com/app/Upframe/api?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=upframe/api&amp;utm_campaign=Badge_Grade)
 
 # 🔥 Api
 The API for our platform and services.
