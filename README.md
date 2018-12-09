@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/upframe/api.svg?branch=master)](https://travis-ci.com/upframe/api)
+[![Build Status](https://travis-ci.org/upframe/api.svg?branch=master)](https://travis-ci.org/upframe/api)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/4e8c21bef65d479990a8aa8219976218)](https://www.codacy.com/app/Upframe/api?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=upframe/api&amp;utm_campaign=Badge_Grade)
 
 # 🔥 Api
