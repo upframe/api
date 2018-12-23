@@ -1,11 +1,11 @@
 const { createLogger, transports, format } = require('winston')
 const { combine, timestamp, printf, colorize } = format
 
-let printFormat = printf(info => {
+let printFormat = printf((info: any) => {
   return `${info.timestamp} [${info.level}]: ${info.message}`
 })
 
-let logger = createLogger({
+export let logger = createLogger({
   transports: [
     new transports.Console({
       silent: process.env.NODE_ENV !== 'production',
@@ -32,5 +32,3 @@ let logger = createLogger({
   ],
   exitOnError: false
 })
-
-module.exports = logger

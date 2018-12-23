@@ -9,7 +9,7 @@ const models = require('../models')
  * @param {JSON} fjson 
  * @param {JSON} sjson 
  */
-function createSQLqueryFromJSON(action, table, fjson, sjson) {
+export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson: object) {
   let query, params
 
   switch(action) {
@@ -32,7 +32,7 @@ function createSQLqueryFromJSON(action, table, fjson, sjson) {
  * @param {string} table 
  * @param {JSON} json 
  */
-function createInsertQuery(table, json) {
+function createInsertQuery(table: string, json: object) {
   let sqlQuery = `INSERT INTO ${table}(`,
     params = []
 
@@ -58,7 +58,7 @@ function createInsertQuery(table, json) {
  * @param {JSON} newJson - JSON object with the new information
  * @param {JSON} whereJson - JSON object with the information needed to indentify record
  */
-function createUpdateQuery(table, newJson, whereJson) {
+function createUpdateQuery(table: string, newJson: object, whereJson: object) {
   let sqlQuery = `UPDATE ${table} SET `,
     params = []
 
@@ -90,7 +90,7 @@ function createUpdateQuery(table, newJson, whereJson) {
  * @param {string} table 
  * @param {JSON} whereJSON 
  */
-function createSelectQuery(table, whereJSON) {
+function createSelectQuery(table: string, whereJSON: object) {
   let fields = models.get(table).fields,
     sqlQuery = 'SELECT ',
     params = []
@@ -111,5 +111,3 @@ function createSelectQuery(table, whereJSON) {
 
   return [sqlQuery, params]
 }
-
-module.exports.createSQLqueryFromJSON = createSQLqueryFromJSON

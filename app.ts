@@ -1,7 +1,7 @@
 require('dotenv').config(); //Podemos usar .env para as variables
 
-const express = require('express')
-const cors = require('cors')
+import express from 'express';
+import cors from 'cors'
 
 const bodyParser = require('body-parser')
 const busboy = require('connect-busboy');
@@ -12,7 +12,7 @@ const logger = require('./utils').logger;
 const services = require('./services')
 const routers = require('./routes')
 
-const app = express()
+let app: express.Application = express()
 
 /* Middleware configuration */
 let corsOptions = {
@@ -29,7 +29,7 @@ app.use(busboy({
 }));
 
 /* Avoid empty POST requests */
-app.use((req, res, next) => {
+app.use((req: express.Request, res: express.Response, next: any) => {
   if(Object.keys(req.body).length === 0 && req.method == 'POST' && req.path != '/profile/image') {
     let response = {
       ok: 0,

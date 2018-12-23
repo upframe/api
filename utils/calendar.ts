@@ -1,11 +1,17 @@
 const moment = require('moment')
 
+/******************
+ * Types 
+ ******************/
+import { date, slot } from '../models/types'
+
+
 /**
  * @description returns date difference given the first, the last and the frequency of events/slots
  * @param {any} maxDate 
  * @param {String} diffUnit - days, weeks, months, years, etc 
  */
-function dateDiff(eventStart, maxDate, diffUnit) {
+function dateDiff(eventStart: date, maxDate: date, diffUnit: string) {
   let num = 0
 
   try {
@@ -30,7 +36,7 @@ function dateDiff(eventStart, maxDate, diffUnit) {
  * @param {Date} end maximum slot/event end time
  */
 
-function genDaily(slot, start, end) {
+export function genDaily(slot: slot, start: date, end: date): slot[] {
   let num = dateDiff(slot.start, new Date(end), 'days'),
     i = 0,
     arr = []
@@ -59,11 +65,10 @@ function genDaily(slot, start, end) {
  * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
-function genWeekly(slot, start, end) {
+export function genWeekly(slot: slot, start: date, end: date): slot[] {
   let num = dateDiff(slot.start, new Date(end), 'w'),
     i = 0,
     arr = []
-
   
   while(i <= num) {
     let newSlot = Object.assign({}, slot)
@@ -86,7 +91,7 @@ function genWeekly(slot, start, end) {
  * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
-function genMonthly(slot, start, end) {
+export function genMonthly(slot: slot, start: date, end: date): slot[] {
   let num = dateDiff(slot.start, new Date(end), 'M'),
     i = 0,
     arr = []
@@ -111,8 +116,8 @@ function genMonthly(slot, start, end) {
  * @param {Date} startDate minimum slot/event start time
  * @param {Date} limitDate maximum slot/event end time
  */
-function automaticGenerate(slots, startDate, limitDate) {
-  let arr = [];
+export function automaticGenerate(slots: slot[], startDate: date, limitDate: date): slot[] {
+  let arr: slot[] = [];
 
   if(!startDate) {
     startDate = new Date()

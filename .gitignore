@@ -4,3 +4,6 @@ node_modules/
 .vs/
 
 app.log
+
+# TypeScript
+build
