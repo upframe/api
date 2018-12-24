@@ -1,4 +1,5 @@
-const { createLogger, transports, format } = require('winston')
+import { createLogger, transports, format } from 'winston'
+
 const { combine, timestamp, printf, colorize } = format
 
 let printFormat = printf((info: any) => {
@@ -16,17 +17,14 @@ export let logger = createLogger({
       silent: process.env.NODE_ENV !== 'dev',
       level: 'debug',
       handleExceptions: true,
-      json: false,
       format: combine(colorize(), timestamp(), printFormat)
     }),
     new transports.File({
       level: 'silly',
       filename: 'app.log',
       handleExceptions: true,
-      json: true,
       maxsize: 20971520,
       maxFiles: 5,
-      colorize: false,
       format: combine(timestamp(), printFormat)
     })
   ],

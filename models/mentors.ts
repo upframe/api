@@ -1,4 +1,4 @@
-exports.fields = [
+export const fields: string[] = [
   'uid',
   'keycode',
   'type',

@@ -1,13 +1,15 @@
 // get local (folder) environment variables
 require('dotenv').config()
 
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcryptjs')
-const crypto = require('crypto')
+import * as express from 'express'
+import * as jwt from 'jsonwebtoken'
+import * as bcrypt from 'bcryptjs'
+import * as crypto from 'crypto'
 
-const { sql } = require('../utils')
+import { APIresponse } from '../types'
+import { sql } from '../utils'
 
-class Auth {
+export class Auth {
   constructor(app) {
     // inject independent services
     this.database = app.get('db').getPool()
@@ -17,25 +19,16 @@ class Auth {
     if(this.logger) this.logger.verbose('Auth service loaded')
   }
 
-  isMentor(req, res, next) {
-    if(req.jwt.aud === 'mentor') next()
-    else {
-      let response = {
-        ok: 0,
-        code: 403,
-        message: 'You\'re not a mentor'
-      }
-      res.status(response.code).json(response)
-    }
-  }
-
-  verifyToken(req, res, next) {
+  verifyToken(req: express.Request, res: express.Response, next: express.NextFunction) {
     let token = req.cookies['access_token']
 
     try {
       if(!token) throw 403;
 
-      let decoded = jwt.verify(token, process.env.CONNECT_PK)
+      let pk: string
+      if(process.env.CONNECT_PK) pk = process.env.CONNECT_PK
+      else throw 500
+      let decoded = jwt.verify(token, pk)
       req.jwt = decoded
 
       next()
@@ -55,11 +48,24 @@ class Auth {
     }
   }
 
+
+  isMentor(req: express.Request, res: express.Response, next: express.NextFunction) {
+    if(req.jwt.aud === 'mentor') next()
+    else {
+      let response = {
+        ok: 0,
+        code: 403,
+        message: 'You\'re not a mentor'
+      }
+      res.status(response.code).json(response)
+    }
+  }
+
   createToken(user, accountType) {
     return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: (86400 * 15) , audience: accountType})
   }
 
-  async login(req, res) {
+  async login(req: express.Request, res: express.Response) {
     let sql = 'SELECT * FROM users WHERE email = ?',
       response = {
         ok: 1,
@@ -91,7 +97,7 @@ class Auth {
     res.status(response.code).json(response)
   }
 
-  async register(req, res) {
+  async register(req: express.Request, res: express.Response) {
     let response = {
         code: 200,
         ok: 1
@@ -120,7 +126,7 @@ class Auth {
     res.status(response.code).json(response)
   }
 
-  async resetPassword(req, res) {
+  async resetPassword(req: express.Request, res: express.Response) {
     let response = {
       ok: 1,
       code: 200
@@ -173,7 +179,7 @@ class Auth {
   /**
    * @description changes account's email
    */
-  async changeEmail(req, res) {
+  async changeEmail(req: express.Request, res: express.Response) {
     let response = {
       ok: 1,
       code: 200
@@ -233,5 +239,3 @@ class Auth {
     res.status(response.code).json(response)
   }
 }
-
-module.exports = Auth

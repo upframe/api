@@ -1,10 +1,11 @@
-const crypto = require('crypto')
-const moment = require('moment')
+import * as crypto from 'crypto'
+import * as express from 'express'
+import * as moment from 'moment'
 
-const { calendar, sql } = require('../utils')
+import { APIresponse } from '../types'
+import { calendar, sql } from '../utils'
 
-class Mentor {
-
+export class Mentor {
   constructor(app) {
     this.database = app.get('db').getPool()
     this.logger = app.get('logger')
@@ -12,9 +13,9 @@ class Mentor {
     if(this.logger) this.logger.verbose('Mentor service loaded')
   }
 
-  async get(req, res) {
+  async get(req: express.Request , res: express.Response) {
     let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', { keycode: req.params.keycode, type: 'mentor'}),
-      response = {
+      response: APIresponse = {
         ok: 1,
         code: 200
       }
@@ -50,7 +51,7 @@ class Mentor {
       response.ok = 0
       response.code = 400
 
-      if(err === 404) {
+      if(err.errorCode === 404) {
         response.code = err
         response.message = 'Mentor not found'
       }
@@ -60,9 +61,9 @@ class Mentor {
     res.status(response.code).json(response)
   }
 
-  async getRandom(req, res) {
+  async getRandom(req: express.Request , res: express.Response) {
     let sql = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5',
-      response = {
+      response: APIresponse = {
         ok: 1,
         code: 200
       }
@@ -89,8 +90,8 @@ class Mentor {
    * @param {Request} req 
    * @param {Response} res 
    */
-  async getTimeSlots(req, res) {
-    let response = {
+  async getTimeSlots(req: express.Request , res: express.Response) {
+    let response: APIresponse = {
       ok: 1,
       code: 200
     }
@@ -133,11 +134,11 @@ class Mentor {
    * @param {Request} req 
    * @param {Response} res 
    */
-  async updateTimeSlots(req, res) {
+  async updateTimeSlots(req: express.Request , res: express.Response) {
     let deletedSlots = req.body.deleted,
       updatedSlots = req.body.updated,
       sqlQuery = '',
-      response = {
+      response: APIresponse = {
         ok: 1,
         code: 200
       }
@@ -202,14 +203,15 @@ class Mentor {
     res.status(response.code).json(response)
   }
 
-  async verify(req, res) {
-    let check = req.query.keycode ? 'keycode' : 'uniqueid'
-    let value = req.query.keycode ? '"' + req.query.keycode + '"' : req.query.uniqueid
-    let sql = `SELECT * FROM onboarding WHERE ${check} = ${value}` 
-    let response = {
-      ok: 1,
-      code: 200
-    }
+  async verify(req: express.Request , res: express.Response) {
+    let check = req.query.keycode ? 'keycode' : 'uniqueid',
+      value = req.query.keycode ? '"' + req.query.keycode + '"' : req.query.uniqueid,
+      sql = `SELECT * FROM onboarding WHERE ${check} = ${value}`,
+      response: APIresponse = {
+        ok: 1,
+        code: 200
+      }
+
     try {
       let [rows] = await this.database.query(sql)
       if(!rows.length) throw 404
@@ -224,7 +226,7 @@ class Mentor {
 
 }
 
-function shuffle(a) {
+function shuffle(a: any[]) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
@@ -232,5 +234,3 @@ function shuffle(a) {
 
   return a.slice(0, 2);
 }
-
-module.exports = Mentor

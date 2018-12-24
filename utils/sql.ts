@@ -1,13 +1,12 @@
-const bcrypt = require('bcryptjs')
+import * as bcrypt from 'bcryptjs';
 
-const models = require('../models')
+import * as models from '../models'
 
 /**
- * 
  * @param {string} action 
  * @param {string} table 
- * @param {JSON} fjson 
- * @param {JSON} sjson 
+ * @param {object} fjson 
+ * @param {object} sjson 
  */
 export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson: object) {
   let query, params
@@ -30,7 +29,7 @@ export function createSQLqueryFromJSON(action: string, table: string, fjson: obj
 /**
  * @description Creates INSERT SQL query using table name and JSON which contains info 
  * @param {string} table 
- * @param {JSON} json 
+ * @param {object} json 
  */
 function createInsertQuery(table: string, json: object) {
   let sqlQuery = `INSERT INTO ${table}(`,
@@ -55,8 +54,8 @@ function createInsertQuery(table: string, json: object) {
 /**
  * @description Creates UPDATE SQL query using table name, JSON which contains info and JSON that identifies record
  * @param {string} table 
- * @param {JSON} newJson - JSON object with the new information
- * @param {JSON} whereJson - JSON object with the information needed to indentify record
+ * @param {object} newJson - JSON object with the new information
+ * @param {object} whereJson - JSON object with the information needed to indentify record
  */
 function createUpdateQuery(table: string, newJson: object, whereJson: object) {
   let sqlQuery = `UPDATE ${table} SET `,
@@ -88,7 +87,7 @@ function createUpdateQuery(table: string, newJson: object, whereJson: object) {
 /**
  * @description Creates SELECT SQL query using table name and JSON which identifies record
  * @param {string} table 
- * @param {JSON} whereJSON 
+ * @param {object} whereJSON 
  */
 function createSelectQuery(table: string, whereJSON: object) {
   let fields = models.get(table).fields,

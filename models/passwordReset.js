@@ -1,4 +1,0 @@
-exports.fields = [
-  'email',
-  'token'
-]

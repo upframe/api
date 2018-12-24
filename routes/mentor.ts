@@ -1,7 +1,8 @@
-const express = require('express')
-const router = express.Router()
+import * as express from 'express'
 
-function setRouters(app) {
+let router: express.Router = express.Router()
+
+function setRouters(app: express.Application) {
   let services = app.get('services')
   
   router.get('/random', (req, res) => {
@@ -27,7 +28,7 @@ function setRouters(app) {
   return router
 }
 
-module.exports.init = (app) => {
+module.exports.init = (app: express.Application) => {
   try {
     let router = setRouters(app)
     app.get('logger').verbose('Mentor router loaded')

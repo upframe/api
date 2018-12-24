@@ -1,5 +1,5 @@
-const Database = require('./database')
-const Mailer = require('./mailer')
+import * as Database from './database'
+import * as Mailer from './mailer'
 
 const Auth = require('./auth')
 const Mentor = require('./mentor')

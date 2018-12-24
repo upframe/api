@@ -1,13 +1,14 @@
-class Search {
+import * as express from 'express'
 
-  constructor(app) {
+export class Search {
+  constructor(app: express.Application) {
     this.database = app.get('db').getPool()
     this.logger = app.get('logger')
 
     if (this.logger) this.logger.verbose('Search service loaded')
   }
 
-  async quick(req, res) {
+  async quick(req: express.Request, res: express.Response) {
     //Primeiro expertise
     //Segundo pessoas
     //Terceiro companies
@@ -25,18 +26,16 @@ class Search {
     res.status(200).send(response)
   }
 
-  async full(req, res) {
+  async full(req: express.Request, res: express.Response) {
     //Queremos pesquisar usando a informacao e devolver só users
     let sql = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
     let [rows] = await this.database.query(sql, '%' + req.query.term + '%')
     res.status(200).send(rows)
   }
 
-  async tags(req, res) {
+  async tags(req: express.Request, res: express.Response) {
     let tags = ['User Research', 'Event Marketing', 'Communities', 'Business Models', 'Ideation', 'B2B', 'B2C']
     res.status(200).send(tags)
   }
 
 }
-
-module.exports = Search;

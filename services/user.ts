@@ -1,17 +1,19 @@
-const { sql } = require('../utils')
+import * as express from 'express'
 
-class User {
+import { APIresponse } from '../types'
+import { sql } from '../utils'
 
-  constructor(app) {
+export class User {
+  constructor(app: express.Application) {
     this.database = app.get('db').getPool()
     this.logger = app.get('logger')
 
     if(this.logger) this.logger.verbose('User service loaded')
   }
 
-  async get(req, res) {
+  async get(req: express.Request, res: express.Response) {
     let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt),
-      response = {
+      response: APIresponse = {
         code: 200,
         ok: 1
       }
@@ -33,9 +35,9 @@ class User {
     res.status(response.code).json(response)
   }
 
-  async update(req, res) {
+  async update(req: express.Request, res: express.Response) {
     let uid = req.jwt.uid,
-      response = {
+      response: APIresponse = {
         code: 200,
         ok: 1
       },
@@ -62,7 +64,7 @@ class User {
 
   async image(url, userEmail, res) {
     let sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?',
-      response = {
+      response: APIresponse = {
         ok: 1,
         code: 200
       }
@@ -73,7 +75,6 @@ class User {
         response.code = 202
         
       } else throw 409
-      response.url
     } catch (err) {
       response.ok = 0
       response.code = 500
@@ -83,5 +84,3 @@ class User {
   }
 
 }
-
-module.exports = User;

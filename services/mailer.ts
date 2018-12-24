@@ -1,11 +1,11 @@
 // get local (folder) environment variables
 require('dotenv').config()
 
-const mailgun = require('mailgun-js')
-const fs = require('fs')
-const crypto = require('crypto')
+import * as crypto from 'crypto'
+import * as fs from 'fs'
+import * as mailgun from 'mailgun-js'
 
-class Mailer {
+export class Mailer {
   constructor(app) {
     this.database = app.get('db').getPool()
     this.logger = app.get('logger');
@@ -173,6 +173,4 @@ class Mailer {
       else return 1
     }
   }
-} 
-
-module.exports = Mailer
+}

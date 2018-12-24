@@ -1,10 +1,12 @@
-const crypto = require('crypto')
-const moment = require('moment')
+import * as crypto from 'crypto'
+import * as express from 'express'
+import * as moment from 'moment'
 
-const { sql, calendar } = require('../utils')
+import { APIresponse } from '../types'
+import { sql, calendar } from '../utils'
 
-class meetup {
-  constructor(app) {
+export class meetup {
+  constructor(app: express.Application) {
     // inject independent services
     this.database = app.get('db').getPool()
     this.logger = app.get('logger')
@@ -15,11 +17,11 @@ class meetup {
 
   /**
    * @description Returns all user's events (confirmed + pending) 
-   * @param {Request} req 
-   * @param {Response} res 
+   * @param {express.Request} req 
+   * @param {express.Response} res 
    */
-  async get(req, res) {
-    let response = {
+  async get(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
         ok: 1,
         code: 200
       },
@@ -46,13 +48,13 @@ class meetup {
 
   /**
    * @description Creates a pending meetup which the mentor has to confirm by email
-   * @param {Request} req 
-   * @param {Response} res 
+   * @param {express.Request} req 
+   * @param {express.Response} res 
    */
-  async create(req, res) {
+  async create(req: express.Request, res: express.Response) {
     let json = Object.assign({}, req.body),
       sqlQuery = '',
-      response = {
+      response: APIresponse = {
         ok: 1,
         code: 200
       }
@@ -122,11 +124,11 @@ class meetup {
 
   /**
    * @description Confirms meetup
-   * @param {Request} req 
-   * @param {Response} res 
+   * @param {express.Request} req 
+   * @param {express.Response} res 
    */
-  async confirm(req, res) {
-    let response = {
+  async confirm(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
       ok: 1,
       code: 200
     }
@@ -162,11 +164,11 @@ class meetup {
   
   /**
    * 
-   * @param {Request} req 
-   * @param {Response} res 
+   * @param {express.Request} req 
+   * @param {express.Response} res 
    */
-  async refuse(req, res) {
-    let response = {
+  async refuse(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
       ok: 1,
       code: 200
     }
@@ -191,5 +193,3 @@ class meetup {
     res.status(response.code).json(response)
   }
 }
-
-module.exports = meetup
