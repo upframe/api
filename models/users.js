@@ -15,6 +15,7 @@ exports.fields = [
   'facebook',
   'dribbble',
   'googleAccessToken',
-  'googleRefreshToken'
+  'googleRefreshToken',
+  'tags'
 ]
 

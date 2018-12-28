@@ -37,6 +37,7 @@ class Auth {
 
       let decoded = jwt.verify(token, process.env.CONNECT_PK)
       req.jwt = decoded
+      console.log(decoded)
 
       next()
     } catch (err) {

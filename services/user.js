@@ -37,7 +37,8 @@ class User {
     let uid = req.jwt.uid,
       response = {
         code: 200,
-        ok: 1
+        ok: 1,
+        test: []
       },
       json = Object.assign({}, req.body)
     
@@ -45,8 +46,12 @@ class User {
 
     try {
       let [rows] = await this.database.query(sqlQuery, params)
-      if(rows.changedRows) response.code = 202
-      else throw 409
+      response.test = rows
+      if(rows.changedRows) {
+        response.code = 202
+      } else {
+        throw 409
+      }
     } catch (err) {
       response.ok = 0
       response.code = 400

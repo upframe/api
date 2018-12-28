@@ -215,6 +215,7 @@ class Mentor {
       if(!rows.length) throw 404
 
       response.name = rows[0].name
+      response.email = rows[0].email
     } catch (err) {
       response.ok = 0
       response.code = 400
