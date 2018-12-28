@@ -133,6 +133,9 @@ function automaticGenerate(slots, startDate, limitDate) {
     case 'Monthly':
       arr = arr.concat(genMonthly(slot, startDate, limitDate))
       break;
+    case 'Unique':
+      arr = arr.concat([{'start': slot.start, 'end': slot.end}])
+      break;
     }
   }
 

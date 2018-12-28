@@ -101,6 +101,7 @@ class Mentor {
         sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
 
       let [slots] = await this.database.query(sqlQuery, [req.jwt.uid])
+      console.log(slots)
       let genSlots = calendar.generateSlots(slots).filter(slot => {
         let ok = true
         // verify if slot start is after the defined minimum start Date 
