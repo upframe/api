@@ -138,6 +138,9 @@ export function automaticGenerate(slots: Slot[], startDate?: date | undefined, l
     case 'Monthly':
       arr = arr.concat(genMonthly(slot, startDate, limitDate))
       break;
+    case 'Unique':
+      arr = arr.concat(slot)
+      break;
     }
   }
 
