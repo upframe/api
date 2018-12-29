@@ -1,4 +1,4 @@
-import { createLogger, transports, format } from 'winston'
+import { createLogger, format, transports, Logger } from 'winston'
 
 const { combine, timestamp, printf, colorize } = format
 
@@ -6,7 +6,7 @@ let printFormat = printf((info: any) => {
   return `${info.timestamp} [${info.level}]: ${info.message}`
 })
 
-export let logger = createLogger({
+export let logger: Logger = createLogger({
   transports: [
     new transports.Console({
       silent: process.env.NODE_ENV !== 'production',

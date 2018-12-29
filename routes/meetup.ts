@@ -1,9 +1,11 @@
 import * as express from 'express'
 
+import { Services } from '../service'
+
 let router: express.Router = express.Router()
 
 function setRouters(app: express.Application): express.Router {
-  let services = app.get('services')
+  let services: Services = app.get('services')
 
   router.post('/', services.auth.verifyToken, (req, res) => {
     services.meetup.create(req, res)

@@ -1,5 +1,5 @@
-const calendar = require('./calendar')
-const logger = require('./logs')
-const sql = require('./sql')
+import * as calendar from './calendar'
+import { logger } from './logs'
+import * as sql from './sql'
 
 export { calendar, logger, sql }

@@ -3,7 +3,7 @@ const moment = require('moment')
 /******************
  * Types 
  ******************/
-import { date, slot } from '../models/types'
+import { date, Slot } from '../types'
 
 
 /**
@@ -31,15 +31,15 @@ function dateDiff(eventStart: date, maxDate: date, diffUnit: string) {
 /**
  * @description Generates daily slots/events until the date specified or
  * the number specified of daily events
- * @param {Object} slot 
+ * @param {Slot} slot 
  * @param {Date} start minimum slot/event start time 
  * @param {Date} end maximum slot/event end time
  */
 
-export function genDaily(slot: slot, start: date, end: date): slot[] {
+export function genDaily(slot: Slot, start: date, end: date): Slot[] {
   let num = dateDiff(slot.start, new Date(end), 'days'),
     i = 0,
-    arr = []
+    arr: Slot[] = []
 
   while(i <= num) {
     let newSlot = Object.assign({}, slot)
@@ -52,7 +52,7 @@ export function genDaily(slot: slot, start: date, end: date): slot[] {
     i++
   }
 
-  arr = arr.filter(item => {
+  arr = arr.filter((item: Slot) => {
     return (new Date(item.start).getTime() >= new Date(start).getTime())
   })
   return arr
@@ -61,14 +61,14 @@ export function genDaily(slot: slot, start: date, end: date): slot[] {
 /**
  * @description Generates weekly slots/events until the date specified or
  * the number specified of weekly events
- * @param {Object} slot 
+ * @param {Slot} slot 
  * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
-export function genWeekly(slot: slot, start: date, end: date): slot[] {
+export function genWeekly(slot: Slot, start: date, end: date): Slot[] {
   let num = dateDiff(slot.start, new Date(end), 'w'),
     i = 0,
-    arr = []
+    arr: Slot[] = []
   
   while(i <= num) {
     let newSlot = Object.assign({}, slot)
@@ -87,14 +87,14 @@ export function genWeekly(slot: slot, start: date, end: date): slot[] {
 /**
  * @description Generates monthly slots/events until the date specified or
  * the number specified of mothly events
- * @param {Object} slot 
+ * @param {Slot} slot 
  * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
-export function genMonthly(slot: slot, start: date, end: date): slot[] {
+export function genMonthly(slot: Slot, start: date, end: date): Slot[] {
   let num = dateDiff(slot.start, new Date(end), 'M'),
     i = 0,
-    arr = []
+    arr: Slot[] = []
 
   while(i <= num) {
     let newSlot = Object.assign({}, slot)
@@ -112,12 +112,12 @@ export function genMonthly(slot: slot, start: date, end: date): slot[] {
 
 /**
  * 
- * @param {Array} slots 
+ * @param {Array<Slot>} slots slots array
  * @param {Date} startDate minimum slot/event start time
  * @param {Date} limitDate maximum slot/event end time
  */
-export function automaticGenerate(slots: slot[], startDate: date, limitDate: date): slot[] {
-  let arr: slot[] = [];
+export function automaticGenerate(slots: Slot[], startDate?: date | undefined, limitDate?: date): Slot[] {
+  let arr: Slot[] = [];
 
   if(!startDate) {
     startDate = new Date()
@@ -143,8 +143,3 @@ export function automaticGenerate(slots: slot[], startDate: date, limitDate: dat
 
   return arr
 }
-
-
-module.exports.generateDailySlot = genDaily;
-module.exports.generateWeeklySlot = genWeekly;
-module.exports.generateSlots = automaticGenerate;

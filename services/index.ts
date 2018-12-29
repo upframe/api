@@ -1,31 +1,36 @@
-import * as Database from './database'
-import * as Mailer from './mailer'
+import * as express from 'express'
 
-const Auth = require('./auth')
-const Mentor = require('./mentor')
-const User = require('./user')
-const Search = require('./search')
-const Meetup = require('./meetup')
+import { Database } from './database'
+import { Mail } from './mail'
 
-module.exports.init = (app) => {
+import { AuthService as Auth } from './auth'
+import { MeetupService as Meetup } from './meetup'
+import { MentorService as Mentor } from './mentor'
+import { SearchService as Search } from './search'
+import { UserService as User } from './user'
+
+import { Services } from '../service'
+
+module.exports.init = (app: express.Application) => {
   /**
    *  Independent services 
    *  that work 100% alone
    **/
   app.set('db', new Database(app))
-  app.set('mailer', new Mailer(app))
+  app.set('mail', new Mail(app))
 
   /**
    *  Dependent services 
    *  that need other 
    *  services to work
    **/
-  let services = {}  
-  services.auth = new Auth(app)
-  services.mentor = new Mentor(app)
-  services.user = new User(app)
-  services.search = new Search(app)
-  services.meetup = new Meetup(app)
+  let services: Services  = {
+    auth: new Auth(app),
+    meetup: new Meetup(app),
+    mentor: new Mentor(app),
+    search: new Search(app),
+    user: new User(app),
+  }
 
   app.set('services', services)
   app.get('logger').verbose('Services loaded')

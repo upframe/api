@@ -1,18 +1,65 @@
+import { Request } from 'express'
+
+/* API types */
+export interface APIrequest extends Request {
+  busboy?: any;
+  body: APIRequestBody;
+  jwt?: JWTpayload;
+}
+
+export interface APIRequestBody {
+  /* IDs */
+  mid?: string;
+  sid?: string;
+  uid?: string;
+
+  email?: string;
+  name?: string;
+
+  start?: date;
+  end?: date;
+
+  location?: string;
+
+  token?: string;
+
+  deleted: string[];
+  updated: Slot[];
+}
+
+export interface JWTpayload {
+  aud?: string;
+  email?: string;
+  uid?: string;
+}
+
 export interface APIresponse {
   code: number;
   ok: number;
   message?: string;
   token?: string;
+  updateOK?: number;
+  deleteOK?: number;
 
-  meetup?: meetup;
-  mentor?: mentor;
-  user?: user;
-  slot?: slot;
+  events?: Meetup[];
+  meetup?: Meetup;
+  mentor?: Mentor;
+  mentors?: Mentor[];
+  user?: User;
+  slot?: Slot;
+  slots?: Slot[];
+}
+
+export interface APIerror {
+  code: number;
+  message: string;
+  friendlyMessage?: string;
 }
 
 export type date = string | Date;
 
-export interface meetup {
+/* Generic types */
+export interface Meetup {
   mid?: string;
   sid?: string;
   menteeUID?: string;
@@ -22,7 +69,7 @@ export interface meetup {
   start?: string | Date;
 }
 
-export interface account {
+export interface Account {
   uid: string;
   name: string;
   email: string;
@@ -32,20 +79,34 @@ export interface account {
   googleRefreshToken?: string;
 }
 
-export interface mentor extends account {
-  keycode?: string;
+export enum AccountTypes {
+  "user",
+  "mentor"
+}
+
+export interface Mentor extends Account {
   favoritePlaces?: string;
+  keycode?: string;
+  slots?: Slot[];
   type: string;
 }
 
-export interface user extends account {
+export interface User extends Account {
   type: string;
 }
 
-export interface slot {
+export interface Slot {
   sid: string;
   mentorUID: string;
   start: Date;
   end: Date;
   recurrency: string;
+}
+
+/* Mailer */
+export interface Email {
+  from: string;
+  to: string;
+  subject: string;
+  html?: string;
 }

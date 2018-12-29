@@ -2,24 +2,22 @@
 require('dotenv').config()
 
 import * as express from 'express'
-import * as jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
+import * as jwt from 'jsonwebtoken'
 
-import { APIresponse } from '../types'
+import { service } from '../service'
+import { APIresponse, APIrequest, JWTpayload } from '../types'
 import { sql } from '../utils'
 
-export class Auth {
-  constructor(app) {
-    // inject independent services
-    this.database = app.get('db').getPool()
-    this.logger = app.get('logger')
-    this.mailer = app.get('mailer')
+export class AuthService extends service {
+  constructor(app: express.Application) {
+    super(app)
 
     if(this.logger) this.logger.verbose('Auth service loaded')
   }
 
-  verifyToken(req: express.Request, res: express.Response, next: express.NextFunction) {
+  verifyToken(req: APIrequest, res: express.Response, next: express.NextFunction) {
     let token = req.cookies['access_token']
 
     try {
@@ -28,12 +26,13 @@ export class Auth {
       let pk: string
       if(process.env.CONNECT_PK) pk = process.env.CONNECT_PK
       else throw 500
+
       let decoded = jwt.verify(token, pk)
-      req.jwt = decoded
+      if(decoded instanceof Object) req.jwt = decoded
 
       next()
     } catch (err) {
-      let response = {
+      let response: APIresponse = {
         ok: 0,
         code: 403,
         message: 'The JWT token is not valid'
@@ -49,10 +48,10 @@ export class Auth {
   }
 
 
-  isMentor(req: express.Request, res: express.Response, next: express.NextFunction) {
-    if(req.jwt.aud === 'mentor') next()
+  isMentor(req: APIrequest, res: express.Response, next: express.NextFunction) {
+    if(req.jwt && req.jwt.aud === 'mentor') next()
     else {
-      let response = {
+      let response: APIresponse = {
         ok: 0,
         code: 403,
         message: 'You\'re not a mentor'
@@ -61,13 +60,15 @@ export class Auth {
     }
   }
 
-  createToken(user, accountType) {
-    return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: (86400 * 15) , audience: accountType})
+  createToken(user: JWTpayload , accountType): string {
+    if(process.env.CONNECT_PK) {
+      return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: (86400 * 15) , audience: accountType})
+    } else return ''
   }
 
   async login(req: express.Request, res: express.Response) {
     let sql = 'SELECT * FROM users WHERE email = ?',
-      response = {
+      response: APIresponse = {
         ok: 1,
         code: 200
       }
@@ -98,7 +99,7 @@ export class Auth {
   }
 
   async register(req: express.Request, res: express.Response) {
-    let response = {
+    let response: APIresponse = {
         code: 200,
         ok: 1
       },
@@ -127,7 +128,7 @@ export class Auth {
   }
 
   async resetPassword(req: express.Request, res: express.Response) {
-    let response = {
+    let response: APIresponse = {
       ok: 1,
       code: 200
     }
@@ -165,7 +166,7 @@ export class Auth {
     } else {
       // result = 1 means email was sent
       // result = 0 means email was NOT sent
-      let result = await this.mailer.sendPasswordReset(req.body.email)
+      let result = await this.mail.sendPasswordReset(req.body.email)
       
       if(result != 0) {
         response.ok = 0
@@ -179,23 +180,23 @@ export class Auth {
   /**
    * @description changes account's email
    */
-  async changeEmail(req: express.Request, res: express.Response) {
-    let response = {
+  async changeEmail(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
       ok: 1,
       code: 200
     }
 
-    if(req.body.token) {
+    if(req.body.token && req.body.email && process.env.CONNECT_PK) {
       try {
         // verify if token is valid by fetching it from the database
         let [rows] = (await this.database.query('SELECT * FROM emailChange WHERE token = ?', req.body.token))
         if (!rows.length) throw 403
 
-        let params = [],
-          sql = 'UPDATE users SET email = ? WHERE email = ?'
+        let params: string[] = [],
+          sqlQuery: string = 'UPDATE users SET email = ? WHERE email = ?'
         
         params.push(req.body.email, rows[0].email)
-        await this.database.query(sql, params)
+        await this.database.query(sqlQuery, params)
 
         // if user is logged in refresh access token
         // clear access token otherwise
@@ -213,9 +214,9 @@ export class Auth {
           }
         })
 
-        sql = 'DELETE FROM emailChange WHERE token = ?'
+        sqlQuery = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token];
-        await this.database.query(sql, params)
+        await this.database.query(sqlQuery, params)
       } catch (err) {
         response.ok = 0
         response.code = 400
@@ -226,11 +227,17 @@ export class Auth {
         }
       }
     } else {
-      // result = 1 means email was sent
-      // result = 0 means email was NOT sent
-      let result = await this.mailer.sendEmailChange(req.body.email)
-      
-      if(result != 0) {
+      try {
+        if(req.body.email) {
+          // result = 1 means email was sent
+          // result = 0 means email was NOT sent
+          let result = await this.mail.sendEmailChange(req.body.email)
+          
+          if(result != 0) throw result
+        } else {
+          throw 1
+        }
+      } catch(err) {
         response.ok = 0
         response.code = 400
       }

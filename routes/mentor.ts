@@ -1,28 +1,31 @@
 import * as express from 'express'
 
+import { Services } from '../service'
+import { APIrequest } from '../types'
+
 let router: express.Router = express.Router()
 
 function setRouters(app: express.Application) {
-  let services = app.get('services')
+  let services: Services = app.get('services')
   
-  router.get('/random', (req, res) => {
+  router.get('/random', (req: APIrequest , res: express.Response) => {
     services.mentor.getRandom(req, res)
   })
 
-  router.get('/slots', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
+  router.get('/slots', services.auth.verifyToken, services.auth.isMentor, (req: APIrequest , res: express.Response) => {
     services.mentor.getTimeSlots(req, res)
   })
 
-  router.post('/slots', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
+  router.post('/slots', services.auth.verifyToken, services.auth.isMentor, (req: APIrequest , res: express.Response) => {
     services.mentor.updateTimeSlots(req, res)
   })
   
-  router.get('/verify', (req, res) => {
+  router.get('/verify', (req: APIrequest , res: express.Response) => {
     services.mentor.verify(req, res)
   })
 
-  router.get('/:keycode', (req, res, next) => {
-    services.mentor.get(req, res, next)
+  router.get('/:keycode', (req: APIrequest , res: express.Response) => {
+    services.mentor.get(req, res)
   })
 
   return router

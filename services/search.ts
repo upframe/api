@@ -1,10 +1,11 @@
 import * as express from 'express'
 
-export class Search {
-  constructor(app: express.Application) {
-    this.database = app.get('db').getPool()
-    this.logger = app.get('logger')
+import { service } from '../service'
 
+export class SearchService extends service {
+  constructor(app: express.Application) {
+    super(app)
+    
     if (this.logger) this.logger.verbose('Search service loaded')
   }
 

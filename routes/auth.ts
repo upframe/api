@@ -1,9 +1,11 @@
 import * as express from 'express'
 
+import { Services } from '../service'
+
 let router: express.Router = express.Router()
 
 function setRouters(app: express.Application) {
-  let services = app.get('services')
+  let services: Services = app.get('services')
 
   router.post('/login', (req, res) => {
     services.auth.login(req, res)  

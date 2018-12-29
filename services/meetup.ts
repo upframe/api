@@ -1,26 +1,25 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
-import * as moment from 'moment'
+import moment from 'moment'
 
-import { APIresponse } from '../types'
+import { APIrequest, APIRequestBody, APIresponse, APIerror, Meetup } from '../types'
 import { sql, calendar } from '../utils'
 
-export class meetup {
-  constructor(app: express.Application) {
-    // inject independent services
-    this.database = app.get('db').getPool()
-    this.logger = app.get('logger')
-    this.mailer = app.get('mailer')
+import { service } from '../service'
 
-    if(this.logger) this.logger.verbose('Auth service loaded')
+export class MeetupService extends service {
+  constructor(app: express.Application) {
+    super(app)
+
+    if(this.logger) this.logger.verbose('Meetup service loaded')
   }
 
   /**
    * @description Returns all user's events (confirmed + pending) 
-   * @param {express.Request} req 
+   * @param {APIrequest} req 
    * @param {express.Response} res 
    */
-  async get(req: express.Request, res: express.Response) {
+  async get(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
         ok: 1,
         code: 200
@@ -28,12 +27,21 @@ export class meetup {
       sqlQuery = 'SELECT * FROM meetups WHERE menteeUID = ?'
 
     try {
-      let [rows] = await this.database.query(sqlQuery, [req.jwt.uid])
-      if(!rows.length) throw { APIerr: true, errorCode: 404, errorMessage: 'No events found'}
+      let rows: Meetup[]
+      if(req.jwt) {
+        rows = (await this.database.query(sqlQuery, [req.jwt.uid]))[0]
+        if (!rows.length) {
+          let err: APIerror = {
+            code: 404,
+            message: 'Events not found',
+            friendlyMessage: 'You have no events'
+          }
+          throw err
+        }
 
-      response.events = rows
+        response.events = rows
+      }
     } catch (err) {
-
       response.ok = 0
       response.code = 400
 
@@ -48,26 +56,38 @@ export class meetup {
 
   /**
    * @description Creates a pending meetup which the mentor has to confirm by email
-   * @param {express.Request} req 
+   * @param {APIrequest} req 
    * @param {express.Response} res 
    */
-  async create(req: express.Request, res: express.Response) {
-    let json = Object.assign({}, req.body),
-      sqlQuery = '',
+  async create(req: APIrequest, res: express.Response) {
+    let json: APIRequestBody = Object.assign({}, req.body),
+      sqlQuery: string = '',
       response: APIresponse = {
         ok: 1,
         code: 200
       }
 
     try {
-      let meetup = {
-        menteeUID: req.jwt.uid,
+      if(!req.jwt || !req.jwt.uid) throw 403
+
+      let meetup: Meetup = {
+        menteeUID: req.jwt.uid || "putas",
         mid: crypto.randomBytes(20).toString('hex'),
         sid: json.sid,
         location: json.location,
         start: json.start
       }
-      
+
+      if(!meetup.mid) {
+        let err: APIerror = {
+          code: 500,
+          message: 'Internal Server Error during Meetup ID creation',
+          friendlyMessage: 'It was not possible to complete your request.'
+        }
+
+        throw err
+      }
+
       // get Slot info using Slot ID
       sqlQuery = 'SELECT * FROM timeSlots WHERE sid = ?'
       let [slots] = (await this.database.query(sqlQuery, [meetup.sid]))
@@ -84,10 +104,10 @@ export class meetup {
       }
 
       // verify if slot is already occupied
-      let genSlots = calendar.generateSlots(slots, moment(meetup.start).add(1, 'd').toDate())
+      let genSlots = calendar.automaticGenerate(slots, moment(meetup.start).add(1, 'd').toDate())
       for(let slot of genSlots) {
         // find slot whose date matches the requested meetup date
-        if(new Date(slot.start).getTime() == new Date(meetup.start).getTime()) {
+        if(meetup.start && new Date(slot.start).getTime() == new Date(meetup.start).getTime()) {
           // verify if slot is free (there is no meetup with status confirmed)
           sqlQuery = 'SELECT * FROM meetups WHERE sid = ? AND start = TIMESTAMP(?) AND status = "confirmed"'
           let [freeSlots] = (await this.database.query(sqlQuery, [meetup.sid, meetup.start]))
@@ -104,7 +124,7 @@ export class meetup {
             if(!rows.affectedRows) throw { APIerr: true, errorCode: 500, errorMessage: 'Internal Server Error' }
             
             // send email
-            let result = await this.mailer.sendMeetupInvitation(meetup.mid)
+            let result = await this.mail.sendMeetupInvitation(meetup.mid)
             if(result) throw 500
           }
         }
@@ -124,16 +144,18 @@ export class meetup {
 
   /**
    * @description Confirms meetup
-   * @param {express.Request} req 
+   * @param {APIrequest} req 
    * @param {express.Response} res 
    */
-  async confirm(req: express.Request, res: express.Response) {
+  async confirm(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
       ok: 1,
       code: 200
     }
 
     try {
+      if(!req.jwt || !req.jwt.uid) throw 403
+
       let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', { mid: req.query.meetup, mentorUID: req.jwt.uid, status: 'pending' })
       let meetup = (await this.database.query(sqlQuery, params))[0]
       if(!meetup.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup not found or has already been confirmed' }
@@ -141,7 +163,7 @@ export class meetup {
       let [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', { status: 'confirmed' }, { mid: req.query.meetup})
       let result = (await this.database.query(sqlQuery2, params2))[0]
       
-      result = await this.mailer.sendMeetupConfirmation(req.query.meetup)
+      result = await this.mail.sendMeetupConfirmation(req.query.meetup)
       if(result) throw { APIerr: true, errorCode: 500, errorMessage: 'Error sending email confirmation' }
     } catch (err) {
       response.ok = 0
@@ -164,16 +186,18 @@ export class meetup {
   
   /**
    * 
-   * @param {express.Request} req 
+   * @param {APIrequest} req 
    * @param {express.Response} res 
    */
-  async refuse(req: express.Request, res: express.Response) {
+  async refuse(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
       ok: 1,
       code: 200
     }
 
     try {
+      if(!req.jwt || !req.jwt.uid) throw 403
+
       let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', { mid: req.query.meetup, mentorUID: req.jwt.uid, status: 'pending' })
       let meetup = (await this.database.query(sqlQuery, params))[0]
       if(!meetup.length) throw { APIerr: false, errorCode: 404, errorMessage: 'Meetup not found or has already been refused' }

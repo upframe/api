@@ -1,24 +1,26 @@
 import * as express from 'express'
 
-import { APIresponse } from '../types'
+import { service } from '../service'
+import { APIrequest, APIresponse } from '../types'
 import { sql } from '../utils'
 
-export class User {
+export class UserService extends service {
   constructor(app: express.Application) {
-    this.database = app.get('db').getPool()
-    this.logger = app.get('logger')
+    super(app)
 
     if(this.logger) this.logger.verbose('User service loaded')
   }
 
-  async get(req: express.Request, res: express.Response) {
-    let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt),
-      response: APIresponse = {
+  async get(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
         code: 200,
         ok: 1
       }
     
     try {
+      if(!req.jwt) throw 403
+
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
       let [rows] = await this.database.query(sqlQuery, params)
       response.user = rows[0]
       if(!rows.length) throw 404
@@ -35,17 +37,20 @@ export class User {
     res.status(response.code).json(response)
   }
 
-  async update(req: express.Request, res: express.Response) {
-    let uid = req.jwt.uid,
+  async update(req: APIrequest, res: express.Response) {
+    let uid: string,
       response: APIresponse = {
         code: 200,
         ok: 1
       },
       json = Object.assign({}, req.body)
-    
-    let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid: uid})
 
     try {
+      if(!req.jwt || !req.jwt.uid) throw 403
+      else uid = req.jwt.uid
+      
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid: uid})
+
       let [rows] = await this.database.query(sqlQuery, params)
       if(rows.changedRows) response.code = 202
       else throw 409
@@ -62,7 +67,7 @@ export class User {
     res.status(response.code).json(response)
   }
 
-  async image(url, userEmail, res) {
+  async image(url: string, userEmail: string, res: express.Response) {
     let sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?',
       response: APIresponse = {
         ok: 1,

@@ -8,7 +8,7 @@ import * as models from '../models'
  * @param {object} fjson 
  * @param {object} sjson 
  */
-export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson: object) {
+export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson?: object) {
   let query, params
 
   switch(action) {
@@ -16,7 +16,9 @@ export function createSQLqueryFromJSON(action: string, table: string, fjson: obj
     [query, params] = createInsertQuery(table, fjson)
     break
   case 'UPDATE':
-    [query, params] = createUpdateQuery(table, fjson, sjson)
+    if(sjson) {
+      [query, params] = createUpdateQuery(table, fjson, sjson)
+    }
     break
   case 'SELECT':
     [query, params] = createSelectQuery(table, fjson)
@@ -33,7 +35,7 @@ export function createSQLqueryFromJSON(action: string, table: string, fjson: obj
  */
 function createInsertQuery(table: string, json: object) {
   let sqlQuery = `INSERT INTO ${table}(`,
-    params = []
+    params: string[] = []
 
   // add property names from JSON
   for (let prop in json) {
@@ -57,9 +59,9 @@ function createInsertQuery(table: string, json: object) {
  * @param {object} newJson - JSON object with the new information
  * @param {object} whereJson - JSON object with the information needed to indentify record
  */
-function createUpdateQuery(table: string, newJson: object, whereJson: object) {
+function createUpdateQuery(table: string, newJson: any, whereJson: object) {
   let sqlQuery = `UPDATE ${table} SET `,
-    params = []
+    params: string[] = []
 
   for(let prop in newJson) {
     sqlQuery += prop + ' = ?, '
@@ -92,7 +94,7 @@ function createUpdateQuery(table: string, newJson: object, whereJson: object) {
 function createSelectQuery(table: string, whereJSON: object) {
   let fields = models.get(table).fields,
     sqlQuery = 'SELECT ',
-    params = []
+    params: string[] = []
 
   for(let fieldName of fields) {
     sqlQuery += `${fieldName}, `

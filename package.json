@@ -6,16 +6,17 @@
   "license": "GPL-3.0-or-later",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "lint": "eslint .",
-    "dev": "nodemon",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "dev": "ts-node-dev --respawn --transpileOnly ./app.ts",
+    "prod": "tsc && node ./build/app.js",
+    "start": "node .build/app.js"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/cors": "^2.8.4",
     "@types/express": "^4.16.0",
     "@types/jsonwebtoken": "^8.3.0",
+    "@types/mailgun-js": "^0.16.3",
     "@types/mysql2": "types/mysql2",
     "aws-sdk": "^2.321.0",
     "bcryptjs": "^2.4.3",
@@ -32,6 +33,7 @@
     "morgan": "^1.9.1",
     "mysql2": "^1.6.1",
     "nodemon": "^1.18.4",
+    "ts-node-dev": "^1.0.0-pre.32",
     "typescript": "^3.2.2",
     "winston": "^3.1.0"
   },
