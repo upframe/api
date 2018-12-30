@@ -11,4 +11,4 @@ deploy:
     api_key: $GITHUB_OAUTH_TOKEN
     on:
       branch: master
-      condition: if $TRAVIS_COMMIT_MESSAGE =~ "^\\[deploy\\]"
+      condition: $TRAVIS_COMMIT_MESSAGE =~ "^\\[deploy\\]"
