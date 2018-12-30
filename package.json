@@ -33,7 +33,6 @@
     "moment": "^2.22.2",
     "morgan": "^1.9.1",
     "mysql2": "^1.6.1",
-    "nodemon": "^1.18.4",
     "ts-node-dev": "^1.0.0-pre.32",
     "typescript": "^3.2.2",
     "winston": "^3.1.0"
