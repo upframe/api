@@ -6,8 +6,9 @@
   "license": "GPL-3.0-or-later",
   "main": "app.js",
   "scripts": {
-    "tsc": "tsc",
+    "build": "tsc",
     "dev": "ts-node-dev --respawn --transpileOnly ./app.ts",
+    "lint": "./node_modules/.bin/tslint --config ./tslint.json --project .",
     "prod": "tsc && node ./build/app.js",
     "start": "node .build/app.js"
   },
@@ -43,6 +44,7 @@
     "eslint-plugin-import": "^2.13.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^3.8.0",
-    "eslint-plugin-standard": "^3.1.0"
+    "eslint-plugin-standard": "^3.1.0",
+    "tslint": "^5.12.0"
   }
 }
