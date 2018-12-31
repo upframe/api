@@ -1,16 +1,16 @@
-// require('dotenv').config() // Podemos usar .env para as variables
 import './env'
 
-import cors from 'cors'
 import express from 'express'
+
 import bodyParser from 'body-parser'
 import busboy from 'connect-busboy'
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
 import morgan from 'morgan'
-import { logger } from './utils'
 
 import * as routers from './routes'
 import * as services from './services'
+import { logger } from './utils'
 
 const app: express.Application = express()
 

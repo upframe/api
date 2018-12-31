@@ -1,5 +1,3 @@
-// get local (folder) environment variables
-// require('dotenv').config()
 import '../env'
 
 import * as crypto from 'crypto'
