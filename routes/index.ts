@@ -1,11 +1,12 @@
-const Auth = require('./auth')
-const Meetup = require('./meetup')
-const Mentor = require('./mentor')
-const Search = require('./search')
-const Profile = require('./profile')
+import * as express from 'express'
 
-exports.init = (app) => {
+import * as Auth from './auth'
+import * as Meetup from './meetup'
+import * as Mentor from './mentor'
+import * as Profile from './profile'
+import * as Search from './search'
 
+export function init(app: express.Application): void {
   try {
     app.use('/auth', Auth.init(app))
     app.use('/meetup', Meetup.init(app))

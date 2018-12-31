@@ -1,21 +1,19 @@
-exports.fields = [
+export const fields: string[] = [
   'uid',
-  'email',
   'keycode',
+  'type',
   'name',
   'role',
   'company',
   'location',
-  'website',
+  'tags',
   'bio',
+  'freeSlots',
   'profilePic',
   'twitter',
   'linkedin',
   'github',
   'facebook',
   'dribbble',
-  'googleAccessToken',
-  'googleRefreshToken',
-  'tags'
+  'favoritePlaces',
 ]
-

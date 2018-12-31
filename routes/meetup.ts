@@ -1,7 +1,11 @@
-const router = require('express').Router()
+import * as express from 'express'
 
-function setRouters(app) {
-  let services = app.get('services')
+import { Services } from '../service'
+
+const router: express.Router = express.Router()
+
+function setRouters(app: express.Application): void {
+  const services: Services = app.get('services')
 
   router.post('/', services.auth.verifyToken, (req, res) => {
     services.meetup.create(req, res)
@@ -18,16 +22,15 @@ function setRouters(app) {
   router.get('/refuse', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
     services.meetup.refuse(req, res)
   })
-
-  return router
 }
 
-module.exports.init = (app) => {
+export function init(app: express.Application): express.Router {
   try {
-    let router = setRouters(app)
+    setRouters(app)
     app.get('logger').verbose('Meetup router loaded')
-    return router
-  } catch(err) {
+  } catch (err) {
     app.get('logger').error('Could not load meetup router')
   }
+
+  return router
 }

@@ -1,5 +1,14 @@
 language: node_js
 node_js:
   - stable
-script:
+before_script:
+  - npm install
+script: 
   - npm run lint
+deploy:
+  - provider: releases
+    skip_cleanup: true
+    api_key: $GITHUB_OAUTH_TOKEN
+    on:
+      branch: master
+      condition: $TRAVIS_COMMIT_MESSAGE =~ "^\\[deploy\\]"
