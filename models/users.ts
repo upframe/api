@@ -16,4 +16,5 @@ export const fields: string[] = [
   'dribbble',
   'googleAccessToken',
   'googleRefreshToken',
+  'tags'
 ]

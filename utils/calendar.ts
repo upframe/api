@@ -10,7 +10,7 @@ import { date, Slot } from '../types'
  * @param {any} maxDate
  * @param {String} diffUnit - days, weeks, months, years, etc
  */
-function dateDiff(eventStart: date, maxDate: date, diffUnit: string) {
+function dateDiff(eventStart: date, maxDate: date, diffUnit: any) {
   let num = 0
 
   try {
