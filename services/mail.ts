@@ -1,18 +1,19 @@
 // get local (folder) environment variables
-require('dotenv').config()
+// require('dotenv').config()
+import '../env'
 
 import * as crypto from 'crypto'
 import * as express from 'express'
 import * as fs from 'fs'
 import mailgun from 'mailgun-js'
 
-import { Email } from '../types'
 import * as winston from 'winston'
+import { Email } from '../types'
 
 export class Mail {
-  database: any;
-  logger: winston.Logger;
-  mailgun: mailgun.Mailgun | undefined;
+  public database: any
+  public logger: winston.Logger
+  public mailgun: mailgun.Mailgun | undefined
 
   constructor(app: express.Application) {
     this.database = app.get('db')
@@ -20,180 +21,179 @@ export class Mail {
 
     try {
       // init mailgun
-      if(process.env.MG_APIKEY && process.env.MG_DOMAIN) {
+      if (process.env.MG_APIKEY && process.env.MG_DOMAIN) {
         this.mailgun = mailgun({apiKey: process.env.MG_APIKEY, domain: process.env.MG_DOMAIN})
-        app.get('logger').verbose('Mail  OK')
+        app.get('logger').verbose('Mail OK')
       }
-      if(!this.mailgun) throw 500
+      if (!this.mailgun) throw 500
 
       return this
-    } catch(err) {
+    } catch (err) {
       app.get('logger').error('Mail NOT OK')
     }
   }
 
-  getTemplate(name: string, args: any) {
+  public getTemplate(name: string, args: any) {
     let file = fs.readFileSync(`assets/${name}.html`, 'utf8')
-    if(args) {
-      for(let prop in args) {
+    if (args) {
+      for (const prop of Object.keys(args)) {
         file = file.replace(new RegExp(prop, 'g'), args[prop])
       }
     }
-    
+
     return file
   }
 
   /**
-   * @param {string} toAddress 
+   * @param {string} toAddress
    */
-  async sendPasswordReset(toAddress: string) {
+  public async sendPasswordReset(toAddress: string) {
     try {
-      if(!this.mailgun) throw 1
+      if (!this.mailgun) throw 1
 
-      let [rows] = await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress)
+      let rows = (await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress))[0][0]
 
       if (rows[0]['COUNT(*)']) {
-        let data: Email = {
+        const data: Email = {
           from: 'noreply@upframe.io',
           to: toAddress,
-          subject: 'Password reset'
-        },
-          token = crypto.randomBytes(20).toString('hex')
-        data.html = this.getTemplate('resetPassword', { 'RESETURL': token })
+          subject: 'Password reset',
+        }
+        const token = crypto.randomBytes(20).toString('hex')
+        data.html = this.getTemplate('resetPassword', { RESETURL: token })
 
-        let [rows] = await this.database.query('INSERT INTO passwordReset VALUES(?,?)', [toAddress, token])
+        rows = (await this.database.query('INSERT INTO passwordReset VALUES(?,?)', [toAddress, token]))[0][0]
         if (rows.affectedRows) {
           return (await this.mailgun.messages().send(data)
-            .then(data => {
-              if (data.message !== '' && data.id !== '') return 0
+            .then((res) => {
+              if (res.message !== '' && res.id !== '') return 0
               else return 1
             }))
         } else throw 1
       } else throw 1
-    } catch(err) {
+    } catch (err) {
       return 1
     }
   }
 
   /**
-   * 
-   * @param {string} toAddress 
+   *
+   * @param {string} toAddress
    */
-  async sendEmailChange(toAddress: string) {
+  public async sendEmailChange(toAddress: string) {
     try {
-      if(!this.mailgun) throw 1
+      if (!this.mailgun) throw 1
 
-      let [rows] = await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress)
+      let rows = (await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress))[0][0]
 
       if (rows[0]['COUNT(*)']) {
-        let data: Email = {
+        const data: Email = {
           from: 'noreply@upframe.io',
           to: toAddress,
-          subject: 'Email change'
-        },
-          token = crypto.randomBytes(20).toString('hex')
-        data.html = this.getTemplate('emailChange', { 'RESETURL': token })
+          subject: 'Email change',
+        }
+        const token = crypto.randomBytes(20).toString('hex')
+        data.html = this.getTemplate('emailChange', { RESETURL: token })
 
-        let [rows] = await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token])
+        rows = (await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token]))[0][0]
         if (rows.affectedRows) {
           return this.mailgun.messages().send(data)
-            .then(data => {
-              if (data.message !== '' && data.id !== '') return 0
+            .then((res) => {
+              if (res.message !== '' && res.id !== '') return 0
               else throw 1
             })
         } else throw 1
       } else throw 1
-    } catch(err) {
+    } catch (err) {
       return 1
     }
   }
 
   /**
-   * @description Sends meetup invite notification to mentor by email 
+   * @description Sends meetup invite notification to mentor by email
    * @param {string} meetupID
    */
-  async sendMeetupInvitation(meetupID: string) {
+  public async sendMeetupInvitation(meetupID: string) {
     try {
-      if(!this.mailgun) throw 1
+      if (!this.mailgun) throw 1
 
       // get meetup by id
-      let [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
-      if(!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
-      
-      // get mentee name
-      let [mentee] = (await this.database.query('SELECT name FROM users WHERE uid = ?', meetup[0].menteeUID))[0]
-      if(!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
-      
-      // get mentor email
-      let [mentor] = (await this.database.query('SELECT email FROM users WHERE uid = ?', meetup[0].mentorUID))[0]
-      if(!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
+      const [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
+      if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
 
-      let data: Email = {
+      // get mentee name
+      const [mentee] = (await this.database.query('SELECT name FROM users WHERE uid = ?', meetup[0].menteeUID))[0]
+      if (!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
+
+      // get mentor email
+      const [mentor] = (await this.database.query('SELECT email FROM users WHERE uid = ?', meetup[0].mentorUID))[0]
+      if (!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
+
+      const data: Email = {
           from: 'noreply@upframe.io',
           to: mentor.email,
-          subject: `${mentee.name} invited you for a meetup`
-        },
-        placeholders = {
-          'USER': mentee.name,
-          'LOCATION': meetup[0].location,
-          'TIME': new Date(meetup[0].start).toLocaleString(),
-          'MID': meetupID,
+          subject: `${mentee.name} invited you for a meetup`,
+        }
+      const placeholders = {
+          USER: mentee.name,
+          LOCATION: meetup[0].location,
+          TIME: new Date(meetup[0].start).toLocaleString(),
+          MID: meetupID,
         }
 
       data.html = this.getTemplate('meetupInvitation', placeholders)
 
       return this.mailgun.messages().send(data)
-        .then(data => {
-          if((data.message !== '') && (data.id !== '')) return 0
+        .then((res) => {
+          if ((res.message !== '') && (res.id !== '')) return 0
           else throw 1
         })
     } catch (err) {
-      if(err.APIerr) return err
+      if (err.APIerr) return err
       else return 1
     }
   }
 
   /**
    * @description Sends meetup confirmation notification to mentee by email
-   * @param {String} meetupID 
+   * @param {String} meetupID
    */
-  async sendMeetupConfirmation(meetupID: string) {
+  public async sendMeetupConfirmation(meetupID: string) {
     try {
-      if(!this.mailgun) throw 1
+      if (!this.mailgun) throw 1
 
       // get meetup by id
-      let [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', [meetupID])
+      const [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', [meetupID])
       if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
 
       // get mentee email
-      let [mentee] = (await this.database.query('SELECT email FROM users WHERE uid = ?', [meetup[0].menteeUID]))[0]
+      const [mentee] = (await this.database.query('SELECT email FROM users WHERE uid = ?', [meetup[0].menteeUID]))[0]
       if (!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
 
       // get mentor name
-      let [mentor] = (await this.database.query('SELECT name FROM users WHERE uid = ?', [meetup[0].mentorUID]))[0]
+      const [mentor] = (await this.database.query('SELECT name FROM users WHERE uid = ?', [meetup[0].mentorUID]))[0]
       if (!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
 
-      let data: Email = {
+      const data: Email = {
           from: 'noreply@upframe.io',
           to: mentee.email,
-          subject: `${mentor.name} accepted to meetup with you`
-        },
-        placeholders = {
-          'MENTOR': mentor.name,
-          'LOCATION': meetup[0].location,
-          'TIME': new Date(meetup[0].start).toLocaleString(),
-          'MID': meetupID,
+          subject: `${mentor.name} accepted to meetup with you`,
         }
-
+      const placeholders = {
+          MENTOR: mentor.name,
+          LOCATION: meetup[0].location,
+          TIME: new Date(meetup[0].start).toLocaleString(),
+          MID: meetupID,
+        }
       data.html = this.getTemplate('meetupConfirmation', placeholders)
 
       return this.mailgun.messages().send(data)
-        .then(data => {
-          if (data.message !== '' && data.id !== '') return 0
+        .then((res) => {
+          if (res.message !== '' && res.id !== '') return 0
           else throw 1
         })
-    } catch( err) {
-      if(err.APIerr) return err
+    } catch (err) {
+      if (err.APIerr) return err
       else return 1
     }
   }

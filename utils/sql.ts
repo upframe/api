@@ -1,22 +1,23 @@
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs'
 
 import * as models from '../models'
 
 /**
- * @param {string} action 
- * @param {string} table 
- * @param {object} fjson 
- * @param {object} sjson 
+ * @param {string} action
+ * @param {string} table
+ * @param {object} fjson
+ * @param {object} sjson
  */
 export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson?: object) {
-  let query, params
+  let query: string
+  let params
 
-  switch(action) {
+  switch (action) {
   case 'INSERT':
     [query, params] = createInsertQuery(table, fjson)
     break
   case 'UPDATE':
-    if(sjson) {
+    if (sjson) {
       [query, params] = createUpdateQuery(table, fjson, sjson)
     }
     break
@@ -24,27 +25,27 @@ export function createSQLqueryFromJSON(action: string, table: string, fjson: obj
     [query, params] = createSelectQuery(table, fjson)
     break
   }
-  
+
   return [query, params]
 }
 
 /**
- * @description Creates INSERT SQL query using table name and JSON which contains info 
- * @param {string} table 
- * @param {object} json 
+ * @description Creates INSERT SQL query using table name and JSON which contains info
+ * @param {string} table
+ * @param {object} json
  */
 function createInsertQuery(table: string, json: object) {
-  let sqlQuery = `INSERT INTO ${table}(`,
-    params: string[] = []
+  let sqlQuery: string = `INSERT INTO ${table}(`
+  const params: string[] = []
 
   // add property names from JSON
-  for (let prop in json) {
+  for (const prop of Object.keys(json)) {
     sqlQuery += prop + ','
   }
   sqlQuery = sqlQuery.slice(0, -1) + ') VALUES('
 
   // add ? as placeholders to VALUES list
-  for(let prop in json) {
+  for (const prop of Object.keys(json)) {
     sqlQuery += '?,'
     params.push(json[prop])
   }
@@ -55,28 +56,28 @@ function createInsertQuery(table: string, json: object) {
 
 /**
  * @description Creates UPDATE SQL query using table name, JSON which contains info and JSON that identifies record
- * @param {string} table 
+ * @param {string} table
  * @param {object} newJson - JSON object with the new information
  * @param {object} whereJson - JSON object with the information needed to indentify record
  */
 function createUpdateQuery(table: string, newJson: any, whereJson: object) {
-  let sqlQuery = `UPDATE ${table} SET `,
-    params: string[] = []
+  let sqlQuery = `UPDATE ${table} SET `
+  const params: string[] = []
 
-  for(let prop in newJson) {
+  for (const prop of Object.keys(newJson)) {
     sqlQuery += prop + ' = ?, '
 
-    if(prop === 'password') {
+    if (prop === 'password') {
       // hash password
-      let salt = bcrypt.genSaltSync(10)
+      const salt = bcrypt.genSaltSync(10)
       newJson[prop] = bcrypt.hashSync(newJson[prop], salt)
     }
 
     params.push(newJson[prop])
   }
   sqlQuery = sqlQuery.slice(0, -2) + ' WHERE '
-  
-  for(let prop in whereJson) {
+
+  for (const prop of Object.keys(whereJson)) {
     sqlQuery += prop + '= ? AND '
 
     params.push(whereJson[prop])
@@ -88,22 +89,22 @@ function createUpdateQuery(table: string, newJson: any, whereJson: object) {
 
 /**
  * @description Creates SELECT SQL query using table name and JSON which identifies record
- * @param {string} table 
- * @param {object} whereJSON 
+ * @param {string} table
+ * @param {object} whereJSON
  */
 function createSelectQuery(table: string, whereJSON: object) {
-  let fields = models.get(table).fields,
-    sqlQuery = 'SELECT ',
-    params: string[] = []
+  const fields = models.get(table).fields
+  let sqlQuery = 'SELECT '
+  const params: string[] = []
 
-  for(let fieldName of fields) {
+  for (const fieldName of fields) {
     sqlQuery += `${fieldName}, `
   }
-  if(table !== 'mentors') sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
+  if (table !== 'mentors') sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
   else sqlQuery = sqlQuery.slice(0, -2) + ' FROM users WHERE '
 
-  for(let prop in whereJSON) {
-    if(fields.includes(prop)) {
+  for (const prop in whereJSON) {
+    if (fields.includes(prop)) {
       sqlQuery += `${prop} = ? AND `
       params.push(whereJSON[prop])
     }

@@ -4,10 +4,10 @@ import * as winston from 'winston'
 
 import { AccountTypes, APIrequest, JWTpayload } from './types'
 
-export class service {
-  database: any;
-  logger: winston.Logger;
-  mail: MailService;
+export class Service {
+  public database: any
+  public logger: winston.Logger
+  public mail: MailService
 
   constructor(app: express.Application) {
     // inject independent services
@@ -15,59 +15,59 @@ export class service {
     this.logger = app.get('logger')
     this.mail = app.get('mail')
 
-    if(!process.env.CONNECT_PK) this.logger.warn('Env vars not set')
+    if (!process.env.CONNECT_PK) this.logger.warn('Env vars not set')
   }
 }
 
 export interface Services {
-  auth: AuthService;
-  meetup: MeetupService;
-  mentor: MentorService;
-  search: SearchService;
-  user: UserService;
+  auth: AuthService
+  meetup: MeetupService
+  mentor: MentorService
+  search: SearchService
+  user: UserService
 }
 
 export interface AuthService {
-  verifyToken(req: APIrequest, res: express.Response, next: express.NextFunction): void;
-  isMentor(req: APIrequest, res: express.Response, next: express.NextFunction): void;
-  createToken(user: JWTpayload , accountType: AccountTypes): string;
-  login(req: express.Request, res: express.Response): void;
-  register(req: express.Request, res: express.Response): void;
-  resetPassword(req: express.Request, res: express.Response): void;
-  changeEmail(req: APIrequest, res: express.Response): void;
+  verifyToken(req: APIrequest, res: express.Response, next: express.NextFunction): void
+  isMentor(req: APIrequest, res: express.Response, next: express.NextFunction): void
+  createToken(user: JWTpayload , accountType: AccountTypes): string
+  login(req: express.Request, res: express.Response): void
+  register(req: express.Request, res: express.Response): void
+  resetPassword(req: express.Request, res: express.Response): void
+  changeEmail(req: APIrequest, res: express.Response): void
 }
 
 export interface MailService {
-  getTemplate(name: string, args: any): string;
-  sendPasswordReset(toAddress: string): Promise<number>;
-  sendEmailChange(toAddress: string): Promise<number>;
-  sendMeetupInvitation(meetupID: string): Promise<number>;
-  sendMeetupConfirmation(meetupID: string): Promise<number>;
+  getTemplate(name: string, args: any): string
+  sendPasswordReset(toAddress: string): Promise<number>
+  sendEmailChange(toAddress: string): Promise<number>
+  sendMeetupInvitation(meetupID: string): Promise<number>
+  sendMeetupConfirmation(meetupID: string): Promise<number>
 }
 
 export interface MeetupService {
-  get(req: APIrequest, res: express.Response): void;
-  create(req: APIrequest, res: express.Response): void;
-  confirm(req: APIrequest, res: express.Response): void;
-  refuse(req: APIrequest, res: express.Response): void;
+  get(req: APIrequest, res: express.Response): void
+  create(req: APIrequest, res: express.Response): void
+  confirm(req: APIrequest, res: express.Response): void
+  refuse(req: APIrequest, res: express.Response): void
 }
 
 export interface MentorService {
-  get(req: express.Request , res: express.Response): void;
-  getRandom(req: express.Request , res: express.Response): void;
-  getTimeSlots(req: express.Request , res: express.Response): void;
-  updateTimeSlots(req: express.Request , res: express.Response): void;
-  verify(req: express.Request , res: express.Response): void;
+  get(req: express.Request , res: express.Response): void
+  getRandom(req: express.Request , res: express.Response): void
+  getTimeSlots(req: express.Request , res: express.Response): void
+  updateTimeSlots(req: express.Request , res: express.Response): void
+  verify(req: express.Request , res: express.Response): void
 }
 
 export interface SearchService {
-  quick(req: express.Request, res: express.Response): void;
-  full(req: express.Request, res: express.Response): void;
-  tags(req: express.Request, res: express.Response): void;
+  quick(req: express.Request, res: express.Response): void
+  full(req: express.Request, res: express.Response): void
+  tags(req: express.Request, res: express.Response): void
 }
 
 export interface UserService {
-  get(req: express.Request, res: express.Response): void;
-  update(req: express.Request, res: express.Response): void;
-  image(url, userEmail, res): void;
+  get(req: express.Request, res: express.Response): void
+  update(req: express.Request, res: express.Response): void
+  image(url, userEmail, res): void
 }

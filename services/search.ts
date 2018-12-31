@@ -1,41 +1,41 @@
 import * as express from 'express'
 
-import { service } from '../service'
+import { Service } from '../service'
 
-export class SearchService extends service {
+export class SearchService extends Service {
   constructor(app: express.Application) {
     super(app)
-    
+
     if (this.logger) this.logger.verbose('Search service loaded')
   }
 
-  async quick(req: express.Request, res: express.Response) {
-    //Primeiro expertise
-    //Segundo pessoas
-    //Terceiro companies
-    let sqlExpertise = 'SELECT * FROM expertise WHERE name LIKE ?'
-    let sqlPeople = 'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
-    let sqlCompanies = 'SELECT * FROM companies WHERE name LIKE ?'
-    let [expertiseRows] = await this.database.query(sqlExpertise, '%' + req.query.term + '%')
-    let [peopleRows] = await this.database.query(sqlPeople, '%' + req.query.term + '%')
-    let [companyRows] = await this.database.query(sqlCompanies, '%' + req.query.term + '%')
-    let response = {
-      expertise: expertiseRows.slice(0,3),
+  public async quick(req: express.Request, res: express.Response) {
+    // Primeiro expertise
+    // Segundo pessoas
+    // Terceiro companies
+    const sqlExpertise = 'SELECT * FROM expertise WHERE name LIKE ?'
+    const sqlPeople = 'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
+    const sqlCompanies = 'SELECT * FROM companies WHERE name LIKE ?'
+    const [expertiseRows] = await this.database.query(sqlExpertise, '%' + req.query.term + '%')
+    const [peopleRows] = await this.database.query(sqlPeople, '%' + req.query.term + '%')
+    const [companyRows] = await this.database.query(sqlCompanies, '%' + req.query.term + '%')
+    const response = {
+      company: companyRows.slice(0, 3),
+      expertise: expertiseRows.slice(0, 3),
       people: peopleRows.slice(0, 3),
-      company: companyRows.slice(0, 3)
     }
     res.status(200).send(response)
   }
 
-  async full(req: express.Request, res: express.Response) {
-    //Queremos pesquisar usando a informacao e devolver só users
-    let sql = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
-    let [rows] = await this.database.query(sql, '%' + req.query.term + '%')
+  public async full(req: express.Request, res: express.Response) {
+    // Queremos pesquisar usando a informacao e devolver só users
+    const sql = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
+    const [rows] = await this.database.query(sql, '%' + req.query.term + '%')
     res.status(200).send(rows)
   }
 
-  async tags(req: express.Request, res: express.Response) {
-    let tags = ['User Research', 'Event Marketing', 'Communities', 'Business Models', 'Ideation', 'B2B', 'B2C']
+  public async tags(req: express.Request, res: express.Response) {
+    const tags = ['User Research', 'Event Marketing', 'Communities', 'Business Models', 'Ideation', 'B2B', 'B2C']
     res.status(200).send(tags)
   }
 

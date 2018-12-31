@@ -75,6 +75,12 @@
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-2.0.0.tgz#5a7306e367c539b9f6543499de8dd519fac37a8b"
 
+"@types/morgan@^1.7.35":
+  version "1.7.35"
+  resolved "https://registry.yarnpkg.com/@types/morgan/-/morgan-1.7.35.tgz#6358f502931cc2583d7a94248c41518baa688494"
+  dependencies:
+    "@types/express" "*"
+
 "@types/mysql2@types/mysql2":
   version "1.0.0"
   resolved "https://codeload.github.com/types/mysql2/tar.gz/e2be194d8db7a1a64612e5f645d5cad8223328ab"

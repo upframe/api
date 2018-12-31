@@ -5,5 +5,5 @@ export const fields: string[] = [
   'mentorUID',
   'location',
   'start',
-  'status'
+  'status',
 ]

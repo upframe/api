@@ -1,32 +1,32 @@
-import { createLogger, format, transports, Logger } from 'winston'
+import { createLogger, format, Logger, transports } from 'winston'
 
 const { combine, timestamp, printf, colorize } = format
 
-let printFormat = printf((info: any) => {
+const printFormat = printf((info: any) => {
   return `${info.timestamp} [${info.level}]: ${info.message}`
 })
 
 export let logger: Logger = createLogger({
+  exitOnError: false,
   transports: [
     new transports.Console({
-      silent: process.env.NODE_ENV !== 'production',
+      format: combine(colorize(), timestamp(), printFormat),
       level: 'info',
-      format: combine(colorize(), timestamp(), printFormat)
+      silent: process.env.NODE_ENV !== 'production',
     }),
     new transports.Console({
-      silent: process.env.NODE_ENV !== 'dev',
-      level: 'debug',
+      format: combine(colorize(), timestamp(), printFormat),
       handleExceptions: true,
-      format: combine(colorize(), timestamp(), printFormat)
+      level: 'debug',
+      silent: process.env.NODE_ENV !== 'dev',
     }),
     new transports.File({
-      level: 'silly',
       filename: 'app.log',
+      format: combine(timestamp(), printFormat),
       handleExceptions: true,
       maxsize: 20971520,
       maxFiles: 5,
-      format: combine(timestamp(), printFormat)
-    })
+      level: 'silly',
+    }),
   ],
-  exitOnError: false
 })

@@ -1,25 +1,24 @@
-const moment = require('moment')
+import moment from 'moment'
 
 /******************
- * Types 
+ * Types
  ******************/
 import { date, Slot } from '../types'
 
-
 /**
  * @description returns date difference given the first, the last and the frequency of events/slots
- * @param {any} maxDate 
- * @param {String} diffUnit - days, weeks, months, years, etc 
+ * @param {any} maxDate
+ * @param {String} diffUnit - days, weeks, months, years, etc
  */
 function dateDiff(eventStart: date, maxDate: date, diffUnit: string) {
   let num = 0
 
   try {
-    if(maxDate instanceof Date) {
+    if (maxDate instanceof Date) {
       num = Math.abs(moment(maxDate).diff(moment(eventStart), diffUnit))
-    } else if (typeof maxDate == 'number') {
+    } else if (typeof maxDate === 'number') {
       num = maxDate
-    } else throw 'Invalid maximum date'
+    } else throw new Error('Invalid maximum date')
   } catch (err) {
     return err
   }
@@ -27,27 +26,26 @@ function dateDiff(eventStart: date, maxDate: date, diffUnit: string) {
   return num
 }
 
-
 /**
  * @description Generates daily slots/events until the date specified or
  * the number specified of daily events
- * @param {Slot} slot 
- * @param {Date} start minimum slot/event start time 
+ * @param {Slot} slot
+ * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
 
 export function genDaily(slot: Slot, start: date, end: date): Slot[] {
-  let num = dateDiff(slot.start, new Date(end), 'days'),
-    i = 0,
-    arr: Slot[] = []
+  const num = dateDiff(slot.start, new Date(end), 'days')
+  let i = 0
+  let arr: Slot[] = []
 
-  while(i <= num) {
-    let newSlot = Object.assign({}, slot)
+  while (i <= num) {
+    const newSlot = Object.assign({}, slot)
 
     // increment day
     newSlot.start = moment(slot.start).add(i, 'd').toDate()
     newSlot.end = moment(slot.end).add(i, 'd').toDate()
-    
+
     arr.push(newSlot)
     i++
   }
@@ -61,17 +59,17 @@ export function genDaily(slot: Slot, start: date, end: date): Slot[] {
 /**
  * @description Generates weekly slots/events until the date specified or
  * the number specified of weekly events
- * @param {Slot} slot 
+ * @param {Slot} slot
  * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
 export function genWeekly(slot: Slot, start: date, end: date): Slot[] {
-  let num = dateDiff(slot.start, new Date(end), 'w'),
-    i = 0,
-    arr: Slot[] = []
-  
-  while(i <= num) {
-    let newSlot = Object.assign({}, slot)
+  const num = dateDiff(slot.start, new Date(end), 'w')
+  let i = 0
+  const arr: Slot[] = []
+
+  while (i <= num) {
+    const newSlot = Object.assign({}, slot)
     newSlot.start = moment(slot.start).add(i, 'w').toDate()
     newSlot.end = moment(slot.end).add(i, 'w').toDate()
 
@@ -79,7 +77,7 @@ export function genWeekly(slot: Slot, start: date, end: date): Slot[] {
     i++
   }
 
-  return arr.filter(item => {
+  return arr.filter((item) => {
     return (new Date(item.start).getTime() >= new Date(start).getTime())
   })
 }
@@ -87,17 +85,17 @@ export function genWeekly(slot: Slot, start: date, end: date): Slot[] {
 /**
  * @description Generates monthly slots/events until the date specified or
  * the number specified of mothly events
- * @param {Slot} slot 
+ * @param {Slot} slot
  * @param {Date} start minimum slot/event start time
  * @param {Date} end maximum slot/event end time
  */
 export function genMonthly(slot: Slot, start: date, end: date): Slot[] {
-  let num = dateDiff(slot.start, new Date(end), 'M'),
-    i = 0,
-    arr: Slot[] = []
+  const num = dateDiff(slot.start, new Date(end), 'M')
+  let i = 0
+  const arr: Slot[] = []
 
-  while(i <= num) {
-    let newSlot = Object.assign({}, slot)
+  while (i <= num) {
+    const newSlot = Object.assign({}, slot)
     newSlot.start = moment(slot.start).add(i, 'M').toDate()
     newSlot.end = moment(slot.end).add(i, 'M').toDate()
 
@@ -105,42 +103,42 @@ export function genMonthly(slot: Slot, start: date, end: date): Slot[] {
     i++
   }
 
-  return arr.filter(item => {
+  return arr.filter((item) => {
     return (new Date(item.start).getTime() >= new Date(start).getTime())
   })
 }
 
 /**
- * 
+ *
  * @param {Array<Slot>} slots slots array
  * @param {Date} startDate minimum slot/event start time
  * @param {Date} limitDate maximum slot/event end time
  */
 export function automaticGenerate(slots: Slot[], startDate?: date | undefined, limitDate?: date): Slot[] {
-  let arr: Slot[] = [];
+  let arr: Slot[] = []
 
-  if(!startDate) {
+  if (!startDate) {
     startDate = new Date()
   }
 
-  if(!limitDate || (new Date().getTime() > new Date(limitDate).getTime()) ) {
+  if (!limitDate || (new Date().getTime() > new Date(limitDate).getTime()) ) {
     limitDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
   }
 
-  for(let slot of slots) {
+  for (const slot of slots) {
     switch (slot.recurrency) {
     case 'Daily':
-      arr = arr.concat(genDaily(slot, startDate, limitDate))      
-      break;
+      arr = arr.concat(genDaily(slot, startDate, limitDate))
+      break
     case 'Weekly':
       arr = arr.concat(genWeekly(slot, startDate, limitDate))
-      break;
+      break
     case 'Monthly':
       arr = arr.concat(genMonthly(slot, startDate, limitDate))
-      break;
+      break
     case 'Unique':
       arr = arr.concat(slot)
-      break;
+      break
     }
   }
 

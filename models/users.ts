@@ -15,6 +15,5 @@ export const fields: string[] = [
   'facebook',
   'dribbble',
   'googleAccessToken',
-  'googleRefreshToken'
+  'googleRefreshToken',
 ]
-

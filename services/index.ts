@@ -11,20 +11,18 @@ import { UserService as User } from './user'
 
 import { Services } from '../service'
 
-module.exports.init = (app: express.Application) => {
-  /**
-   *  Independent services 
-   *  that work 100% alone
-   **/
+export function init(app: express.Application): void {
+  /*
+   * Independent services that work alone
+   */
   app.set('db', new Database(app))
   app.set('mail', new Mail(app))
 
-  /**
-   *  Dependent services 
-   *  that need other 
-   *  services to work
+  /*
+   * Dependent services that need other
+   * services to work
    **/
-  let services: Services  = {
+  const services: Services  = {
     auth: new Auth(app),
     meetup: new Meetup(app),
     mentor: new Mentor(app),
