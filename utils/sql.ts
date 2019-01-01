@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs'
 
 import * as models from '../models'
+import { sql } from '.';
 
 /**
  * @param {string} action
@@ -8,11 +9,11 @@ import * as models from '../models'
  * @param {object} fjson
  * @param {object} sjson
  */
-export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson?: object) {
-  let query: string
-  let params
+export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson?: object): [string, string[]] {
+  let query: string = ''
+  let params: string[] = []
 
-  switch (action) {
+  switch (action) { 
   case 'INSERT':
     [query, params] = createInsertQuery(table, fjson)
     break
@@ -26,7 +27,9 @@ export function createSQLqueryFromJSON(action: string, table: string, fjson: obj
     break
   }
 
-  return [query, params]
+  if(query && params) {
+    return [query, params]
+  } else return ['', []]
 }
 
 /**
@@ -34,7 +37,7 @@ export function createSQLqueryFromJSON(action: string, table: string, fjson: obj
  * @param {string} table
  * @param {object} json
  */
-function createInsertQuery(table: string, json: object) {
+function createInsertQuery(table: string, json: object): [string, string[]] {
   let sqlQuery: string = `INSERT INTO ${table}(`
   const params: string[] = []
 
@@ -60,7 +63,7 @@ function createInsertQuery(table: string, json: object) {
  * @param {object} newJson - JSON object with the new information
  * @param {object} whereJson - JSON object with the information needed to indentify record
  */
-function createUpdateQuery(table: string, newJson: any, whereJson: object) {
+function createUpdateQuery(table: string, newJson: any, whereJson: object): [string, string[]] {
   let sqlQuery = `UPDATE ${table} SET `
   const params: string[] = []
 
@@ -92,8 +95,8 @@ function createUpdateQuery(table: string, newJson: any, whereJson: object) {
  * @param {string} table
  * @param {object} whereJSON
  */
-function createSelectQuery(table: string, whereJSON: object) {
-  const fields = models.get(table).fields
+function createSelectQuery(table: string, whereJSON: object): [string, string[]] {
+  const fields = models.get(table)
   let sqlQuery = 'SELECT '
   const params: string[] = []
 

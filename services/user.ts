@@ -1,12 +1,12 @@
 import * as express from 'express'
 
-import { Service } from '../service'
+import { Service, StandaloneServices } from '../service'
 import { APIrequest, APIresponse } from '../types'
 import { sql } from '../utils'
 
 export class UserService extends Service {
-  constructor(app: express.Application) {
-    super(app)
+  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+    super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('User service loaded')
   }

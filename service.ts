@@ -1,19 +1,20 @@
 import * as express from 'express'
-import mailgun from 'mailgun-js'
 import * as winston from 'winston'
 
-import { AccountTypes, APIrequest, JWTpayload } from './types'
+import { AccountTypes, APIrequest, date, JWTpayload } from './types'
 
 export class Service {
-  public database: any
+  public database: DatabaseService
   public logger: winston.Logger
   public mail: MailService
 
-  constructor(app: express.Application) {
+  constructor(app: express.Application, standaloneServices: StandaloneServices) {
     // inject independent services
-    this.database = app.get('db')
+    this.database = standaloneServices.db
+    this.mail = standaloneServices.mail
+
+    // inject logger
     this.logger = app.get('logger')
-    this.mail = app.get('mail')
 
     if (!process.env.CONNECT_PK) this.logger.warn('Env vars not set')
   }
@@ -70,4 +71,13 @@ export interface UserService {
   get(req: express.Request, res: express.Response): void
   update(req: express.Request, res: express.Response): void
   image(url, userEmail, res): void
+}
+
+export interface StandaloneServices {
+  db: DatabaseService
+  mail: MailService
+}
+
+export interface DatabaseService {
+  query(sqlQuery: string, parameters?: string[] | date[]): Promise<any>
 }

@@ -2,79 +2,75 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import moment from 'moment'
 
-import { Service } from '../service'
+import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, Mentor, Slot } from '../types'
 import { calendar, sql } from '../utils'
 
 export class MentorService extends Service {
-  constructor(app: express.Application) {
-    super(app)
+  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+    super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('Mentor service loaded')
   }
 
   public async get(req: express.Request , res: express.Response) {
-    let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users',
-      {
-        keycode: req.params.keycode,
-        type: 'mentor',
-      })
     const response: APIresponse = {
-        code: 200,
         ok: 1,
+        code: 200,
       }
     let err: APIerror
 
     try {
-      // console.log(await this.database.query(sqlQuery, params))
-      // let [rows]: any[] = await this.database.query(sqlQuery, params)
-      // if(!rows.length) throw 404
-      // else response.mentor = rows[0]
+      // fetch mentor general info
+      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users',
+        {
+          keycode: req.params.keycode,
+          type: 'mentor',
+        })
 
-      if (!response.mentor) {
+      const mentorInfo: Mentor = (await this.database.query(sqlQuery, params))
+      if (!mentorInfo) {
         err = {
           code: 404,
           message: 'Mentor not found',
+          friendlyMessage: 'There is no mentor with the provided keycode',
         }
-        throw err
-      }
 
+        throw err
+      } else response.mentor = mentorInfo
+
+      // fetch mentor time slots
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
-      const verified: string[] = []
-      let slots: Slot[]
+      params = [response.mentor.uid]
 
-      // fetch slots
-      slots = (await this.database.query(sqlQuery, [response.mentor.uid]))[0]
-      if (!slots.length) {
-        err = {
-          code: 404,
-          message: 'Slots not found',
-          friendlyMessage: 'This mentor has no time slots',
-        }
-        throw err
-      }
+      let mentorSlots: Slot[] = (await this.database.query(sqlQuery, params))
+      if (!mentorSlots || !mentorSlots.length) {
+        response.mentor.slots = []
+      } else {
+        const verified: string[] = []
 
-      // generate slots from today to 7 days from now
-      slots = calendar.automaticGenerate(slots, moment().toDate(), moment().add(7, 'd').toDate())
+        // generate slots from today to 7 days from now
+        mentorSlots = calendar.automaticGenerate(mentorSlots, moment().toDate(), moment().add(7, 'd').toDate())
 
-      // filter available slots from all slots
-      for (const slot of slots) {
-        if (verified.includes(slot.sid)) continue
+        // filter available slots from all slots
+        for (const slot of mentorSlots) {
+          if (verified.includes(slot.sid)) continue
 
-        // check if there any meetup refering to this slot and its space in time
-        sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed"
+          // check if there any meetup refering to this slot and its space in time
+          sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed"
          AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)`
-        if ( (await this.database.query(sqlQuery,
-          [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()],
-          ))[0][0]['COUNT(*)']) {
-          // there is a confirmed meetup on that space in time
-          // so let's filter all the slots and remove the slot starting
-          // at that time
-          slots = slots.filter((eachSlot) => eachSlot.start.getTime() !== slot.start.getTime())
+          if ( (await this.database.query(sqlQuery,
+            [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()],
+          ))[0][0]['COUNT(*)'] ) {
+            // there is a confirmed meetup on that space in time
+            // so let's filter all the slots and remove the slot starting
+            // at that time
+            mentorSlots = mentorSlots.filter((eachSlot) => eachSlot.start.getTime() !== slot.start.getTime())
+          }
         }
-      }
 
-      response.mentor.slots = slots
+        response.mentor.slots = mentorSlots
+      }
     } catch (err) {
       response.ok = 0
       response.code = 400
@@ -83,12 +79,16 @@ export class MentorService extends Service {
         response.code = err
         response.message = 'Mentor not found'
       }
-
     }
 
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Fetches random mentors (max: 5)
+   * @param {express.Request} req Express request
+   * @param {express.Response} res Express response
+   */
   public async getRandom(req: express.Request , res: express.Response) {
     const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5'
     const  response: APIresponse = {
@@ -97,10 +97,10 @@ export class MentorService extends Service {
       }
 
     try {
-      const [rows] = await this.database.query(sqlQuery)
-      if (!rows.length) throw 404
+      const mentorList = await this.database.query(sqlQuery)
+      if (!mentorList.length) throw 404
 
-      response.mentors = shuffle(rows)
+      response.mentors = shuffle(mentorList)
     } catch (err) {
       response.ok = 0
       response.code = 400
@@ -116,7 +116,7 @@ export class MentorService extends Service {
   /**
    * @description Returns mentor's time slots
    * @param {APIrequest} req
-   * @param {Response} res
+   * @param {express.Response} res
    */
   public async getTimeSlots(req: APIrequest, res: express.Response) {
     const response: APIresponse = {
@@ -162,7 +162,7 @@ export class MentorService extends Service {
   /**
    * @description Updates and creates mentor's time slots
    * @param {APIrequest} req
-   * @param {Response} res
+   * @param {express.Response} res
    */
   public async updateTimeSlots(req: APIrequest, res: express.Response) {
     const deletedSlots: string[] = req.body.deleted

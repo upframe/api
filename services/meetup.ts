@@ -5,11 +5,11 @@ import moment from 'moment'
 import { APIerror, APIrequest, APIRequestBody, APIresponse, Meetup } from '../types'
 import { calendar, sql } from '../utils'
 
-import { Service } from '../service'
+import { Service, StandaloneServices } from '../service'
 
 export class MeetupService extends Service {
-  constructor(app: express.Application) {
-    super(app)
+  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+    super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('Meetup service loaded')
   }

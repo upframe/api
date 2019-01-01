@@ -5,13 +5,13 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
-import { Service } from '../service'
+import { Service, StandaloneServices } from '../service'
 import { APIrequest, APIresponse, JWTpayload } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
-  constructor(app: express.Application) {
-    super(app)
+  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+    super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('Auth service loaded')
   }
@@ -199,7 +199,7 @@ export class AuthService extends Service {
     if (req.body.token && req.body.email && process.env.CONNECT_PK) {
       try {
         // verify if token is valid by fetching it from the database
-        const [rows] = (await this.database.query('SELECT * FROM emailChange WHERE token = ?', req.body.token))
+        const [rows] = (await this.database.query('SELECT * FROM emailChange WHERE token = ?', [req.body.token]))
         if (!rows.length) throw 403
 
         let params: string[] = []
