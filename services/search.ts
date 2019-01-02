@@ -1,6 +1,7 @@
 import * as express from 'express'
 
 import { Service, StandaloneServices } from '../service'
+import { APIerror, APIresponse } from '../types'
 
 export class SearchService extends Service {
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
@@ -9,29 +10,104 @@ export class SearchService extends Service {
     if (this.logger) this.logger.verbose('Search service loaded')
   }
 
+  /**
+   * @description Performes a quick search for expertise, people and companies
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
   public async quick(req: express.Request, res: express.Response) {
-    // Primeiro expertise
-    // Segundo pessoas
-    // Terceiro companies
-    const sqlExpertise = 'SELECT * FROM expertise WHERE name LIKE ?'
-    const sqlPeople = 'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
-    const sqlCompanies = 'SELECT * FROM companies WHERE name LIKE ?'
-    const [expertiseRows] = await this.database.query(sqlExpertise, '%' + req.query.term + '%')
-    const [peopleRows] = await this.database.query(sqlPeople, '%' + req.query.term + '%')
-    const [companyRows] = await this.database.query(sqlCompanies, '%' + req.query.term + '%')
-    const response = {
-      company: companyRows.slice(0, 3),
-      expertise: expertiseRows.slice(0, 3),
-      people: peopleRows.slice(0, 3),
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
     }
-    res.status(200).send(response)
+    let error: APIerror
+
+    try {
+      let sqlQuery: string = ''
+      response.search = {}
+
+      // expertise search
+      sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
+      const expertiseResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
+      if (expertiseResult) response.search.expertise = expertiseResult
+
+      // people search
+      sqlQuery = 'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
+      const peopleResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
+      if (peopleResult) response.search.people = peopleResult
+
+      // company search
+      sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
+      const companyResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
+      if (companyResult) response.search.companies = companyResult
+
+      if (!response.search.expertise || !response.search.people || !response.search.companies) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'No matches were found.',
+          friendlyMessage: 'There is no expertise, person or company with the given name.',
+        }
+
+        throw error
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 400,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+      }
+    }
+
+    res.status(response.code).json(response)
   }
 
+  /**
+   * @description Performes a full search for people whose name is similar to the one given
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
   public async full(req: express.Request, res: express.Response) {
-    // Queremos pesquisar usando a informacao e devolver só users
-    const sql = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
-    const [rows] = await this.database.query(sql, '%' + req.query.term + '%')
-    res.status(200).send(rows)
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    try {
+      const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
+      const user = await this.database.query(sqlQuery, [`%${req.query.term}%`])
+      if (!user) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'User not found',
+          friendlyMessage: 'There is no account that matches the term.',
+        }
+
+        throw error
+      } else {
+        response.search = {
+          people: user,
+        }
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 400,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+      }
+    }
+
+    res.status(response.code).json(response)
   }
 
   public async tags(req: express.Request, res: express.Response) {

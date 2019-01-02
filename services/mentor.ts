@@ -13,12 +13,17 @@ export class MentorService extends Service {
     if (this.logger) this.logger.verbose('Mentor service loaded')
   }
 
+  /**
+   * @description Fetches mentor info based on keycode
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
   public async get(req: express.Request , res: express.Response) {
-    const response: APIresponse = {
+    let response: APIresponse = {
         ok: 1,
         code: 200,
       }
-    let err: APIerror
+    let error: APIerror
 
     try {
       // fetch mentor general info
@@ -28,25 +33,26 @@ export class MentorService extends Service {
           type: 'mentor',
         })
 
-      const mentorInfo: Mentor = (await this.database.query(sqlQuery, params))
+      const mentorInfo: Mentor = await this.database.query(sqlQuery, params)
       if (!mentorInfo) {
-        err = {
+        error = {
+          api: true,
           code: 404,
           message: 'Mentor not found',
           friendlyMessage: 'There is no mentor with the provided keycode',
         }
 
-        throw err
-      } else response.mentor = mentorInfo
+        throw error
+      }
+      response.mentor = mentorInfo
 
       // fetch mentor time slots
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       params = [response.mentor.uid]
 
-      let mentorSlots: Slot[] = (await this.database.query(sqlQuery, params))
-      if (!mentorSlots || !mentorSlots.length) {
-        response.mentor.slots = []
-      } else {
+      let mentorSlots: Slot[] = await this.database.query(sqlQuery, params)
+      if (!mentorSlots || !mentorSlots.length) response.mentor.slots = []
+      else {
         const verified: string[] = []
 
         // generate slots from today to 7 days from now
@@ -59,9 +65,9 @@ export class MentorService extends Service {
           // check if there any meetup refering to this slot and its space in time
           sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed"
          AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)`
-          if ( (await this.database.query(sqlQuery,
+          if ( await this.database.query(sqlQuery,
             [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()],
-          ))[0][0]['COUNT(*)'] ) {
+          )['COUNT(*)'] ) {
             // there is a confirmed meetup on that space in time
             // so let's filter all the slots and remove the slot starting
             // at that time
@@ -72,12 +78,15 @@ export class MentorService extends Service {
         response.mentor.slots = mentorSlots
       }
     } catch (err) {
-      response.ok = 0
-      response.code = 400
+      response = {
+        ok: 0,
+        code: 400,
+      }
 
-      if (err.errorCode === 404) {
-        response.code = err
-        response.message = 'Mentor not found'
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 
@@ -90,23 +99,38 @@ export class MentorService extends Service {
    * @param {express.Response} res Express response
    */
   public async getRandom(req: express.Request , res: express.Response) {
-    const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5'
-    const  response: APIresponse = {
-        ok: 1,
-        code: 200,
-      }
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
 
     try {
+      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5'
+
       const mentorList = await this.database.query(sqlQuery)
-      if (!mentorList.length) throw 404
+      if (!mentorList) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentors not found',
+          friendlyMessage: 'Mentors not found',
+        }
+
+        throw error
+      }
 
       response.mentors = shuffle(mentorList)
     } catch (err) {
-      response.ok = 0
-      response.code = 400
+      response = {
+        ok: 0,
+        code: 400,
+      }
 
-      if (err === 404) {
-        response.code = err
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 
@@ -119,19 +143,40 @@ export class MentorService extends Service {
    * @param {express.Response} res
    */
   public async getTimeSlots(req: APIrequest, res: express.Response) {
-    const response: APIresponse = {
+    let response: APIresponse = {
       ok: 1,
       code: 200,
     }
+    let error: APIerror
 
     try {
-      if (!req.jwt || !req.jwt.uid) throw 403
+      if (!req.jwt || !req.jwt.uid) {
+        error = {
+          api: true,
+          code: 403,
+          message: 'Insufficient permissions',
+          friendlyMessage: 'There was a problem fetching your timeslots',
+        }
 
-      const startDate = req.query.start
+        throw error
+      }
+
       const sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+      const startDate = req.query.start
       const endDate = req.query.end
 
-      const [slots] = await this.database.query(sqlQuery, [req.jwt.uid])
+      const slots: Slot[] = await this.database.query(sqlQuery, [req.jwt.uid])
+      if (!slots || !slots.length) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Slots not found',
+          friendlyMessage: 'This mentor has no slots',
+        }
+
+        throw error
+      }
+
       const genSlots = calendar.automaticGenerate(slots).filter((slot) => {
         let ok = true
         // verify if slot start is after the defined minimum start Date
@@ -147,12 +192,15 @@ export class MentorService extends Service {
 
       response.slots = genSlots
     } catch (err) {
-      response.ok = 0
-      response.code = 400
+      response = {
+        ok: 0,
+        code: 400,
+      }
 
-      if (err.APIerr) {
-        response.code = err.errorCode
-        response.message = err.errorMessage
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 
@@ -165,25 +213,27 @@ export class MentorService extends Service {
    * @param {express.Response} res
    */
   public async updateTimeSlots(req: APIrequest, res: express.Response) {
-    const deletedSlots: string[] = req.body.deleted
-    const updatedSlots: Slot[] = req.body.updated
-    let sqlQuery = ''
-    const response: APIresponse = {
+    let response: APIresponse = {
         ok: 1,
         code: 200,
       }
-    let err: APIerror
+    let error: APIerror
 
     try {
       if (!req.jwt || !req.jwt.uid) {
-        err = {
+        error = {
+          api: true,
           code: 403,
           message: 'Forbidden',
           friendlyMessage: 'There was a problem updating your timeslots',
         }
 
-        throw err
+        throw error
       }
+
+      const deletedSlots: string[] = req.body.deleted
+      const updatedSlots: Slot[] = req.body.updated
+      let sqlQuery: string
 
       // delete events
       if (deletedSlots) {
@@ -247,31 +297,65 @@ export class MentorService extends Service {
         }
       }
     } catch (err) {
-      response.ok = 0
-      response.code = 500
-      response.deleteOK = 0
-      response.updateOK = 0
+      response = {
+        ok: 0,
+        code: 400,
+        deleteOK: 0,
+        updateOK: 0,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
     }
 
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Verify if
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
   public async verify(req: express.Request , res: express.Response) {
-    const check = req.query.keycode ? 'keycode' : 'uniqueid'
-    const value = req.query.keycode ? `"${req.query.keycode}"` : req.query.uniqueid
-    const sqlQuery = `SELECT * FROM onboarding WHERE ${check} = ${value}`
-    const response: APIresponse = {
+    let response: APIresponse = {
         ok: 1,
         code: 200,
       }
+    let error: APIerror
 
     try {
-      const [rows] = await this.database.query(sqlQuery)
-      if (!rows.length) throw 404
+      const check = req.query.keycode ? 'keycode' : 'uniqueid'
+      const value = req.query.keycode ? `"${req.query.keycode}"` : req.query.uniqueid
+      const sqlQuery = `SELECT * FROM onboarding WHERE ${check} = ${value}`
+
+      const onboardingInvite = await this.database.query(sqlQuery)
+      if (!onboardingInvite) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Onboarding invite not found',
+          friendlyMessage: 'There is no onboarding invite with this unique ID',
+        }
+
+        throw error
+      }
+
     } catch (err) {
-      response.ok = 0
-      response.code = 400
+      response = {
+        ok: 0,
+        code: 400,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
     }
+
     res.status(response.code).json(response)
   }
 

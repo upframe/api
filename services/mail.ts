@@ -3,21 +3,20 @@ import '../env'
 import * as crypto from 'crypto'
 import * as express from 'express'
 import * as fs from 'fs'
-import mailgun from 'mailgun-js'
+import mailgun, { Mailgun } from 'mailgun-js'
 
-import * as winston from 'winston'
-import { Email } from '../types'
+import { DatabaseService } from '../service'
+import { Email, User } from '../types'
 
 export class Mail {
-  public database: any
-  public logger: winston.Logger
-  public mailgun: mailgun.Mailgun | undefined
+  private database!: DatabaseService
+  private mailgun!: Mailgun
 
-  constructor(app: express.Application) {
-    this.database = app.get('db')
-    this.logger = app.get('logger')
-
+  constructor(app: express.Application, db: DatabaseService) {
     try {
+      // set dabase
+      this.database = db
+
       // init mailgun
       if (process.env.MG_APIKEY && process.env.MG_DOMAIN) {
         this.mailgun = mailgun({apiKey: process.env.MG_APIKEY, domain: process.env.MG_DOMAIN})
@@ -43,15 +42,15 @@ export class Mail {
   }
 
   /**
+   * @description Send password reset email
    * @param {string} toAddress
    */
   public async sendPasswordReset(toAddress: string) {
     try {
-      if (!this.mailgun) throw 1
+      const passwordResetRequest = await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?',
+        [toAddress])
 
-      let rows = (await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress))[0][0]
-
-      if (rows[0]['COUNT(*)']) {
+      if (passwordResetRequest['COUNT(*)']) {
         const data: Email = {
           from: 'noreply@upframe.io',
           to: toAddress,
@@ -60,8 +59,8 @@ export class Mail {
         const token = crypto.randomBytes(20).toString('hex')
         data.html = this.getTemplate('resetPassword', { RESETURL: token })
 
-        rows = (await this.database.query('INSERT INTO passwordReset VALUES(?,?)', [toAddress, token]))[0][0]
-        if (rows.affectedRows) {
+        const result = await this.database.query('INSERT INTO passwordReset VALUES(?,?)', [toAddress, token])
+        if (result.affectedRows) {
           return (await this.mailgun.messages().send(data)
             .then((res) => {
               if (res.message !== '' && res.id !== '') return 0
@@ -80,11 +79,10 @@ export class Mail {
    */
   public async sendEmailChange(toAddress: string) {
     try {
-      if (!this.mailgun) throw 1
+      const emailChangeRequest = await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?',
+        toAddress)
 
-      let rows = (await this.database.query('SELECT COUNT(*) FROM users WHERE email = ?', toAddress))[0][0]
-
-      if (rows[0]['COUNT(*)']) {
+      if (emailChangeRequest['COUNT(*)']) {
         const data: Email = {
           from: 'noreply@upframe.io',
           to: toAddress,
@@ -93,8 +91,8 @@ export class Mail {
         const token = crypto.randomBytes(20).toString('hex')
         data.html = this.getTemplate('emailChange', { RESETURL: token })
 
-        rows = (await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token]))[0][0]
-        if (rows.affectedRows) {
+        const result = await this.database.query('INSERT INTO emailChange VALUES(?,?)', [toAddress, token])
+        if (result.affectedRows) {
           return this.mailgun.messages().send(data)
             .then((res) => {
               if (res.message !== '' && res.id !== '') return 0
@@ -113,8 +111,6 @@ export class Mail {
    */
   public async sendMeetupInvitation(meetupID: string) {
     try {
-      if (!this.mailgun) throw 1
-
       // get meetup by id
       const [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
       if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
@@ -158,8 +154,6 @@ export class Mail {
    */
   public async sendMeetupConfirmation(meetupID: string) {
     try {
-      if (!this.mailgun) throw 1
-
       // get meetup by id
       const [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', [meetupID])
       if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }

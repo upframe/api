@@ -6,7 +6,7 @@ import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
 import { Service, StandaloneServices } from '../service'
-import { APIrequest, APIresponse, JWTpayload } from '../types'
+import { APIerror, APIrequest, APIresponse, JWTpayload, User } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
@@ -54,6 +54,7 @@ export class AuthService extends Service {
         ok: 0,
         message: 'You\'re not a mentor',
       }
+
       res.status(response.code).json(response)
     }
   }
@@ -64,48 +65,99 @@ export class AuthService extends Service {
     } else return ''
   }
 
-  public async login(req: express.Request, res: express.Response) {
-    const sqlQuery = 'SELECT * FROM users WHERE email = ?'
-    const  response: APIresponse = {
+  public async login(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
         ok: 1,
         code: 200,
       }
+    let error: APIerror
 
-    const [rows] = await this.database.query(sqlQuery, req.body.email)
-    if (rows.length) {
-      try {
-        if (bcrypt.compareSync(req.body.password, rows[0].password)) {
-          response.token = this.createToken({
-            email: rows[0].email,
-            uid: rows[0].uid,
-          }, rows[0].type)
+    try {
+      if (!req.body || !req.body.email || !req.body.password) {
+        error = {
+          api: true,
+          code: 400,
+          message: 'Unsufficient fields to perform a register request',
+          friendlyMessage: 'There is a field missing in the request.',
+        }
 
-          res.cookie('access_token', response.token, {expires: new Date(Date.now() + 86400 * 15e3), httpOnly: true})
-        } else throw 401
-      } catch (err) {
-        response.ok = 0
-        response.code = 400
-
-        if (err === 401) response.message = 'The email or password didn\'t match'
+        throw error
       }
-    } else {
-      response.ok = 0
-      response.code = 404
+
+      const sqlQuery = 'SELECT * FROM users WHERE email = ?'
+      const user = await this.database.query(sqlQuery, [req.body.email])
+      if (user) {
+        if (bcrypt.compareSync(req.body.password, user.password)) {
+          response.token = this.createToken({
+            email: user.email,
+            uid: user.uid,
+          }, user.type)
+
+          res.cookie('access_token', response.token, { expires: new Date(Date.now() + 86400 * 15e3), httpOnly: true })
+        } else {
+          error = {
+            api: true,
+            code: 401,
+            message: 'Wrong credentials',
+            friendlyMessage: 'The password and password didn\'t match',
+          }
+
+          throw error
+        }
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 400,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
     }
 
     res.status(response.code).json(response)
   }
 
-  public async register(req: express.Request, res: express.Response) {
-    const response: APIresponse = {
-        code: 200,
-        ok: 1,
-      }
+  public async register(req: APIrequest, res: express.Response) {
     const json = Object.assign({}, req.body)
+    let response: APIresponse = {
+      code: 200,
+      ok: 1,
+    }
+    let error: APIerror
+
     try {
+      /* - MVP-ONLY -
+       * Disable register
+       */
+      if (!Number(process.env.REGISTER)) {
+        error = {
+          api: true,
+          code: 501,
+          message: 'Register is not allowed',
+          friendlyMessage: 'Register is not available at the moment. Please, try again later',
+        }
+
+        throw error
+      }
+
+      if (!json.email || !json.password || !json.name) {
+        error = {
+          api: true,
+          code: 400,
+          message: 'Unsufficient fields to perform a register request',
+          friendlyMessage: 'There is a field missing in the request.',
+        }
+
+        throw error
+      }
+
       // hash password
       const salt = bcrypt.genSaltSync(10)
-      json.password = bcrypt.hashSync(req.body.password, salt)
+      json.password = bcrypt.hashSync(json.password, salt)
       // generate keycode
       json.keycode = json.name.normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -117,95 +169,132 @@ export class AuthService extends Service {
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
       await this.database.query(sqlQuery, params)
     } catch (err) {
-      response.ok = 0
-      response.code = 400
+      response = {
+        ok: 0,
+        code: 400,
+      }
 
-      if (err.errno === 1062 && err.sqlState === 23000) {
+      // check if it's a mysql error
+      if (err.errno === 1062 && err.sqlState === '23000') {
         response.message = 'There is already an account using that email'
+      }
+
+      // check API errors
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message,
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 
     res.status(response.code).json(response)
   }
 
-  public async resetPassword(req: express.Request, res: express.Response) {
-    const response: APIresponse = {
+  public async resetPassword(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
       ok: 1,
       code: 200,
     }
+    let error: APIerror
 
-    if (req.body.token) {
-      try {
+    try {
+      if (req.body.token) {
+        let sqlQuery: string
+        let params: string[]
+
         // verify if token is valid
-        let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'passwordReset', { token: req.body.token })
-        let result = (await this.database.query(sqlQuery, params))[0]
-        if (!result.length) {
-          throw {
-            APIerr: false,
-            errorCode: 404,
-            errorMessage: 'Token was not found or has already been used',
+        [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'passwordReset', { token: req.body.token })
+        const passwordResetToken = await this.database.query(sqlQuery, params)
+        if (!passwordResetToken) {
+          error = {
+            api: true,
+            code: 404,
+            message: 'Token not found',
+            friendlyMessage: 'The given token is invalid or has already been used.',
           }
-        } else result = result[0]
 
-        const whereJson = { email: result.email }
-
-        const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'users',
-          {
-            password: req.body.password,
-          },
-          whereJson)
-        result = (await this.database.query(sqlQuery2, params2))[0]
-        if (!result.affectedRows) throw 404
-
-        sqlQuery = 'DELETE FROM passwordReset WHERE token = ?'
-        params = [req.body.token]
-        result = (await this.database.query(sqlQuery, params))[0]
-
-        res.status(response.code).json(response)
-      } catch (err) {
-        response.ok = 0
-        response.code = 400
-
-        if (err === 403) {
-          response.code = err
-          response.message = 'Token is invalid'
+          throw error
         }
 
-        res.status(response.code).json(response)
-      }
-    } else {
-      // result = 1 means email was sent
-      // result = 0 means email was NOT sent
-      const result = await this.mail.sendPasswordReset(req.body.email)
+        // create SQL query to set a new password
+        [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users',
+          {
+            password: req.body.password,
+          }, {
+            email: passwordResetToken.email,
+          })
 
-      if (result !== 0) {
-        response.ok = 0
-        response.code = 400
+        let queryResult = await this.database.query(sqlQuery, params)
+        console.log(queryResult)
+      } else {
+        if (!req.body.email) {
+          error = {
+            api: true,
+            code: 400,
+            message: 'Email not found',
+            friendlyMessage: 'The given email is not valid or unexistent',
+          }
+        } else {
+          // result = 1 means email was sent
+          // result = 0 means email was NOT sent
+          const result = await this.mail.sendPasswordReset(req.body.email)
+
+          if (result !== 0) {
+            error = {
+              api: true,
+              code: 400,
+              message: 'It was not possible to send the password reset email',
+              friendlyMessage: 'It was not possible to send the password reset email',
+            }
+
+            throw error
+          }
+        }
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 400,
       }
 
-      res.status(response.code).json(response)
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
     }
+
+    res.status(response.code).json(response)
   }
 
   /**
    * @description changes account's email
    */
   public async changeEmail(req: APIrequest, res: express.Response) {
-    const response: APIresponse = {
+    let response: APIresponse = {
       ok: 1,
       code: 200,
     }
+    let error: APIerror
 
     if (req.body.token && req.body.email && process.env.CONNECT_PK) {
       try {
         // verify if token is valid by fetching it from the database
-        const [rows] = (await this.database.query('SELECT * FROM emailChange WHERE token = ?', [req.body.token]))
-        if (!rows.length) throw 403
+        const emailChangeRequest = await this.database.query('SELECT * FROM emailChange WHERE token = ?',
+          [req.body.token])
+        if (!emailChangeRequest) {
+          error = {
+            api: true,
+            code: 404,
+            message: 'Email change request not found',
+            friendlyMessage: 'There is no email change request with this email',
+          }
 
-        let params: string[] = []
+          throw error
+        }
+
         let sqlQuery: string = 'UPDATE users SET email = ? WHERE email = ?'
-
-        params.push(req.body.email, rows[0].email)
+        let params: string[] = [req.body.email, emailChangeRequest.email]
         await this.database.query(sqlQuery, params)
 
         // if user is logged in refresh access token

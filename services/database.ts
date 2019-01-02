@@ -1,6 +1,8 @@
 import * as express from 'express'
 import * as mysql from 'mysql2/promise'
 
+import { date } from '../types'
+
 export class Database {
   private pool: any
 
@@ -25,11 +27,18 @@ export class Database {
    * @param {string} sqlQuery - SQL query string
    * @param {string} parameters - String with the only parameter or an array
    */
-  public async query(sqlQuery: string, parameters?: string | string[]): Promise<any> {
-    const result: any[] = await this.pool.query(sqlQuery, parameters)
+  public async query(sqlQuery: string, parameters?: string | string[] | date[]): Promise<any> {
+    try {
+      const result: any[] = await this.pool.query(sqlQuery, parameters)
 
-    if (result[0].length) {
-      return (result[0].length > 1 ? result[0] : result[0][0])
-    } else return 0
+      if (result[0].length) {
+        if (result[0].length > 1) return result[0]
+        else if (result[0].length === 1) return result[0][0]
+        else if (result[0][0].length > 1) return result[0][0]
+        else return result[0]
+      } else return result[0]
+    } catch (err) {
+      return 1
+    }
   }
 }
