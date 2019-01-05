@@ -6,7 +6,6 @@ import { APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'
-import { Firehose } from 'aws-sdk';
 
 export class MeetupService extends Service {
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
