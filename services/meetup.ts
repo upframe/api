@@ -359,7 +359,7 @@ export class MeetupService extends Service {
         code: 500,
       }
 
-      if (err.code === 404) {
+      if (err.api) {
         response.code = err.code
         response.message = err.message
         response.friendlyMessage = err.friendlyMessage
