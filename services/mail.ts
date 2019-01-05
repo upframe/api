@@ -6,7 +6,7 @@ import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
 
 import { DatabaseService } from '../service'
-import { Email, User } from '../types'
+import { APIerror, Email, User } from '../types'
 
 export class Mail {
   private database!: DatabaseService
@@ -109,19 +109,48 @@ export class Mail {
    * @description Sends meetup invite notification to mentor by email
    * @param {string} meetupID
    */
-  public async sendMeetupInvitation(meetupID: string) {
+  public async sendMeetupInvitation(meetupID: string): Promise<(APIerror | number)> {
+    let error: APIerror
+
     try {
       // get meetup by id
-      const [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
-      if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
+      const meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
+      if (!meetup || !Object.keys(meetup)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Meetup not found',
+          friendlyMessage: 'The meetup was not found',
+        }
+
+        throw error
+      }
 
       // get mentee name
-      const [mentee] = (await this.database.query('SELECT name FROM users WHERE uid = ?', meetup[0].menteeUID))[0]
-      if (!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
+      const mentee = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.menteeUID)
+      if (!mentee || !Object.keys(mentee)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentee not found',
+          friendlyMessage: 'The mentee was not found',
+        }
+
+        throw error
+      }
 
       // get mentor email
-      const [mentor] = (await this.database.query('SELECT email FROM users WHERE uid = ?', meetup[0].mentorUID))[0]
-      if (!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
+      const mentor = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.mentorUID)
+      if (!mentor || !Object.keys(mentor)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentor not found',
+          friendlyMessage: 'The mentor was not found',
+        }
+
+        throw error
+      }
 
       const data: Email = {
           from: 'noreply@upframe.io',
@@ -130,8 +159,8 @@ export class Mail {
         }
       const placeholders = {
           USER: mentee.name,
-          LOCATION: meetup[0].location,
-          TIME: new Date(meetup[0].start).toLocaleString(),
+          LOCATION: meetup.location,
+          TIME: new Date(meetup.start).toLocaleString(),
           MID: meetupID,
         }
 
@@ -143,7 +172,7 @@ export class Mail {
           else throw 1
         })
     } catch (err) {
-      if (err.APIerr) return err
+      if (err.api) return err
       else return 1
     }
   }

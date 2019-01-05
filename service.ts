@@ -1,7 +1,7 @@
 import * as express from 'express'
 import * as winston from 'winston'
 
-import { AccountTypes, APIrequest, date, JWTpayload } from './types'
+import { AccountTypes, APIerror, APIrequest, date, JWTpayload } from './types'
 
 export class Service {
   public database: DatabaseService
@@ -38,14 +38,6 @@ export interface AuthService {
   changeEmail(req: APIrequest, res: express.Response): void
 }
 
-export interface MailService {
-  getTemplate(name: string, args: any): string
-  sendPasswordReset(toAddress: string): Promise<number>
-  sendEmailChange(toAddress: string): Promise<number>
-  sendMeetupInvitation(meetupID: string): Promise<number>
-  sendMeetupConfirmation(meetupID: string): Promise<number>
-}
-
 export interface MeetupService {
   get(req: APIrequest, res: express.Response): void
   create(req: APIrequest, res: express.Response): void
@@ -79,5 +71,13 @@ export interface StandaloneServices {
 }
 
 export interface DatabaseService {
-  query(sqlQuery: string, parameters?: string[] | date[]): Promise<any>
+  query(sqlQuery: string, parameters?: string | date[]): Promise<any>
+}
+
+export interface MailService {
+  getTemplate(name: string, args: any): string
+  sendPasswordReset(toAddress: string): Promise<number>
+  sendEmailChange(toAddress: string): Promise<number>
+  sendMeetupInvitation(meetupID: string): Promise<APIerror | number>
+  sendMeetupConfirmation(meetupID: string): Promise<number>
 }

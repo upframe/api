@@ -1,7 +1,7 @@
 import * as express from 'express'
 
 import { Service, StandaloneServices } from '../service'
-import { APIrequest, APIresponse } from '../types'
+import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
 
 export class UserService extends Service {
@@ -12,77 +12,125 @@ export class UserService extends Service {
   }
 
   public async get(req: APIrequest, res: express.Response) {
-    const response: APIresponse = {
+    let response: APIresponse = {
         code: 200,
         ok: 1,
       }
+    let error: APIerror
 
     try {
       if (!req.jwt) throw 403
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
-      const [rows] = await this.database.query(sqlQuery, params)
-      response.user = rows[0]
-      if (!rows.length) throw 404
-    } catch (err) {
-      response.ok = 0
-      response.code = 400
+      const user: User = await this.database.query(sqlQuery, params)
+      if (!user) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'User not found',
+          friendlyMessage: 'There was an error fetching the user\'s info',
+        }
 
-      if (err === 404) {
-        response.code = err
-        response.message = 'User not found'
+        throw error
+      }
+
+      response.user = user
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Updates user info with the new info
+   * @param {APIrequest} req
+   * @param {express.Response} res
+   */
   public async update(req: APIrequest, res: express.Response) {
-    let uid: string
-    const response: APIresponse = {
+    let response: APIresponse = {
         code: 200,
         ok: 1,
       }
+    let error: APIerror
+
     const json = Object.assign({}, req.body)
 
     try {
+      let uid: string
       if (!req.jwt || !req.jwt.uid) throw 403
       else uid = req.jwt.uid
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
+      const result = await this.database.query(sqlQuery, params)
+      if (result.changedRows) response.code = 202
+      else {
+        error = {
+          api: true,
+          code: 409,
+          message: 'User info could not be updated',
+          friendlyMessage: 'It was not possible to update the user profile.',
+        }
 
-      const [rows] = await this.database.query(sqlQuery, params)
-      if (rows.changedRows) response.code = 202
-      else throw 409
+        throw error
+      }
     } catch (err) {
-      response.ok = 0
-      response.code = 400
+      response = {
+        ok: 0,
+        code: 500,
+      }
 
-      if (err === 404) {
-        response.code = err
-        response.message = 'User not found'
-      } else if (err === 409) response.code = err
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
     }
 
     res.status(response.code).json(response)
   }
 
   public async image(url: string, userEmail: string, res: express.Response) {
-    const sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?'
-    const response: APIresponse = {
+    let response: APIresponse = {
         ok: 1,
         code: 200,
       }
+    let error: APIerror
 
     try {
-      const [rows] = await this.database.query(sqlQuery, [url, userEmail])
-      if (rows.changedRows) {
-        response.code = 202
+      const sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?'
+      const result = await this.database.query(sqlQuery, [url, userEmail])
+      if (result.changedRows) response.code = 202
+      else {
+        error = {
+          api: true,
+          code: 409,
+          message: 'User profile picture could not be updated',
+          friendlyMessage: 'It was not possible to update the user\'s profile picture',
+        }
 
-      } else throw 409
+        throw error
+      }
     } catch (err) {
-      response.ok = 0
-      response.code = 500
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
     }
 
     res.status(response.code).json(response)

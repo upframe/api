@@ -14,11 +14,15 @@ export interface APIRequestBody {
   uid?: string
 
   email?: string
+  keycode?: string
+  password?: string
   name?: string
 
   start?: date
   end?: date
 
+  menteeUID?: string
+  mentorUID?: string
   location?: string
 
   token?: string
@@ -37,20 +41,29 @@ export interface APIresponse {
   code: number
   ok: number
   message?: string
+  friendlyMessage?: string
+
   token?: string
   updateOK?: number
   deleteOK?: number
 
-  events?: Meetup[]
   meetup?: Meetup
+  meetups?: Meetup[]
   mentor?: Mentor
   mentors?: Mentor[]
   user?: User
   slot?: Slot
   slots?: Slot[]
+
+  search?: {
+    companies?: any[],
+    expertise?: any[],
+    people?: any[],
+  }
 }
 
 export interface APIerror {
+  api: boolean
   code: number
   message: string
   friendlyMessage?: string
@@ -60,13 +73,13 @@ export type date = string | Date
 
 /* Generic types */
 export interface Meetup {
-  mid?: string
-  sid?: string
-  menteeUID?: string
-  mentorUID?: string
-  location?: string
-  status?: string
-  start?: string | Date
+  mid: string
+  sid: string
+  menteeUID: string
+  mentorUID: string
+  location: string
+  status: string
+  start: string | Date
 }
 
 export interface Account {

@@ -1,5 +1,6 @@
 {
   "name": "api",
+  "private": true,
   "version": "1.0.0",
   "repository": "https://github.com/ulissesferreira/api.git",
   "author": "Upframe <webmaster@upframe.io>",
@@ -10,7 +11,7 @@
     "dev": "ts-node-dev --respawn --transpileOnly ./app.ts",
     "lint": "./node_modules/.bin/tslint --config ./tslint.json --project ./tsconfig.json",
     "prod": "tsc && node ./build/app.js",
-    "start": "node .build/app.js"
+    "start": "node ./build/app.js"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.2",

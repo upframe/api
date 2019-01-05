@@ -1,7 +1,6 @@
 import * as bcrypt from 'bcryptjs'
 
 import * as models from '../models'
-import { sql } from '.';
 
 /**
  * @param {string} action
@@ -9,25 +8,29 @@ import { sql } from '.';
  * @param {object} fjson
  * @param {object} sjson
  */
-export function createSQLqueryFromJSON(action: string, table: string, fjson: object, sjson?: object): [string, string[]] {
+export function createSQLqueryFromJSON(
+  action: string,
+  table: string,
+  fjson: object,
+  sjson?: object): [string, string[]] {
   let query: string = ''
   let params: string[] = []
 
-  switch (action) { 
-  case 'INSERT':
-    [query, params] = createInsertQuery(table, fjson)
-    break
-  case 'UPDATE':
-    if (sjson) {
-      [query, params] = createUpdateQuery(table, fjson, sjson)
-    }
-    break
-  case 'SELECT':
-    [query, params] = createSelectQuery(table, fjson)
-    break
+  switch (action) {
+    case 'INSERT':
+      [query, params] = createInsertQuery(table, fjson)
+      break
+    case 'UPDATE':
+      if (sjson) {
+        [query, params] = createUpdateQuery(table, fjson, sjson)
+      }
+      break
+    case 'SELECT':
+      [query, params] = createSelectQuery(table, fjson)
+      break
   }
 
-  if(query && params) {
+  if (query && params) {
     return [query, params]
   } else return ['', []]
 }
@@ -96,7 +99,8 @@ function createUpdateQuery(table: string, newJson: any, whereJson: object): [str
  * @param {object} whereJSON
  */
 function createSelectQuery(table: string, whereJSON: object): [string, string[]] {
-  const fields = models.get(table)
+  const fields: string[] = models.get(table)
+
   let sqlQuery = 'SELECT '
   const params: string[] = []
 
@@ -106,7 +110,7 @@ function createSelectQuery(table: string, whereJSON: object): [string, string[]]
   if (table !== 'mentors') sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
   else sqlQuery = sqlQuery.slice(0, -2) + ' FROM users WHERE '
 
-  for (const prop in whereJSON) {
+  for (const prop of Object.keys(whereJSON)) {
     if (fields.includes(prop)) {
       sqlQuery += `${prop} = ? AND `
       params.push(whereJSON[prop])

@@ -108,7 +108,7 @@ export class AuthService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {
@@ -171,7 +171,7 @@ export class AuthService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       // check if it's a mysql error
@@ -230,7 +230,7 @@ export class AuthService extends Service {
         if (!req.body.email) {
           error = {
             api: true,
-            code: 400,
+            code: 404,
             message: 'Email not found',
             friendlyMessage: 'The given email is not valid or unexistent',
           }
@@ -242,7 +242,7 @@ export class AuthService extends Service {
           if (result !== 0) {
             error = {
               api: true,
-              code: 400,
+              code: 500,
               message: 'It was not possible to send the password reset email',
               friendlyMessage: 'It was not possible to send the password reset email',
             }
@@ -254,7 +254,7 @@ export class AuthService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {
