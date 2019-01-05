@@ -5,10 +5,26 @@ before_script:
   - npm install
 script: 
   - npm run lint
+
+before_deploy:
+  - sudo apt-get install zip
+  - tsc
+  - mkdir deploy
+  - zip deploy/api.zip build package.json yarn.lock
+
 deploy:
   - provider: releases
     skip_cleanup: true
     api_key: $GITHUB_OAUTH_TOKEN
     on:
       branch: master
-      condition: $TRAVIS_COMMIT_MESSAGE =~ "^\\[deploy\\]"
+      condition: $TRAVIS_COMMIT_MESSAGE =~ "^\\[realease\\]"
+  - provider: elasticbeanstalk
+    skip_cleanup: true
+    access_key_id: "$AWS_SECRETID"
+    secret_access_key: "$AWS_SECRETKEY"
+    region: "eu-west-2"
+    app: "api"
+    env: "api-mpv"
+    bucket_name: "$AWS_S3BUCKET"
+    zip_file: 'deploy/api.zip'
