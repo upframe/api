@@ -224,8 +224,17 @@ export class AuthService extends Service {
             email: passwordResetToken.email,
           })
 
-        let queryResult = await this.database.query(sqlQuery, params)
-        console.log(queryResult)
+        const result = await this.database.query(sqlQuery, params)
+        if (!result.affectedRows) {
+          error = {
+            api: true,
+            code: 500,
+            message: 'Could not update user\'s password',
+            friendlyMessage: 'Could not update user\'s password',
+          }
+
+          throw error
+        }
       } else {
         if (!req.body.email) {
           error = {
@@ -317,8 +326,10 @@ export class AuthService extends Service {
         params = [req.body.token]
         await this.database.query(sqlQuery, params)
       } catch (err) {
-        response.ok = 0
-        response.code = 400
+        response = {
+          ok: 0,
+          code: 500,
+        }
 
         if (err === 403) {
           response.code = err
@@ -337,8 +348,10 @@ export class AuthService extends Service {
           throw 1
         }
       } catch (err) {
-        response.ok = 0
-        response.code = 400
+        response = {
+          ok: 0,
+          code: 500,
+        }
       }
     }
 
