@@ -181,19 +181,45 @@ export class Mail {
    * @description Sends meetup confirmation notification to mentee by email
    * @param {String} meetupID
    */
-  public async sendMeetupConfirmation(meetupID: string) {
+  public async sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)> {
+    let error: APIerror
+
     try {
       // get meetup by id
-      const [meetup] = await this.database.query('SELECT * FROM meetups WHERE mid = ?', [meetupID])
-      if (!meetup.length) throw { APIerr: true, errorCode: 404, errorMessage: 'Meetup not found' }
+      const meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
+      if (!meetup || !Object.keys(meetup)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Meetup not found',
+        }
+
+        throw error
+      }
 
       // get mentee email
-      const [mentee] = (await this.database.query('SELECT email FROM users WHERE uid = ?', [meetup[0].menteeUID]))[0]
-      if (!Object.keys(mentee)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentee not found' }
+      const mentee = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.menteeUID)
+      if (!mentee || !Object.keys(mentee)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentee not found',
+        }
+
+        throw error
+      }
 
       // get mentor name
-      const [mentor] = (await this.database.query('SELECT name FROM users WHERE uid = ?', [meetup[0].mentorUID]))[0]
-      if (!Object.keys(mentor)) throw { APIerr: true, errorCode: 404, errorMessage: 'Mentor not found' }
+      const mentor = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.mentorUID)
+      if (!mentor || !Object.keys(mentor)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentor not found',
+        }
+
+        throw error
+      }
 
       const data: Email = {
           from: 'noreply@upframe.io',
@@ -202,8 +228,8 @@ export class Mail {
         }
       const placeholders = {
           MENTOR: mentor.name,
-          LOCATION: meetup[0].location,
-          TIME: new Date(meetup[0].start).toLocaleString(),
+          LOCATION: meetup.location,
+          TIME: new Date(meetup.start).toLocaleString(),
           MID: meetupID,
         }
       data.html = this.getTemplate('meetupConfirmation', placeholders)
@@ -214,7 +240,7 @@ export class Mail {
           else throw 1
         })
     } catch (err) {
-      if (err.APIerr) return err
+      if (err.api) return err
       else return 1
     }
   }

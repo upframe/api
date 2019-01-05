@@ -6,6 +6,7 @@ import { APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'
+import { Firehose } from 'aws-sdk';
 
 export class MeetupService extends Service {
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
@@ -248,12 +249,15 @@ export class MeetupService extends Service {
     try {
       if (!req.jwt || !req.jwt.uid) throw 403
 
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
+      let sqlQuery: string
+      let params: string | string[]
+
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
         mid: req.query.meetup,
         mentorUID: req.jwt.uid,
         status: 'pending' })
-      const meetup = (await this.database.query(sqlQuery, params))[0]
-      if (!meetup.length) {
+      const meetup = await this.database.query(sqlQuery, params)
+      if (!meetup || !Object.keys(meetup)) {
         error = {
           api: false,
           code: 404,
@@ -263,19 +267,19 @@ export class MeetupService extends Service {
         throw error
       }
 
-      const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', {
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', {
         status: 'confirmed',
       }, {
         mid: req.query.meetup,
       })
-      let result = (await this.database.query(sqlQuery2, params2))[0]
-
+      let result = await this.database.query(sqlQuery, params)
       result = await this.mail.sendMeetupConfirmation(req.query.meetup)
       if (result) {
         error = {
           api: true,
           code: 500,
           message: 'Error sending email confirmation',
+          friendlyMessage: 'Error sending email confirmation',
         }
 
         throw error
@@ -288,8 +292,9 @@ export class MeetupService extends Service {
       }
 
       if (err.api) {
-        response.code = err.errorCode
+        response.code = err.code
         response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 
@@ -302,41 +307,63 @@ export class MeetupService extends Service {
    * @param {express.Response} res
    */
   public async refuse(req: APIrequest, res: express.Response) {
-    const response: APIresponse = {
+    let response: APIresponse = {
       ok: 1,
       code: 200,
     }
+    let error: APIerror
 
     try {
       if (!req.jwt || !req.jwt.uid) throw 403
 
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
+      let sqlQuery: string
+      let params: string | string[]
+      let result: any
+
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
         mid: req.query.meetup,
         mentorUID: req.jwt.uid,
         status: 'pending' })
-      const meetup = (await this.database.query(sqlQuery, params))[0]
-      if (!meetup.length) {
-        throw {
-          APIerr: false,
-          errorCode: 404,
-          errorMessage: 'Meetup not found or has already been refused',
+      const meetup = await this.database.query(sqlQuery, params)
+      if (!meetup || !Object.keys(meetup)) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Meetup not found',
+          friendlyMessage: 'Meetup not found or has already been refused',
         }
+
+        throw error
       }
-      const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('UPDATE', 'meetups',
+
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups',
       {
         status: 'refused',
       },
       {
         mid: req.query.meetup,
       })
-      await this.database.query(sqlQuery2, params2)
-    } catch (err) {
-      response.ok = 0
-      response.code = 400
+      result = await this.database.query(sqlQuery, params)
+      if (!result.affectedRows) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'It was not possible to update meetup state',
+          friendlyMessage: 'It was not possible to update meetup state',
+        }
 
-      if (err.errorCode === 404) {
-        response.code = err.errorCode
-        response.message = err.errorMessage
+        throw error
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.code === 404) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
       }
     }
 

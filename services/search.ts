@@ -54,7 +54,7 @@ export class SearchService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {
@@ -98,7 +98,7 @@ export class SearchService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {

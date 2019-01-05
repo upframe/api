@@ -80,7 +80,7 @@ export class MentorService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {
@@ -124,7 +124,7 @@ export class MentorService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {
@@ -194,7 +194,7 @@ export class MentorService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {
@@ -246,7 +246,7 @@ export class MentorService extends Service {
 
           } catch (err) {
             response.ok = 0
-            response.code = 400
+            response.code = 500
             response.message = 'One or more time slots couldn\'t be deleted'
             response.deleteOK = 0
           }
@@ -290,7 +290,7 @@ export class MentorService extends Service {
             }
           } catch (err) {
             response.ok = 0
-            response.code = 400
+            response.code = 500
             response.message = 'One or more time slots couldn\'t be updated'
             response.updateOK = 0
           }
@@ -299,7 +299,7 @@ export class MentorService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
         deleteOK: 0,
         updateOK: 0,
       }
@@ -346,7 +346,7 @@ export class MentorService extends Service {
     } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
 
       if (err.api) {

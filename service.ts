@@ -79,5 +79,5 @@ export interface MailService {
   sendPasswordReset(toAddress: string): Promise<number>
   sendEmailChange(toAddress: string): Promise<number>
   sendMeetupInvitation(meetupID: string): Promise<APIerror | number>
-  sendMeetupConfirmation(meetupID: string): Promise<number>
+  sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)>
 }

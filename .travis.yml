@@ -27,4 +27,4 @@ deploy:
     app: "api"
     env: "api-mpv"
     bucket_name: "$AWS_S3BUCKET"
-    zip_file: 'deploy/api.zip'
+    zip_file: 'deploy/api-$TRAVIS_JOB_ID.zip'
