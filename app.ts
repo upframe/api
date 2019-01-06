@@ -17,7 +17,7 @@ const app: express.Application = express()
 /* Middleware configuration */
 const corsOptions = {
   credentials: true,
-  origin: process.env.NODE_ENV === 'dev' ? 'http://localhost:3000' : 'https://connect.upframe.io',
+  origin: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://connect.upframe.io',
 }
 
 app.use(cors(corsOptions))

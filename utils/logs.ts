@@ -18,7 +18,7 @@ export let logger: Logger = createLogger({
       format: combine(colorize(), timestamp(), printFormat),
       handleExceptions: true,
       level: 'debug',
-      silent: process.env.NODE_ENV !== 'dev',
+      silent: process.env.NODE_ENV !== 'development',
     }),
     new transports.File({
       filename: 'app.log',
