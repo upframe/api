@@ -14,6 +14,7 @@ export const fields: string[] = [
   'github',
   'facebook',
   'dribbble',
+  'favoriteLocations',
   'googleAccessToken',
   'googleRefreshToken',
   'tags',
