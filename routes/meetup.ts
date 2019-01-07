@@ -7,12 +7,12 @@ const router: express.Router = express.Router()
 function setRouters(app: express.Application): void {
   const services: Services = app.get('services')
 
-  router.post('/', services.auth.verifyToken, (req, res) => {
-    services.meetup.create(req, res)
-  })
-
   router.get('/', services.auth.verifyToken, (req, res) => {
     services.meetup.get(req, res)
+  })
+
+  router.post('/', /*services.auth.verifyToken,*/ (req, res) => {
+    services.meetup.create(req, res)
   })
 
   router.get('/confirm', services.auth.verifyToken, services.auth.isMentor, (req, res) => {

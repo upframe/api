@@ -105,7 +105,7 @@ export interface Mentor extends Account {
 }
 
 export interface User extends Account {
-  type: string
+  type: AccountTypes
 }
 
 export interface Slot {

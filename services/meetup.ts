@@ -2,7 +2,7 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import moment from 'moment'
 
-import { APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot } from '../types'
+import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot, User } from '../types'
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'
@@ -74,6 +74,7 @@ export class MeetupService extends Service {
     let error: APIerror
 
     try {
+      /*
       if (!req.jwt || !req.jwt.uid) throw 403
 
       const json: APIRequestBody = Object.assign({}, req.body)
@@ -87,11 +88,177 @@ export class MeetupService extends Service {
 
         throw error
       }
+      */
+
+      // MVP ONLY SECTION START
+      const json = Object.assign({}, req.body)
+      if (!json.email || !json.location || !json.name || !json.sid) {
+        error = {
+          api: true,
+          code: 400,
+          message: 'Insufficient fields to create meetup request',
+          friendlyMessage: 'There are no sufficient fields to create meetup request',
+        }
+
+        throw error
+      }
+
+      const newUser: User = {
+        uid: crypto.randomBytes(20).toString('hex'),
+        type: AccountTypes.user,
+        email: json.email,
+        name: json.name,
+        password: 'nologin',
+      }
+      // MVP ONLY SECTION END
 
       let sqlQuery: string = ''
       let params: string[] = []
       let result
 
+      // MVP ONLY SECTION START
+      sqlQuery = `INSERT INTO users (uid, email, name, password, type) VALUES(?, ?, ?, ?, ?)`
+      params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user']
+      result = await this.database.query(sqlQuery, params)
+      if (!result.affectedRows) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Could not create user account',
+          friendlyMessage: 'Could not create user account',
+        }
+
+        throw error
+      }
+      // MVP ONLY SECTION END
+
+      // get slot info using Slot ID
+      sqlQuery = 'SELECT * FROM timeSlots WHERE sid = ?'
+      const slot: Slot = await this.database.query(sqlQuery, [json.sid])
+      // verify if stot exists
+      if (!slot) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Slot not found',
+          friendlyMessage: 'The slot was not found',
+        }
+
+        throw error
+      }
+      // verify who is creating meetup
+      if (slot.mentorUID === newUser.uid) {
+        error = {
+          api: true,
+          code: 400,
+          message: 'Mentors cannot set a meetup with themselves',
+          friendlyMessage: 'Mentors cannot set a meetup with themselves',
+        }
+
+        throw error
+      }
+
+      // create meetup object
+      const meetup: Meetup = {
+        sid: json.sid,
+        mid: crypto.randomBytes(20).toString('hex'),
+        mentorUID: slot.mentorUID,
+        menteeUID: newUser.uid,
+        location: json.location,
+        start: slot.start,
+        status: 'pending',
+      }
+      if (!meetup.mid) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Could not generate meetup ID',
+          friendlyMessage: 'It was not possible to complete your request.',
+        }
+
+        throw error
+      }
+
+      // verify if the requested meetup location is valid (if the mentor has this location as a favorite place)
+      sqlQuery = 'SELECT * FROM users WHERE uid = ?'
+      const mentor: Mentor = (await this.database.query(sqlQuery, [meetup.mentorUID]))
+      if ( mentor.favoritePlaces && !(JSON.parse(mentor.favoritePlaces).includes(meetup.location)) ) {
+        error = {
+          api: true,
+          code: 400,
+          message: 'Location is invalid',
+          friendlyMessage: 'The location for the meetup you\'re requesting is invalid',
+        }
+
+        throw error
+      }
+
+      // verify if slot is already occupied
+      const genSlots = calendar.automaticGenerate([slot], moment(meetup.start).add(1, 'd').toDate())
+      for (const eachSlot of genSlots) {
+        // find slot whose date matches the requested meetup date
+        if (new Date(eachSlot.start).getTime() === new Date(meetup.start).getTime()) {
+
+          // verify if slot is free (there is no meetup with status confirmed)
+          sqlQuery = 'SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?) AND status = "confirmed"'
+          const confirmedSlots = await this.database.query(sqlQuery, [meetup.sid, meetup.start])
+          if (confirmedSlots['COUNT(*)']) {
+            error = {
+              api: true,
+              code: 409,
+              message: 'This slot is not available.',
+              friendlyMessage: 'This slot is not available or has already been booked.',
+            }
+
+            throw error
+          } else {
+            // verify if user has already made a meetup request to that space in time
+            sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?)
+             AND status = "pending" AND menteeUID = ?`
+            const userRequests = await this.database.query(sqlQuery, [meetup.sid, meetup.start, meetup.menteeUID])
+            if (userRequests['COUNT(*)']) {
+              error = {
+                api: true,
+                code: 400,
+                message: 'Cannot set more than one meetup request',
+                friendlyMessage: 'One user can only make one meetup request per slot.',
+              }
+
+              throw error
+            }
+
+            // finally, let's insert a new meetup request
+            [sqlQuery, params] = await sql.createSQLqueryFromJSON('INSERT', 'meetups', meetup)
+            result = await this.database.query(sqlQuery, params)
+            if (!result.affectedRows) {
+              error = {
+                api: true,
+                code: 500,
+                message: 'Could not create meetup request',
+                friendlyMessage: 'It was not possible to create a meetup request',
+              }
+
+              throw error
+            }
+
+            // send email
+            result = await this.mail.sendMeetupInvitation(meetup.mid)
+            if (result.api) throw result
+            else if (result) {
+              error = {
+                api: true,
+                code: 500,
+                message: 'Could not send meetup request email',
+                friendlyMessage: 'Could not send meetup request email to mentor',
+              }
+
+              throw error
+            }
+          }
+        }
+      }
+
+      /*
       // get slot info using Slot ID
       sqlQuery = 'SELECT * FROM timeSlots WHERE sid = ?'
       const slot: Slot = await this.database.query(sqlQuery, [json.sid])
@@ -217,6 +384,7 @@ export class MeetupService extends Service {
           }
         }
       }
+      */
     } catch (err) {
       response = {
         ok: 0,
