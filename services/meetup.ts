@@ -117,21 +117,29 @@ export class MeetupService extends Service {
       let result
 
       // MVP ONLY SECTION START
-      sqlQuery = `INSERT INTO users (uid, email, name, password, type) VALUES(?, ?, ?, ?, ?)`
-      params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user']
-      await this.database.query(sqlQuery, params)
-      /*
-      if (!result.affectedRows) {
-        error = {
-          api: true,
-          code: 500,
-          message: 'Could not create user account',
-          friendlyMessage: 'Could not create user account',
-        }
+      sqlQuery = 'SELECT * FROM users WHERE email = ?'
+      params = [newUser.email]
+      result = await this.database.query(sqlQuery, params)
+      if (!Object.keys(result)) {
+        // create new user
+        sqlQuery = `INSERT INTO users (uid, email, name, password, type) VALUES(?, ?, ?, ?, ?)`
+        params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user']
+        result = await this.database.query(sqlQuery, params)
 
-        throw error
+        if (!result.affectedRows) {
+          error = {
+            api: true,
+            code: 500,
+            message: 'Could not create user account',
+            friendlyMessage: 'Could not create user account',
+          }
+
+          throw error
+        }
+      } else {
+        // assign existing account UID
+        newUser.uid = result.uid
       }
-      */
       // MVP ONLY SECTION END
 
       // get slot info using Slot ID
