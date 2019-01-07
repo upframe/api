@@ -31,7 +31,7 @@ export class Mail {
   }
 
   public getTemplate(name: string, args: any) {
-    let file = fs.readFileSync(`assets/${name}.html`, 'utf8')
+    let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
     if (args) {
       for (const prop of Object.keys(args)) {
         file = file.replace(new RegExp(prop, 'g'), args[prop])
