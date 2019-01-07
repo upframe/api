@@ -119,7 +119,8 @@ export class MeetupService extends Service {
       // MVP ONLY SECTION START
       sqlQuery = `INSERT INTO users (uid, email, name, password, type) VALUES(?, ?, ?, ?, ?)`
       params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user']
-      result = await this.database.query(sqlQuery, params)
+      await this.database.query(sqlQuery, params)
+      /*
       if (!result.affectedRows) {
         error = {
           api: true,
@@ -130,6 +131,7 @@ export class MeetupService extends Service {
 
         throw error
       }
+      */
       // MVP ONLY SECTION END
 
       // get slot info using Slot ID
