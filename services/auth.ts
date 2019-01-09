@@ -5,11 +5,11 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 import * as fetch from 'node-fetch'
+import { query } from 'winston'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, JWTpayload, User, APIRequestBody } from '../types'
+import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, User } from '../types'
 import { sql } from '../utils'
-import { query } from 'winston';
 
 export class AuthService extends Service {
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
@@ -361,31 +361,33 @@ export class AuthService extends Service {
   }
 
   public async googleSync(req: APIrequest, res: express.Response) {
-    //req.body.code
     let response: APIresponse = {
       ok: 1,
       code: 200,
     }
-    let error: APIerror
     try {
-      let fetchData = {
+      const fetchData = {
         method: 'POST',
         mode: 'cors',
-        body: 'code=' + req.body.code + '&client_id=821697749752-k7h981c73hrji0k96235q2cblsjpkm7t.apps.googleusercontent.com&client_secret=Uxd6biwXVue993gNOij5cFRs&redirect_uri=https://connect.upframe.io/dev2&grant_type=authorization_code',
+        body: 'code=' + req.body.code +
+        '&client_id=821697749752-k7h981c73hrji0k96235q2cblsjpkm7t.apps.googleusercontent.com' +
+        '&client_secret=Uxd6biwXVue993gNOij5cFRs&redirect_uri=https://connect.upframe.io/dev2' +
+        '&grant_type=authorization_code',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       }
-      let googleRes: any = await fetch('https://www.googleapis.com/oauth2/v4/token').then((res) => res.json())
+      const googleRes: any = await fetch('https://www.googleapis.com/oauth2/v4/token')
+        .then((googleResponse) => googleResponse.json())
       response = {
         ok: 1,
         code: 200,
-        googleRes
+        googleRes,
       }
     } catch (error) {
       response = {
         ok: 0,
-        code: 400
+        code: 400,
       }
     }
     res.status(response.code).json(response)
