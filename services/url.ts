@@ -5,9 +5,9 @@ import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
 
 export class UrlService extends Service {
+
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     super(app, standaloneServices)
-
     if (this.logger) this.logger.verbose('URL shortener service loaded')
   }
 
@@ -31,15 +31,19 @@ export class UrlService extends Service {
       }
     } catch (error) {
       if (error.api) {
-        response.code = error.code
-        response.message = error.message
-        response.friendlyMessage = error.friendlyMessage
+        response = {
+          ok: 0,
+          code: error.code,
+          friendlyMessage: error.friendlyMessage,
+          message: error.message,
+        }
       } else {
-        response.code = 500
-        response.ok = 0
+        response = {
+          ok: 0,
+          code: 500,
+        }
       }
     }
     res.status(response.code).json(response)
   }
-
 }

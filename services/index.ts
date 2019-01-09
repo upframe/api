@@ -7,8 +7,8 @@ import { AuthService as Auth } from './auth'
 import { MeetupService as Meetup } from './meetup'
 import { MentorService as Mentor } from './mentor'
 import { SearchService as Search } from './search'
-import { UserService as User } from './user'
 import { UrlService as Url } from './url'
+import { UserService as User } from './user'
 
 import { DatabaseService, MailService, Services, StandaloneServices } from '../service'
 
