@@ -16,24 +16,27 @@ export class UrlService extends Service {
       ok: 1,
       code: 200,
     }
-    let error: APIerror
+    let err: APIerror
     try {
       const sqlQuery = 'SELECT * FROM users WHERE keycode = ?'
       const user = await this.database.query(sqlQuery, req.query.short)
       if (Object.keys(user).length === 0) {
-        error = {
-          api: false,
-          code: 500,
-          message: 'No mentors',
+        err = {
+          code: 404,
+          api: true,
+          message: 'No mentors found',
           friendlyMessage: 'There are no mentors with that keycode',
         }
-        throw error
+        throw err
       }
     } catch (error) {
       if (error.api) {
         response.code = error.code
         response.message = error.message
         response.friendlyMessage = error.friendlyMessage
+      } else {
+        response.code = 500
+        response.ok = 0
       }
     }
     res.status(response.code).json(response)
