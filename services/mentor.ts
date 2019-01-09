@@ -3,7 +3,7 @@ import * as express from 'express'
 import moment from 'moment'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, Mentor, Slot } from '../types'
+import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
 import { calendar, sql } from '../utils'
 
 export class MentorService extends Service {
@@ -26,8 +26,12 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
+      let sqlQuery: string
+      let params: string[] | string | date[]
+      let result
+
       // fetch mentor general info
-      let [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users',
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users',
         {
           keycode: req.params.keycode,
           type: 'mentor',
@@ -51,7 +55,7 @@ export class MentorService extends Service {
       params = [response.mentor.uid]
 
       let mentorSlots: Slot[] = await this.database.query(sqlQuery, params)
-      if (!mentorSlots || !mentorSlots.length) response.mentor.slots = []
+      if (!Object.keys(mentorSlots) || !mentorSlots.length) response.mentor.slots = []
       else {
         const verified: string[] = []
 
@@ -65,9 +69,9 @@ export class MentorService extends Service {
           // check if there any meetup refering to this slot and its space in time
           sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed"
          AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)`
-          if ( await this.database.query(sqlQuery,
-            [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()],
-          )['COUNT(*)'] ) {
+          params = [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()]
+          result = await this.database.query(sqlQuery, params)
+          if ( result['COUNT(*)'] ) {
             // there is a confirmed meetup on that space in time
             // so let's filter all the slots and remove the slot starting
             // at that time
