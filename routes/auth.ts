@@ -22,6 +22,11 @@ function setRouters(app: express.Application): void {
   router.post('/changemyemail', (req, res) => {
     services.auth.changeEmail(req, res)
   })
+
+  router.post('/sync', (req, res) => {
+    services.auth.googleSync(req, res)
+  })
+
 }
 
 export function init(app: express.Application): express.Router {

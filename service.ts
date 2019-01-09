@@ -36,6 +36,7 @@ export interface AuthService {
   register(req: express.Request, res: express.Response): void
   resetPassword(req: express.Request, res: express.Response): void
   changeEmail(req: APIrequest, res: express.Response): void
+  googleSync(req: APIrequest, res: express.Response): void
 }
 
 export interface MeetupService {

@@ -29,6 +29,8 @@ export interface APIRequestBody {
 
   deleted: string[]
   updated: Slot[]
+
+  code?: string
 }
 
 export interface JWTpayload {
@@ -60,6 +62,8 @@ export interface APIresponse {
     expertise?: any[],
     people?: any[],
   }
+
+  googleRes?: any
 }
 
 export interface APIerror {
