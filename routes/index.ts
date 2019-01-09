@@ -5,6 +5,7 @@ import * as Meetup from './meetup'
 import * as Mentor from './mentor'
 import * as Profile from './profile'
 import * as Search from './search'
+import * as Url from './url'
 
 export function init(app: express.Application): void {
   try {
@@ -13,6 +14,7 @@ export function init(app: express.Application): void {
     app.use('/mentor', Mentor.init(app))
     app.use('/search', Search.init(app))
     app.use('/profile', Profile.init(app))
+    app.use('/url', Url.init(app))
 
     app.get('logger').verbose('Routers loaded')
   } catch (err) {

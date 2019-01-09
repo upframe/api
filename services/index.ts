@@ -8,6 +8,7 @@ import { MeetupService as Meetup } from './meetup'
 import { MentorService as Mentor } from './mentor'
 import { SearchService as Search } from './search'
 import { UserService as User } from './user'
+import { UrlService as Url } from './url'
 
 import { DatabaseService, MailService, Services, StandaloneServices } from '../service'
 
@@ -32,6 +33,7 @@ export function init(app: express.Application): void {
     mentor: new Mentor(app, standaloneServices),
     search: new Search(app, standaloneServices),
     user: new User(app, standaloneServices),
+    url: new Url(app, standaloneServices),
   }
 
   app.set('services', services)

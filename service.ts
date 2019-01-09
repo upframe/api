@@ -26,6 +26,7 @@ export interface Services {
   mentor: MentorService
   search: SearchService
   user: UserService
+  url: UrlService
 }
 
 export interface AuthService {
@@ -64,6 +65,10 @@ export interface UserService {
   get(req: express.Request, res: express.Response): void
   update(req: express.Request, res: express.Response): void
   image(url, userEmail, res): void
+}
+
+export interface UrlService {
+  getRealUrl(req: express.Request, res: express.Response): void
 }
 
 export interface StandaloneServices {
