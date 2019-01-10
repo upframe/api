@@ -84,10 +84,10 @@ export class MentorService extends Service {
         // start
         // end
         // recurrency
-        mentorSlots = mentorSlots.filter((slot) => { //Dont send slots in the past
+        mentorSlots = mentorSlots.filter((slot) => { // Dont send slots in the past
           return new Date() < moment(slot.start).toDate()
         })
-        mentorSlots.sort((a, b) => { //Sort the slots chronologically
+        mentorSlots.sort((a, b) => { // Sort the slots chronologically
           if (moment(a.start).toDate() < moment(b.start).toDate()) {
             return -1
           }
