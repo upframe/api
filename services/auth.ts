@@ -88,7 +88,7 @@ export class AuthService extends Service {
 
       const sqlQuery = 'SELECT * FROM users WHERE email = ?'
       const user = await this.database.query(sqlQuery, [req.body.email])
-      if (user) {
+      if (Object.keys(user).length) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
           response.token = this.createToken({
             email: user.email,
@@ -207,7 +207,7 @@ export class AuthService extends Service {
         // verify if token is valid
         [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'passwordReset', { token: req.body.token })
         const passwordResetToken = await this.database.query(sqlQuery, params)
-        if (!passwordResetToken) {
+        if (!Object.keys(passwordResetToken).length) {
           error = {
             api: true,
             code: 404,
@@ -398,6 +398,7 @@ export class AuthService extends Service {
         code: 400,
       }
     }
+
     res.status(response.code).json(response)
   }
 }

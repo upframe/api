@@ -36,7 +36,10 @@ export class Database {
         else if (result[0].length === 1) return result[0][0]
         else if (result[0][0].length > 1) return result[0][0]
         else return result[0]
-      } else return result[0]
+      } else {
+        if (Object.keys(result[0]).length) return result[0]
+        else return {}
+      }
     } catch (err) {
       return 1
     }

@@ -32,7 +32,7 @@ export class MeetupService extends Service {
 
       if (req.jwt && req.jwt.uid) {
         userMeetups = (await this.database.query(sqlQuery, [req.jwt.uid]))
-        if (!userMeetups.length) {
+        if (!Object.keys(userMeetups).length || !userMeetups.length) {
           error = {
             api: true,
             code: 404,
@@ -113,14 +113,14 @@ export class MeetupService extends Service {
       // MVP ONLY SECTION END
 
       let sqlQuery: string = ''
-      let params: string[] = []
+      let params: string[] | string = []
       let result
 
       // MVP ONLY SECTION START
       sqlQuery = 'SELECT * FROM users WHERE email = ?'
       params = [newUser.email]
       result = await this.database.query(sqlQuery, params)
-      if (!Object.keys(result)) {
+      if (!Object.keys(result).length) {
         // create new user
         sqlQuery = `INSERT INTO users (uid, email, name, password, type) VALUES(?, ?, ?, ?, ?)`
         params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user']
@@ -146,7 +146,7 @@ export class MeetupService extends Service {
       sqlQuery = 'SELECT * FROM timeSlots WHERE sid = ?'
       const slot: Slot = await this.database.query(sqlQuery, [json.sid])
       // verify if stot exists
-      if (!slot) {
+      if (!Object.keys(slot).length) {
         error = {
           api: true,
           code: 404,
@@ -238,7 +238,7 @@ export class MeetupService extends Service {
             }
 
             // finally, let's insert a new meetup request
-            [sqlQuery, params] = await sql.createSQLqueryFromJSON('INSERT', 'meetups', meetup)
+            [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'meetups', meetup)
             result = await this.database.query(sqlQuery, params)
             if (!result.affectedRows) {
               error = {
@@ -434,7 +434,7 @@ export class MeetupService extends Service {
         mentorUID: req.jwt.uid,
         status: 'pending' })
       const meetup = await this.database.query(sqlQuery, params)
-      if (!meetup || !Object.keys(meetup)) {
+      if (!Object.keys(meetup)) {
         error = {
           api: false,
           code: 404,
@@ -502,7 +502,7 @@ export class MeetupService extends Service {
         mentorUID: req.jwt.uid,
         status: 'pending' })
       const meetup = await this.database.query(sqlQuery, params)
-      if (!meetup || !Object.keys(meetup)) {
+      if (!Object.keys(meetup)) {
         error = {
           api: true,
           code: 404,

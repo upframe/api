@@ -38,7 +38,7 @@ export class MentorService extends Service {
         })
 
       const mentorInfo: Mentor = await this.database.query(sqlQuery, params)
-      if (!mentorInfo) {
+      if (!Object.keys(mentorInfo)) {
         error = {
           api: true,
           code: 404,
@@ -113,7 +113,7 @@ export class MentorService extends Service {
       const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5'
 
       const mentorList = await this.database.query(sqlQuery)
-      if (!mentorList) {
+      if (!Object.keys(mentorList).length) {
         error = {
           api: true,
           code: 404,
@@ -170,7 +170,7 @@ export class MentorService extends Service {
       const endDate = req.query.end
 
       const slots: Slot[] = await this.database.query(sqlQuery, [req.jwt.uid])
-      if (!slots || !slots.length) {
+      if (!Object.keys(slots).length || !slots.length) {
         error = {
           api: true,
           code: 404,
@@ -336,7 +336,7 @@ export class MentorService extends Service {
       const sqlQuery = `SELECT * FROM onboarding WHERE ${check} = ${value}`
 
       const onboardingInvite = await this.database.query(sqlQuery)
-      if (!onboardingInvite) {
+      if (!Object.keys(onboardingInvite).length) {
         error = {
           api: true,
           code: 404,

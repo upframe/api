@@ -29,17 +29,17 @@ export class SearchService extends Service {
       // expertise search
       sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
       const expertiseResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (expertiseResult) response.search.expertise = expertiseResult
+      if (Object.keys(expertiseResult).length) response.search.expertise = expertiseResult
 
       // people search
       sqlQuery = 'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
       const peopleResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (peopleResult) response.search.people = peopleResult
+      if (Object.keys(peopleResult).length) response.search.people = peopleResult
 
       // company search
       sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
       const companyResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (companyResult) response.search.companies = companyResult
+      if (Object.keys(companyResult).length) response.search.companies = companyResult
 
       if (!response.search.expertise || !response.search.people || !response.search.companies) {
         error = {
@@ -81,7 +81,7 @@ export class SearchService extends Service {
     try {
       const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ?'
       const user = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (!user) {
+      if (!Object.keys(user).length) {
         error = {
           api: true,
           code: 404,

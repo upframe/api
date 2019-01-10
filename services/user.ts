@@ -23,7 +23,7 @@ export class UserService extends Service {
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
       const user: User = await this.database.query(sqlQuery, params)
-      if (!user) {
+      if (!Object.keys(user).length) {
         error = {
           api: true,
           code: 404,
