@@ -78,6 +78,23 @@ export class MentorService extends Service {
             mentorSlots = mentorSlots.filter((eachSlot) => eachSlot.start.getTime() !== slot.start.getTime())
           }
         }
+        // Mentor slots have the following props
+        // sid
+        // mentorUID
+        // start
+        // end
+        // recurrency
+        mentorSlots.sort((a, b) => {
+          if (moment(a.start).toDate() < moment(b.start).toDate()) {
+            return -1
+          }
+
+          if (moment(a.start).toDate() > moment(b.start).toDate()) {
+            return 1
+          }
+
+          return 0
+        })
 
         response.mentor.slots = mentorSlots
       }
