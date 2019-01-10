@@ -115,7 +115,7 @@ export class Mail {
     try {
       // get meetup by id
       const meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
-      if (!meetup || !Object.keys(meetup)) {
+      if (!meetup || !Object.keys(meetup).length) {
         error = {
           api: true,
           code: 404,
@@ -128,7 +128,7 @@ export class Mail {
 
       // get mentee name
       const mentee = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.menteeUID)
-      if (!mentee || !Object.keys(mentee)) {
+      if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
           code: 404,
@@ -141,7 +141,7 @@ export class Mail {
 
       // get mentor email
       const mentor = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.mentorUID)
-      if (!mentor || !Object.keys(mentor)) {
+      if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
           code: 404,
@@ -187,7 +187,7 @@ export class Mail {
     try {
       // get meetup by id
       const meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
-      if (!meetup || !Object.keys(meetup)) {
+      if (!meetup || !Object.keys(meetup).length) {
         error = {
           api: true,
           code: 404,
@@ -199,7 +199,7 @@ export class Mail {
 
       // get mentee email
       const mentee = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.menteeUID)
-      if (!mentee || !Object.keys(mentee)) {
+      if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
           code: 404,
@@ -211,7 +211,7 @@ export class Mail {
 
       // get mentor name
       const mentor = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.mentorUID)
-      if (!mentor || !Object.keys(mentor)) {
+      if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
           code: 404,

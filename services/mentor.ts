@@ -38,7 +38,7 @@ export class MentorService extends Service {
         })
 
       const mentorInfo: Mentor = await this.database.query(sqlQuery, params)
-      if (!Object.keys(mentorInfo)) {
+      if (!Object.keys(mentorInfo).length) {
         error = {
           api: true,
           code: 404,
@@ -55,7 +55,7 @@ export class MentorService extends Service {
       params = [response.mentor.uid]
 
       let mentorSlots: Slot[] = await this.database.query(sqlQuery, params)
-      if (!Object.keys(mentorSlots) || !mentorSlots.length) response.mentor.slots = []
+      if (!Object.keys(mentorSlots).length || !mentorSlots.length) response.mentor.slots = []
       else {
         const verified: string[] = []
 

@@ -434,7 +434,7 @@ export class MeetupService extends Service {
         mentorUID: req.jwt.uid,
         status: 'pending' })
       const meetup = await this.database.query(sqlQuery, params)
-      if (!Object.keys(meetup)) {
+      if (!Object.keys(meetup).length) {
         error = {
           api: false,
           code: 404,
@@ -502,7 +502,7 @@ export class MeetupService extends Service {
         mentorUID: req.jwt.uid,
         status: 'pending' })
       const meetup = await this.database.query(sqlQuery, params)
-      if (!Object.keys(meetup)) {
+      if (!Object.keys(meetup).length) {
         error = {
           api: true,
           code: 404,
