@@ -237,9 +237,7 @@ export class AuthService extends Service {
 
           throw error
         }
-        sqlQuery = 'DELETE FROM passwordReset WHERE token = ?'
-        params = [req.body.token]
-        await this.database.query(sqlQuery, params)
+        const result2 = await this.database.query('DELETE FROM passwordReset WHERE token = ?', [req.body.token])
       } else {
         if (!req.body.email) {
           error = {
