@@ -30,7 +30,6 @@ deploy:
     zip_file: 'deploy/api-$TRAVIS_JOB_ID.zip'
     on:
       branch: master
-      condition: $TRAVIS_COMMIT_MESSAGE =~ "^\\[realease\\]"
   - provider: elasticbeanstalk
     skip_cleanup: true
     access_key_id: "$AWS_SECRETID"
