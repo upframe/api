@@ -28,3 +28,16 @@ deploy:
     env: "api-mvp"
     bucket_name: "$AWS_S3BUCKET"
     zip_file: 'deploy/api-$TRAVIS_JOB_ID.zip'
+    on:
+      branch: master
+  - provider: elasticbeanstalk
+    skip_cleanup: true
+    access_key_id: "$AWS_SECRETID"
+    secret_access_key: "$AWS_SECRETKEY"
+    region: "eu-west-2"
+    app: "api"
+    env: "api-staging"
+    bucket_name: "$AWS_S3BUCKET"
+    zip_file: 'deploy/api-$TRAVIS_JOB_ID.zip'
+    on:
+      branch: staging
