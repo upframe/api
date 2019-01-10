@@ -25,7 +25,7 @@ deploy:
     secret_access_key: "$AWS_SECRETKEY"
     region: "eu-west-2"
     app: "api"
-    env: "api-mvp"
+    env: "api-main"
     bucket_name: "$AWS_S3BUCKET"
     zip_file: 'deploy/api-$TRAVIS_JOB_ID.zip'
     on:
