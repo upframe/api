@@ -21,7 +21,7 @@ export class AuthService extends Service {
     this.oAuth2Client = new OAuth2Client(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
-      'http://localhost:3000/dev2' // 'http://localhost/auth/oauthcode'
+      process.env.GOOGLE_CALLBACK_URL
     );
 
     if (this.logger) this.logger.verbose('Auth service loaded')
