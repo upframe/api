@@ -3,8 +3,8 @@ import '../env'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
 import * as express from 'express'
+import { OAuth2Client } from 'google-auth-library'
 import * as jwt from 'jsonwebtoken'
-import * as fetch from 'node-fetch'
 import { query } from 'winston'
 
 import { Service, StandaloneServices } from '../service'
@@ -12,8 +12,17 @@ import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, User } f
 import { sql } from '../utils'
 
 export class AuthService extends Service {
+
+  oAuth2Client: any;
+
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     super(app, standaloneServices)
+
+    this.oAuth2Client = new OAuth2Client(
+      process.env.CLIENT_ID,
+      process.env.CLIENT_SECRET,
+      'http://localhost:3000/dev2' // 'http://localhost/auth/oauthcode'
+    );
 
     if (this.logger) this.logger.verbose('Auth service loaded')
   }
@@ -361,43 +370,95 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async googleSync(req: APIrequest, res: express.Response) {
+  public async getGoogleUrl(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
       ok: 1,
       code: 200,
     }
+    let error: APIerror
+
     try {
 
-      const params = {
-        code: req.body.code,
-        client_id: '821697749752-k7h981c73hrji0k96235q2cblsjpkm7t.apps.googleusercontent.com',
-        client_secret: 'Uxd6biwXVue993gNOij5cFRs',
-        redirect_uri: 'https://connect.upframe.io/dev2',
-        grant_type: 'authorization_code',
-      }
-      const searchParams = Object.keys(params).map((key) => {
-        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key])
-      }).join('&')
+      const authorizeUrl = this.oAuth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: 'profile email https://www.googleapis.com/auth/calendar',
+        prompt: 'consent'
+      });
 
-      const fetchData = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        body: searchParams,
+      if (!authorizeUrl) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Error creating google sync URL',
+          friendlyMessage: 'There was a problem accesssing the Google OAuth URl',
+        }
+        throw error
       }
-      const googleRes = await fetch('https://www.googleapis.com/oauth2/v4/token', fetchData)
-        .then((googleResponse) => googleResponse.json())
-      response = {
-        ok: 1,
-        code: 200,
-        googleRes,
-      }
-    } catch (error) {
+
+      response.url = authorizeUrl
+
+    } catch (err) {
       response = {
         ok: 0,
-        code: 400,
+        code: 500,
       }
+    }
+
+    res.status(response.code).json(response)
+  }
+
+  public async receiveOauthCode(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+    try {
+      if (!req.query.code) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Needed parameter was missing from the request',
+          friendlyMessage: 'The parameter \'code\' was missing in the query',
+        }
+        throw error
+      }
+      const googleResponse = await this.oAuth2Client.getToken(req.query.code)
+
+      if (!googleResponse || !googleResponse.tokens.access_token) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Error parsing synchronization code from Google - access token and refresh token not generated',
+          friendlyMessage: 'We could not transform the Google code into an access token and refresh token',
+        }
+        throw error
+      }
+
+      //DONE - Save refresh token
+      //DONE - Return access token
+      let uid: string
+      if (!req.jwt || !req.jwt.uid) throw 403
+      else uid = req.jwt.uid
+
+      const json = {
+        googleAccessToken: googleResponse.tokens.access_token,
+        googleRefreshToken: googleResponse.tokens.refresh_token,
+      }
+
+      const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, { uid })
+      const result = await this.database.query(sqlQuery, params)
+      if (result.changedRows) response.code = 202
+
+      response.token = googleResponse.tokens.access_token
+
+    } catch (err) {
+      console.log(err)
+      response = {
+        ok: 0,
+        code: 500,
+      }
+      res.status(response.code).json(response)
     }
 
     res.status(response.code).json(response)

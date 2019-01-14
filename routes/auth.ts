@@ -23,8 +23,12 @@ function setRouters(app: express.Application): void {
     services.auth.changeEmail(req, res)
   })
 
-  router.post('/sync', (req, res) => {
-    services.auth.googleSync(req, res)
+  router.get('/google', (req, res) => {
+    services.auth.getGoogleUrl(req, res)
+  })
+
+  router.get('/oauthcode', (req, res) => {
+    services.auth.receiveOauthCode(req, res)
   })
 
 }
