@@ -63,7 +63,7 @@ export interface APIresponse {
     people?: any[],
   }
 
-  googleRes?: any
+  url?: string
 }
 
 export interface APIerror {
