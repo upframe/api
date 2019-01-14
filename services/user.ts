@@ -1,12 +1,22 @@
 import * as express from 'express'
 
+import { OAuth2Client } from 'google-auth-library'
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
 
 export class UserService extends Service {
+
+  private oAuth2Client: any
+
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     super(app, standaloneServices)
+
+    this.oAuth2Client = new OAuth2Client(
+      process.env.CLIENT_ID,
+      process.env.CLIENT_SECRET,
+      process.env.GOOGLE_CALLBACK_URL,
+    )
 
     if (this.logger) this.logger.verbose('User service loaded')
   }
@@ -33,6 +43,13 @@ export class UserService extends Service {
 
         throw error
       }
+
+      this.oAuth2Client.setCredentials({
+        access_token: user.googleAccessToken,
+        refresh_token: user.googleRefreshToken,
+      })
+      const tokens = await this.oAuth2Client.refreshAccessToken()
+      user.googleAccessToken = tokens.access_token
 
       response.user = user
     } catch (err) {
