@@ -13,7 +13,7 @@ import { sql } from '../utils'
 
 export class AuthService extends Service {
 
-  oAuth2Client: any;
+  private oAuth2Client: any
 
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     super(app, standaloneServices)
@@ -21,8 +21,8 @@ export class AuthService extends Service {
     this.oAuth2Client = new OAuth2Client(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
-      process.env.GOOGLE_CALLBACK_URL
-    );
+      process.env.GOOGLE_CALLBACK_URL,
+    )
 
     if (this.logger) this.logger.verbose('Auth service loaded')
   }
@@ -382,8 +382,8 @@ export class AuthService extends Service {
       const authorizeUrl = this.oAuth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: 'profile email https://www.googleapis.com/auth/calendar',
-        prompt: 'consent'
-      });
+        prompt: 'consent',
+      })
 
       if (!authorizeUrl) {
         error = {
@@ -435,8 +435,8 @@ export class AuthService extends Service {
         throw error
       }
 
-      //DONE - Save refresh token
-      //DONE - Return access token
+      // DONE - Save refresh token
+      // DONE - Return access token
       let uid: string
       if (!req.jwt || !req.jwt.uid) throw 403
       else uid = req.jwt.uid
@@ -453,7 +453,6 @@ export class AuthService extends Service {
       response.token = googleResponse.tokens.access_token
 
     } catch (err) {
-      console.log(err)
       response = {
         ok: 0,
         code: 500,
