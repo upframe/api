@@ -121,6 +121,24 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
+  public logout(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+
+    try {
+      res.clearCookie('access_token')
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
   public async register(req: APIrequest, res: express.Response) {
     const json = Object.assign({}, req.body)
     let response: APIresponse = {
