@@ -2,6 +2,7 @@ import * as express from 'express'
 
 import { Database } from './database'
 import { Mail } from './mail'
+import { OAuth } from './oauth'
 
 import { AuthService as Auth } from './auth'
 import { MeetupService as Meetup } from './meetup'
@@ -10,7 +11,7 @@ import { SearchService as Search } from './search'
 import { UrlService as Url } from './url'
 import { UserService as User } from './user'
 
-import { DatabaseService, MailService, Services, StandaloneServices } from '../service'
+import { DatabaseService, MailService, OAuthService, Services, StandaloneServices } from '../service'
 
 export function init(app: express.Application): void {
   /*
@@ -18,9 +19,11 @@ export function init(app: express.Application): void {
    */
   const database: DatabaseService = new Database(app)
   const mailer: MailService = new Mail(app, database)
+  const oauth: OAuthService = new OAuth()
   const standaloneServices: StandaloneServices = {
     db: database,
     mail: mailer,
+    oAuth: oauth,
   }
 
   /*
