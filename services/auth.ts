@@ -3,26 +3,15 @@ import '../env'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
 import * as express from 'express'
-import { OAuth2Client } from 'google-auth-library'
 import * as jwt from 'jsonwebtoken'
-import { query } from 'winston'
 
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, User } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
-
-  private oAuth2Client: any
-
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     super(app, standaloneServices)
-
-    this.oAuth2Client = new OAuth2Client(
-      process.env.CLIENT_ID,
-      process.env.CLIENT_SECRET,
-      process.env.GOOGLE_CALLBACK_URL,
-    )
 
     if (this.logger) this.logger.verbose('Auth service loaded')
   }
@@ -379,7 +368,7 @@ export class AuthService extends Service {
 
     try {
 
-      const authorizeUrl = this.oAuth2Client.generateAuthUrl({
+      const authorizeUrl = this.oauth.generateAuthUrl({
         access_type: 'offline',
         scope: 'profile email https://www.googleapis.com/auth/calendar',
         prompt: 'consent',
@@ -423,7 +412,7 @@ export class AuthService extends Service {
         }
         throw error
       }
-      const googleResponse = await this.oAuth2Client.getToken(req.query.code)
+      const googleResponse = this.oauth.getToken(req.query.code)
 
       if (!googleResponse || !googleResponse.tokens.access_token) {
         error = {

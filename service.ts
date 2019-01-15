@@ -1,17 +1,20 @@
 import * as express from 'express'
 import * as winston from 'winston'
 
+import { OAuth2Client } from 'google-auth-library'
 import { AccountTypes, APIerror, APIrequest, date, JWTpayload } from './types'
 
 export class Service {
   public database: DatabaseService
   public logger: winston.Logger
   public mail: MailService
+  public oauth: OAuthService
 
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     // inject independent services
     this.database = standaloneServices.db
     this.mail = standaloneServices.mail
+    this.oauth = standaloneServices.oAuth
 
     // inject logger
     this.logger = app.get('logger')
@@ -75,6 +78,7 @@ export interface UrlService {
 export interface StandaloneServices {
   db: DatabaseService
   mail: MailService
+  oAuth: OAuthService
 }
 
 export interface DatabaseService {
@@ -87,4 +91,13 @@ export interface MailService {
   sendEmailChange(toAddress: string): Promise<number>
   sendMeetupInvitation(meetupID: string): Promise<APIerror | number>
   sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)>
+}
+
+export interface OAuthService {
+  OAuthClient: OAuth2Client
+
+  generateAuthUrl(config: object)
+  getToken(code: string)
+  setCredentials(credentials: object)
+  refreshAccessToken()
 }
