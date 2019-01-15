@@ -441,9 +441,9 @@ export class AuthService extends Service {
         }
         throw error
       }
-
-      response.token = googleResponse.tokens.access_token
       
+      response.token = googleResponse.tokens.access_token
+
       // DONE - Save refresh token
       // DONE - Return access token
       let uid: string
@@ -458,12 +458,13 @@ export class AuthService extends Service {
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, { uid })
       const result = await this.database.query(sqlQuery, params)
       if (result.changedRows) response.code = 202
-
+      
     } catch (err) {
       response = {
         ok: 0,
         code: 500,
       }
+      res.status(response.code).json(response)
     }
 
     res.status(response.code).json(response)
