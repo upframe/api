@@ -35,7 +35,7 @@ export class UserService extends Service {
         throw error
       }
 
-      if (user.googleAccessToken || user.googleRefreshToken) { //If we have already synced once
+      if (user.googleAccessToken || user.googleRefreshToken) { // If we have already synced once
         this.oauth.setCredentials({
           access_token: user.googleAccessToken,
           refresh_token: user.googleRefreshToken,
