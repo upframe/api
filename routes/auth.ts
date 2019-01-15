@@ -11,6 +11,10 @@ function setRouters(app: express.Application): void {
     services.auth.login(req, res)
   })
 
+  router.get('/logout', (req, res) => {
+    services.auth.logout(req, res)
+  })
+
   router.post('/register', (req, res) => {
     services.auth.register(req, res)
   })

@@ -37,6 +37,7 @@ export interface AuthService {
   isMentor(req: APIrequest, res: express.Response, next: express.NextFunction): void
   createToken(user: JWTpayload , accountType: AccountTypes): string
   login(req: express.Request, res: express.Response): void
+  logout(req: APIrequest, res: express.Response): void
   register(req: express.Request, res: express.Response): void
   resetPassword(req: express.Request, res: express.Response): void
   changeEmail(req: APIrequest, res: express.Response): void
