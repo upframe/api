@@ -111,7 +111,8 @@ export interface Mentor extends Account {
 }
 
 export interface User extends Account {
-  type: AccountTypes
+  type?: AccountTypes
+  upframeCalendarId?: string
 }
 
 export interface Slot {

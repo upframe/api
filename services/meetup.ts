@@ -1,6 +1,7 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
 import moment from 'moment'
+import { fetch } from 'node-fetch'
 
 import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot, User } from '../types'
 import { calendar, sql } from '../utils'
@@ -461,6 +462,35 @@ export class MeetupService extends Service {
 
         throw error
       }
+
+      // TODO Time to add to Google Calendar
+      // [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
+      // const user: User = await this.database.query(sqlQuery, params)
+      // const body = {
+      //   end: {
+      //     dateTime: moment(meetup.start).add(1, 'hour').toISOString(),
+      //   },
+      //   start: {
+      //     dateTime: meetup.start.toISOString(),
+      //   },
+      //   location: meetup.location,
+      // }
+      // const fetchData = {
+      //   method: 'POST',
+      //   body: JSON.stringify(body),
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${user.googleAccessToken}`,
+      //   }
+      // }
+
+      // fetch(`https://www.googleapis.com/calendar/v3/calendars/ulissesvf@gmail.com/events`, fetchData)
+      // .then((res) => res.json())
+      // .then((res) => {
+
+      // })
+      // const final = await fetch(`https://www.googleapis.com/calendar/v3/calendars/
+      // ${user.upframeCalendarId}/events`,fetchData).then((res) => res.json())
 
     } catch (err) {
       response = {
