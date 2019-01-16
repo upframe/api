@@ -7,7 +7,6 @@ import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'
-import { PollyCustomizations } from 'aws-sdk/lib/services/polly';
 
 export class MeetupService extends Service {
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
@@ -464,44 +463,6 @@ export class MeetupService extends Service {
         throw error
       }
 
-      // DEBUG - Testing Ground
-
-      // const finalCalendar = 'pkukj3dsjrqf9m0i43v6tv4964@group.calendar.google.com'
-      // const finalToken = 'ya29.GluTBsSDu8Snqn316wqa6D8rA2niFCSiDiFT43jzmofz82nSMleE3lud4T3uhF7UpHgO1a-ppH5vNGBAws2C3CPbzublr7hTb7aTN1psqX-7nX962VmbNfD9pBoS'
-      // const finalLocation = 'Padaria Portuguesa Telheiras'
-      // const finalStart = '2019-01-17T02:00:00.000Z'
-      // const finalEnd = '2019-01-17T03:00:00.000Z'
-      // const finalName = 'Jose'
-      // console.log(finalCalendar)
-      // console.log(finalToken)
-      // console.log(finalLocation)
-      // console.log(finalStart)
-      // console.log(finalEnd)
-      // const body = {
-      //   summary: `Upframe Meetup w/ ${finalName}`,
-      //   end: {
-      //     dateTime: finalEnd,
-      //   },
-      //   start: {
-      //     dateTime: finalStart,
-      //   },
-      //   location: finalLocation,
-      // }
-      // const fetchData = {
-      //   method: 'POST',
-      //   body: JSON.stringify(body),
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${finalToken}`,
-      //   }
-      // }
-      // console.log('Ate aqui ta tudo')
-      // const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${finalCalendar}/events`, fetchData)
-      // console.log('Brooo')
-      // const final = await res.json()
-      // console.log(final)
-
-      // TODO Time to add to Google Calendar
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
       const user: User = await this.database.query(sqlQuery, params)
 
@@ -547,7 +508,7 @@ export class MeetupService extends Service {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${finalToken}`,
-          }
+          },
         }
 
         fetch(`https://www.googleapis.com/calendar/v3/calendars/${finalCalendar}/events`, fetchData)
@@ -591,7 +552,8 @@ export class MeetupService extends Service {
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
         mid: req.query.meetup,
         mentorUID: req.jwt.uid,
-        status: 'pending' })
+        status: 'pending',
+      })
       const meetup = await this.database.query(sqlQuery, params)
       if (!Object.keys(meetup).length) {
         error = {
