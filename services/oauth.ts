@@ -16,7 +16,7 @@ export class OAuth {
   }
 
   public async getToken(code: string) {
-    return (await this.OAuthClient.getToken(code))
+    return this.OAuthClient.getToken(code)
   }
 
   public setCredentials(credentials: object) {
@@ -24,6 +24,6 @@ export class OAuth {
   }
 
   public async refreshAccessToken() {
-    return (await this.OAuthClient.refreshAccessToken())
+    return this.OAuthClient.refreshAccessToken()
   }
 }

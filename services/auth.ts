@@ -430,7 +430,7 @@ export class AuthService extends Service {
         }
         throw error
       }
-      const googleResponse = this.oauth.getToken(req.query.code)
+      const googleResponse = await this.oauth.getToken(req.query.code)
 
       if (!googleResponse || !googleResponse.tokens.access_token) {
         error = {
@@ -441,30 +441,35 @@ export class AuthService extends Service {
         }
         throw error
       }
-      
+
       response.token = googleResponse.tokens.access_token
+      response.refreshToken = googleResponse.tokens.refresh_token
 
       // DONE - Save refresh token
       // DONE - Return access token
-      let uid: string
-      if (!req.jwt || !req.jwt.uid) throw 403
-      else uid = req.jwt.uid
+      // let uid: string
+      // if (!req.jwt || !req.jwt.uid) throw 403
+      // else uid = req.jwt.uid
 
-      const json = {
-        googleAccessToken: googleResponse.tokens.access_token,
-        googleRefreshToken: googleResponse.tokens.refresh_token,
-      }
+      // // const json = {
+      // //   googleAccessToken: googleResponse.tokens.access_token,
+      // //   googleRefreshToken: googleResponse.tokens.refresh_token,
+      // // }
+      // const sqlQuery = 'UPDATE users SET googleAccessToken = ?, googleRefreshToken = ? WHERE uid = ?'
+      // const params = [
+      //   googleResponse.tokens.access_token,
+      //   googleResponse.tokens.refresh_token,
+      //   uid,
+      // ]
+      // const result = await this.database.query(sqlQuery, params)
+      // if (result.changedRows) response.code = 202
 
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, { uid })
-      const result = await this.database.query(sqlQuery, params)
-      if (result.changedRows) response.code = 202
-      
     } catch (err) {
       response = {
         ok: 0,
         code: 500,
       }
-      res.status(response.code).json(response)
+
     }
 
     res.status(response.code).json(response)

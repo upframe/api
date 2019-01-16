@@ -64,6 +64,8 @@ export interface APIresponse {
   }
 
   url?: string
+
+  refreshToken?: string
 }
 
 export interface APIerror {

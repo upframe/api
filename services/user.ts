@@ -40,7 +40,7 @@ export class UserService extends Service {
           access_token: user.googleAccessToken,
           refresh_token: user.googleRefreshToken,
         })
-        const tokens = this.oauth.refreshAccessToken()
+        const tokens = await this.oauth.refreshAccessToken()
 
         if (!tokens.credentials.access_token) {
           error = {
