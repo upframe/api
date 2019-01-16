@@ -1,12 +1,13 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
 import moment from 'moment'
-import { fetch } from 'node-fetch'
+import * as fetch from 'node-fetch'
 
 import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot, User } from '../types'
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'
+import { PollyCustomizations } from 'aws-sdk/lib/services/polly';
 
 export class MeetupService extends Service {
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
@@ -463,34 +464,94 @@ export class MeetupService extends Service {
         throw error
       }
 
-      // TODO Time to add to Google Calendar
-      // [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
-      // const user: User = await this.database.query(sqlQuery, params)
+      // DEBUG - Testing Ground
+
+      // const finalCalendar = 'pkukj3dsjrqf9m0i43v6tv4964@group.calendar.google.com'
+      // const finalToken = 'ya29.GluTBsSDu8Snqn316wqa6D8rA2niFCSiDiFT43jzmofz82nSMleE3lud4T3uhF7UpHgO1a-ppH5vNGBAws2C3CPbzublr7hTb7aTN1psqX-7nX962VmbNfD9pBoS'
+      // const finalLocation = 'Padaria Portuguesa Telheiras'
+      // const finalStart = '2019-01-17T02:00:00.000Z'
+      // const finalEnd = '2019-01-17T03:00:00.000Z'
+      // const finalName = 'Jose'
+      // console.log(finalCalendar)
+      // console.log(finalToken)
+      // console.log(finalLocation)
+      // console.log(finalStart)
+      // console.log(finalEnd)
       // const body = {
+      //   summary: `Upframe Meetup w/ ${finalName}`,
       //   end: {
-      //     dateTime: moment(meetup.start).add(1, 'hour').toISOString(),
+      //     dateTime: finalEnd,
       //   },
       //   start: {
-      //     dateTime: meetup.start.toISOString(),
+      //     dateTime: finalStart,
       //   },
-      //   location: meetup.location,
+      //   location: finalLocation,
       // }
       // const fetchData = {
       //   method: 'POST',
       //   body: JSON.stringify(body),
       //   headers: {
       //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${user.googleAccessToken}`,
+      //     'Authorization': `Bearer ${finalToken}`,
       //   }
       // }
+      // console.log('Ate aqui ta tudo')
+      // const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${finalCalendar}/events`, fetchData)
+      // console.log('Brooo')
+      // const final = await res.json()
+      // console.log(final)
 
-      // fetch(`https://www.googleapis.com/calendar/v3/calendars/ulissesvf@gmail.com/events`, fetchData)
-      // .then((res) => res.json())
-      // .then((res) => {
+      // TODO Time to add to Google Calendar
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
+      const user: User = await this.database.query(sqlQuery, params)
 
-      // })
-      // const final = await fetch(`https://www.googleapis.com/calendar/v3/calendars/
-      // ${user.upframeCalendarId}/events`,fetchData).then((res) => res.json())
+      if (user.googleAccessToken || user.googleRefreshToken) { // If we have already synced once
+        this.oauth.setCredentials({
+          access_token: user.googleAccessToken,
+          refresh_token: user.googleRefreshToken,
+        })
+        const tokens = await this.oauth.refreshAccessToken()
+
+        if (!tokens.credentials.access_token) {
+          error = {
+            api: true,
+            code: 500,
+            message: 'Could not get updated access token',
+            friendlyMessage: 'There was an error fetching the user\'s info',
+          }
+          throw error
+        }
+
+        sqlQuery = 'SELECT name FROM users WHERE uid = ?'
+        params = [meetup.menteeUID]
+        const mentee: User = await this.database.query(sqlQuery, params)
+        const finalCalendar = user.upframeCalendarId
+        const finalToken = tokens.credentials.access_token
+        const finalLocation = meetup.location
+        const finalStart = meetup.start
+        const finalEnd = moment(finalStart).add(1, 'hours').toISOString()
+        const finalName = mentee.name
+        const body = {
+          summary: `Upframe Meetup w/ ${finalName}`,
+          end: {
+            dateTime: finalEnd,
+          },
+          start: {
+            dateTime: finalStart,
+          },
+          location: finalLocation,
+        }
+        const fetchData = {
+          method: 'POST',
+          body: JSON.stringify(body),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${finalToken}`,
+          }
+        }
+
+        fetch(`https://www.googleapis.com/calendar/v3/calendars/${finalCalendar}/events`, fetchData)
+      }
 
     } catch (err) {
       response = {
