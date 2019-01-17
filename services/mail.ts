@@ -52,7 +52,7 @@ export class Mail {
 
       if (passwordResetRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'noreply@upframe.io',
+          from: 'upframe@upframe.io',
           to: toAddress,
           subject: 'Password reset',
         }
@@ -84,7 +84,7 @@ export class Mail {
 
       if (emailChangeRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'noreply@upframe.io',
+          from: 'upframe@upframe.io',
           to: toAddress,
           subject: 'Email change',
         }
@@ -153,7 +153,7 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'noreply@upframe.io',
+          from: 'upframe@upframe.io',
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
@@ -222,7 +222,7 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'noreply@upframe.io',
+          from: 'upframe@upframe.io',
           to: mentee.email,
           subject: `${mentor.name} accepted to meetup with you`,
         }
