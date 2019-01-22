@@ -29,8 +29,8 @@ app.use(cookieParser())
 app.use(busboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
   limits: {
-    fileSize: 3 * 1024 * 1024 // Max size of 10MB
-  }
+    fileSize: 5 * 1024 * 1024, // Max size of 10MB
+  },
 }))
 
 /* Avoid empty POST requests */
