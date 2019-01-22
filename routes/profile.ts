@@ -36,15 +36,6 @@ function setRouters(app: express.Application): void {
   })
 }
 
-/*
-Uploads a file to our S3 Storage Bucket for profile pictures
-We are using a stream so that this function can be future proof
-Our next step is to replace the code at the router
-so that instead of saving it to a file it redirects
-the file stream directly to this function...
-I believe we need to change bodyParser to another middleware
-that supports streams... TODO
-*/
 function uploadToS3UsingStream(services: any, filename: any, stream: any, req: APIrequest, res: express.Response) {
   try {
     if (!process.env.IAM_USER_KEY || !process.env.IAM_USER_SECRET || !process.env.BUCKET_NAME) throw 500
