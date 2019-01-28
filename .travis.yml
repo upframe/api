@@ -10,7 +10,7 @@ before_deploy:
   - sudo apt-get install zip
   - tsc
   - mkdir deploy
-  - zip deploy/api-"$TRAVIS_JOB_ID".zip -r assets build package.json yarn.lock
+  - zip deploy/api-"$TRAVIS_JOB_ID".zip -r .ebextensions assets build package.json yarn.lock
 
 deploy:
   - provider: releases
