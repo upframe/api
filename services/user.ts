@@ -81,7 +81,6 @@ export class UserService extends Service {
         code: 200,
         ok: 1,
       }
-    let error: APIerror
 
     const json = Object.assign({}, req.body)
 
@@ -92,17 +91,7 @@ export class UserService extends Service {
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
       const result = await this.database.query(sqlQuery, params)
-      // if (result.changedRows) response.code = 202
-      // else {
-      //   error = {
-      //     api: true,
-      //     code: 409,
-      //     message: 'User info could not be updated',
-      //     friendlyMessage: 'It was not possible to update the user profile.',
-      //   }
 
-      //   throw error
-      // }
     } catch (err) {
       response = {
         ok: 0,
