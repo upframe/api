@@ -170,9 +170,16 @@ export class MeetupService extends Service {
       }
 
       // create meetup object
+      let randomMid
+      if (json.location.includes('https://talky.io')) {
+        randomMid = 't' + crypto.randomBytes(20).toString('hex')
+      } else {
+        randomMid = 'm' + crypto.randomBytes(20).toString('hex')
+      }
+
       const meetup: Meetup = {
         sid: json.sid,
-        mid: crypto.randomBytes(20).toString('hex'),
+        mid: randomMid,
         mentorUID: slot.mentorUID,
         menteeUID: newUser.uid,
         location: json.location,
