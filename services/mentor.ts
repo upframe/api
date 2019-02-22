@@ -1,5 +1,6 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
+import {google} from 'googleapis'
 import moment from 'moment'
 
 import { Service, StandaloneServices } from '../service'
@@ -258,6 +259,30 @@ export class MentorService extends Service {
       const deletedSlots: string[] = req.body.deleted
       const updatedSlots: Slot[] = req.body.updated
       let sqlQuery: string
+      let params: string | string[]
+
+      // fetch mentor info
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
+      const mentor: Mentor = await this.database.query(sqlQuery, params)
+
+      // let's refresh google access token if the mentor has synced
+      if (mentor.googleAccessToken || mentor.googleRefreshToken) {
+        this.oauth.setCredentials({
+          access_token: mentor.googleAccessToken,
+          refresh_token: mentor.googleRefreshToken,
+        })
+
+        const tokens = await this.oauth.refreshAccessToken()
+        if (!tokens.credentials.access_token) {
+          error = {
+            api: true,
+            code: 500,
+            message: 'Could not get updated access token',
+            friendlyMessage: 'There was an error fetching the user\'s info',
+          }
+          throw error
+        }
+      }
 
       // delete events
       if (deletedSlots) {

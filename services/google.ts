@@ -1,10 +1,10 @@
-import { OAuth2Client } from 'google-auth-library'
+import {google} from 'googleapis'
 
 export class OAuth {
-  public OAuthClient!: OAuth2Client
+  public OAuthClient!: any
 
   constructor() {
-    this.OAuthClient = new OAuth2Client(
+    this.OAuthClient = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
       process.env.GOOGLE_CALLBACK_URL,
@@ -16,7 +16,7 @@ export class OAuth {
   }
 
   public async getToken(code: string) {
-    return this.OAuthClient.getToken(code)
+    return await this.OAuthClient.getToken(code)
   }
 
   public setCredentials(credentials: object) {
@@ -24,6 +24,6 @@ export class OAuth {
   }
 
   public async refreshAccessToken() {
-    return this.OAuthClient.refreshAccessToken()
+    return await this.OAuthClient.refreshAccessToken()
   }
 }

@@ -1,8 +1,8 @@
 import * as express from 'express'
 
 import { Database } from './database'
+import { OAuth } from './google'
 import { Mail } from './mail'
-import { OAuth } from './oauth'
 
 import { AuthService as Auth } from './auth'
 import { MeetupService as Meetup } from './meetup'

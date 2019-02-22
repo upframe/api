@@ -403,7 +403,6 @@ export class AuthService extends Service {
       }
 
       response.url = authorizeUrl
-
     } catch (err) {
       response = {
         ok: 0,
@@ -430,9 +429,9 @@ export class AuthService extends Service {
         }
         throw error
       }
-      const googleResponse = await this.oauth.getToken(req.query.code)
+      const tokens = await this.oauth.getToken(req.query.code)
 
-      if (!googleResponse || !googleResponse.tokens.access_token) {
+      if (!tokens || !tokens.access_token) {
         error = {
           api: true,
           code: 500,
@@ -442,34 +441,13 @@ export class AuthService extends Service {
         throw error
       }
 
-      response.token = googleResponse.tokens.access_token
-      response.refreshToken = googleResponse.tokens.refresh_token
-
-      // DONE - Save refresh token
-      // DONE - Return access token
-      // let uid: string
-      // if (!req.jwt || !req.jwt.uid) throw 403
-      // else uid = req.jwt.uid
-
-      // // const json = {
-      // //   googleAccessToken: googleResponse.tokens.access_token,
-      // //   googleRefreshToken: googleResponse.tokens.refresh_token,
-      // // }
-      // const sqlQuery = 'UPDATE users SET googleAccessToken = ?, googleRefreshToken = ? WHERE uid = ?'
-      // const params = [
-      //   googleResponse.tokens.access_token,
-      //   googleResponse.tokens.refresh_token,
-      //   uid,
-      // ]
-      // const result = await this.database.query(sqlQuery, params)
-      // if (result.changedRows) response.code = 202
-
+      response.token = tokens.access_token
+      response.refreshToken = tokens.refresh_token
     } catch (err) {
       response = {
         ok: 0,
         code: 500,
       }
-
     }
 
     res.status(response.code).json(response)

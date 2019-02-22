@@ -95,7 +95,7 @@ export interface MailService {
 }
 
 export interface OAuthService {
-  OAuthClient: OAuth2Client
+  OAuthClient: any
 
   generateAuthUrl(config: object)
   getToken(code: string)

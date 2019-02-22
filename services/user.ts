@@ -35,13 +35,14 @@ export class UserService extends Service {
         throw error
       }
 
-      if (user.googleAccessToken || user.googleRefreshToken) { // If we have already synced once
+      // let's refresh google access token if the mentor has synced
+      if (user.googleAccessToken || user.googleRefreshToken) {
         this.oauth.setCredentials({
           access_token: user.googleAccessToken,
           refresh_token: user.googleRefreshToken,
         })
-        const tokens = await this.oauth.refreshAccessToken()
 
+        const tokens = await this.oauth.refreshAccessToken()
         if (!tokens.credentials.access_token) {
           error = {
             api: true,
