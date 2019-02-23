@@ -105,6 +105,7 @@ export enum AccountTypes {
 
 export interface Mentor extends Account {
   favoritePlaces?: string
+  upframeCalendarId?: string
   keycode?: string
   slots?: Slot[]
   type: string

@@ -6,7 +6,7 @@ import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, User } from '../types'
+import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, Mentor, User } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
@@ -429,7 +429,7 @@ export class AuthService extends Service {
         }
         throw error
       }
-      const tokens = await this.oauth.getToken(req.query.code)
+      const tokens = (await this.oauth.getToken(req.query.code)).tokens
 
       if (!tokens || !tokens.access_token) {
         error = {
@@ -448,6 +448,44 @@ export class AuthService extends Service {
         ok: 0,
         code: 500,
       }
+    }
+
+    res.status(response.code).json(response)
+  }
+
+  public async unlinkGoogle(req: APIrequest, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    try {
+      if (!req.jwt || !req.jwt.uid) {
+        error = {
+          api: true,
+          code: 403,
+          message: 'Forbidden',
+          friendlyMessage: 'You are not logged in.',
+        }
+
+        throw error
+      }
+
+      let sqlQuery: string
+      let params: string | string[]
+
+      // fetch mentor info
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
+      const mentor: Mentor = await this.database.query(sqlQuery, params)
+      console.log(mentor)
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      console.log(err)
     }
 
     res.status(response.code).json(response)

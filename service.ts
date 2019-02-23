@@ -43,6 +43,7 @@ export interface AuthService {
   changeEmail(req: APIrequest, res: express.Response): void
   getGoogleUrl(req: APIrequest, res: express.Response): void
   receiveOauthCode(req: APIrequest, res: express.Response): void
+  unlinkGoogle(req: APIrequest, res: express.Response): void
 }
 
 export interface MeetupService {

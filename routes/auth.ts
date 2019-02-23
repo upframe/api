@@ -35,6 +35,11 @@ function setRouters(app: express.Application): void {
     services.auth.receiveOauthCode(req, res)
   })
 
+  /*
+  router.get('/unlink', (req, res) => {
+    services.auth.unlinkGoogle(req, res)
+  })
+  */
 }
 
 export function init(app: express.Application): express.Router {

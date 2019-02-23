@@ -1,5 +1,6 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
+import { GaxiosResponse } from 'gaxios'
 import {google} from 'googleapis'
 import moment from 'moment'
 
@@ -284,6 +285,15 @@ export class MentorService extends Service {
         }
       }
 
+      // create Calendar instance
+      const googleCalendar = google.calendar({
+        version: 'v3',
+      })
+      // set google options
+      google.options({
+        auth: this.oauth.OAuthClient,
+      })
+
       // delete events
       if (deletedSlots) {
         sqlQuery = 'SELECT deleteSlot(?, ?)'
@@ -291,6 +301,11 @@ export class MentorService extends Service {
 
         for (const slotID of deletedSlots) {
           try {
+            await googleCalendar.events.delete({
+              calendarId: mentor.upframeCalendarId,
+              eventId: slotID,
+            })
+
             await this.database.query(sqlQuery, [slotID, req.jwt.uid])
 
           } catch (err) {
@@ -335,6 +350,39 @@ export class MentorService extends Service {
               }
               continue
             } else {
+              // find out if event has been saved
+              let found = true
+              try {
+                await googleCalendar.events.get({
+                  calendarId: mentor.upframeCalendarId,
+                  eventId: slot.sid,
+                })
+              } catch (err) {
+                if (err.response.status === 404) found = false
+              }
+
+              if (!found) {
+                await googleCalendar.events.insert({
+                  calendarId: mentor.upframeCalendarId,
+                  requestBody: {
+                    summary: 'Upframe Free Time Slot',
+                    start: {
+                      dateTime: slot.start,
+                    },
+                    end: {
+                      dateTime: slot.end,
+                    },
+                    description: 'Nice slot',
+                    id: slot.sid,
+                  },
+                })
+                .then((googleRes: GaxiosResponse) => {
+                  if (googleRes.status !== 200) {
+                    response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
+                  }
+                })
+              }
+
               await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
             }
           } catch (err) {

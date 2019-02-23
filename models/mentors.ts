@@ -16,4 +16,5 @@ export const fields: string[] = [
   'facebook',
   'dribbble',
   'favoritePlaces',
+  'upframeCalendarId',
 ]
