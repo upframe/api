@@ -1,5 +1,6 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
+import {google} from 'googleapis'
 import moment from 'moment'
 import * as fetch from 'node-fetch'
 
@@ -435,13 +436,14 @@ export class MeetupService extends Service {
       if (!req.jwt || !req.jwt.uid) throw 403
 
       let sqlQuery: string
-      let params: string | string[]
+      let params: string[]
 
+      // verify if meetup exists and its status
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
         mid: req.query.meetup,
         mentorUID: req.jwt.uid,
         status: 'pending' })
-      const meetup = await this.database.query(sqlQuery, params)
+      const meetup: Meetup = await this.database.query(sqlQuery, params)
       if (!Object.keys(meetup).length) {
         error = {
           api: false,
@@ -452,6 +454,7 @@ export class MeetupService extends Service {
         throw error
       }
 
+      // change meetup status
       [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', {
         status: 'confirmed',
       }, {
@@ -470,13 +473,19 @@ export class MeetupService extends Service {
         throw error
       }
 
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
-      const user: User = await this.database.query(sqlQuery, params)
+      // fetch mentor info
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
+      const mentor: Mentor = await this.database.query(sqlQuery, params)
 
-      if (user.googleAccessToken || user.googleRefreshToken) { // If we have already synced once
+      // fetch mentee info
+      const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: meetup.menteeUID})
+      const mentee: User = await this.database.query(sqlQuery2, params2)
+
+      if (mentor.googleAccessToken || mentor.googleRefreshToken) {
+        // refresh access token
         this.oauth.setCredentials({
-          access_token: user.googleAccessToken,
-          refresh_token: user.googleRefreshToken,
+          access_token: mentor.googleAccessToken,
+          refresh_token: mentor.googleRefreshToken,
         })
         const tokens = await this.oauth.refreshAccessToken()
 
@@ -490,35 +499,39 @@ export class MeetupService extends Service {
           throw error
         }
 
-        sqlQuery = 'SELECT name FROM users WHERE uid = ?'
-        params = [meetup.menteeUID]
-        const mentee: User = await this.database.query(sqlQuery, params)
-        const finalCalendar = user.upframeCalendarId
-        const finalToken = tokens.credentials.access_token
-        const finalLocation = meetup.location
-        const finalStart = meetup.start
-        const finalEnd = moment(finalStart).add(1, 'hours').toISOString()
-        const finalName = mentee.name
-        const body = {
-          summary: `Upframe Meetup w/ ${finalName}`,
-          end: {
-            dateTime: finalEnd,
-          },
-          start: {
-            dateTime: finalStart,
-          },
-          location: finalLocation,
-        }
-        const fetchData = {
-          method: 'POST',
-          body: JSON.stringify(body),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${finalToken}`,
-          },
-        }
+        // create Calendar instance
+        const googleCalendar = google.calendar({
+          version: 'v3',
+        })
+        // set google options
+        google.options({
+          auth: this.oauth.OAuthClient,
+        })
 
-        fetch(`https://www.googleapis.com/calendar/v3/calendars/${finalCalendar}/events`, fetchData)
+        // delete slot
+        await googleCalendar.events.delete({
+          calendarId: mentor.upframeCalendarId,
+          eventId: meetup.sid,
+        })
+
+        // create event
+        await googleCalendar.events.insert({
+          calendarId: mentor.upframeCalendarId,
+          requestBody: {
+            summary: `Upframe Meetup w/${mentee.name}`,
+            description: `Meetup with ${mentee.name} at ${meetup.location}`,
+            location: meetup.location,
+            id: meetup.mid,
+            start: {
+              dateTime: meetup.start,
+              timeZone: 'UTC',
+            },
+            end: {
+              dateTime: moment(meetup.start).add(1, 'hours').toISOString(),
+              timeZone: 'UTC',
+            },
+          },
+        })
       }
 
     } catch (err) {

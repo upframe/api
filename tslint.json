@@ -10,7 +10,8 @@
         "object-literal-sort-keys": false,
         "prefer-const": [true, { "destructuring": "all"}],
         "quotemark": [true, "single"],
-        "semicolon": [true, "never"]
+        "semicolon": [true, "never"],
+        "one-variable-per-declaration": false
     },
     "rulesDirectory": []
 }
