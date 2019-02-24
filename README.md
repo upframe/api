@@ -14,7 +14,7 @@ cd api
 yarn install
 ```
 
-All the dependencies are now installed. Let's take care of the following environment variables. There are two ways get them working. **Option 1** is to get a copy of our .env file, a secret file with all the environment variables we use in production (for Upframe developers only). **Option 2** is to manually set them up. We prefer the first option but the second one also works. Here is a list of said environment variables and what their use is.
+All the dependencies are now installed. Let's take care of the following environment variables. There are two ways get them working. **Option 1** is to get a copy of our .env file, a secret file with all the environment variables we use in production (for Upframe developers only). We take this file and add it to the root folder. **Option 2** is to manually set them up. We prefer the first option but the second one also works. Here is a list of said environment variables and what their use is.
 
 **NODE_ENV** - "development" or anything else. Controls our CORS policy to allow localhost.
 **REGISTER** - Temporary. When it's a number it opens our registration endpoint.
