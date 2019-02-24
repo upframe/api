@@ -27,7 +27,7 @@ function setRouters(app: express.Application): void {
 
       uploadToS3UsingStream(
         services,
-        email + filename.slice(-4),
+        req.jwt.uid + filename.slice(-5),
         file,
         req,
         res,
@@ -43,7 +43,6 @@ function uploadToS3UsingStream(services: any, filename: any, stream: any, req: A
     const s3 = new AWS.S3({
       accessKeyId: process.env.IAM_USER_KEY,
       secretAccessKey: process.env.IAM_USER_SECRET,
-      // Bucket: process.env.BUCKET_NAME,
     })
     const params = {
       ACL: 'public-read',
@@ -55,12 +54,8 @@ function uploadToS3UsingStream(services: any, filename: any, stream: any, req: A
       if (err) {
         res.status(404).send(err)
       } else {
-        // res.status(200).send('Feito Link Publico: ' + data.Location)
         if (!req.jwt || !req.jwt.email) throw 403
         services.user.image(data.Location, req.jwt.email, res, data.Location)
-        // fs.unlink('./uploads/' + filename, (err) => {
-        //   console.log(err)
-        // })
       }
     })
     return 0
