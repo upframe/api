@@ -1,6 +1,9 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
 import {google} from 'googleapis'
+
+import {calendar_v3} from 'googleapis'
+
 import moment from 'moment'
 import * as fetch from 'node-fetch'
 

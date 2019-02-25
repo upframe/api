@@ -478,14 +478,11 @@ export class AuthService extends Service {
       // fetch mentor info
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
       const mentor: Mentor = await this.database.query(sqlQuery, params)
-      console.log(mentor)
     } catch (err) {
       response = {
         ok: 0,
         code: 500,
       }
-
-      console.log(err)
     }
 
     res.status(response.code).json(response)
