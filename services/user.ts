@@ -120,7 +120,6 @@ export class UserService extends Service {
     let error: APIerror
     try {
       if (!req.jwt) throw 403
-      
       const newExtension = path.parse(url.slice(-7)).ext
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
       const user = await this.database.query(sqlQuery, params)
