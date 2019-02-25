@@ -35,13 +35,12 @@ function setRouters(app: express.Application): void {
         throw error
       }
 
+      const uid = req.jwt.uid
       req.pipe(req.busboy)
       req.busboy.on('file', (fieldname, file, filename) => {
-        // console.log(`Upload of '${filename}' started`)
-
         uploadToS3UsingStream(
           services,
-          req.jwt.uid + filename.slice(-5),
+          uid + filename.slice(-5),
           file,
           req,
           res,
