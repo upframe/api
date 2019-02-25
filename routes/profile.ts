@@ -60,15 +60,12 @@ function setRouters(app: express.Application): void {
         response.friendlyMessage = err.friendlyMessage
       }
     }
-
-    res.status(response.code).json(response)
   })
 }
 
 function uploadToS3UsingStream(services: any, filename: any, stream: any, req: APIrequest, res: express.Response) {
   try {
     if (!process.env.IAM_USER_KEY || !process.env.IAM_USER_SECRET || !process.env.BUCKET_NAME) throw 500
-
     const s3 = new AWS.S3({
       accessKeyId: process.env.IAM_USER_KEY,
       secretAccessKey: process.env.IAM_USER_SECRET,
@@ -84,7 +81,7 @@ function uploadToS3UsingStream(services: any, filename: any, stream: any, req: A
         res.status(404).send(err)
       } else {
         if (!req.jwt || !req.jwt.email) throw 403
-        services.user.image(data.Location, req.jwt.email, res, data.Location)
+        services.user.image(data.Location, req.jwt.email, res, req)
       }
     })
     return 0
