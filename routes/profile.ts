@@ -2,7 +2,7 @@ import * as AWS from 'aws-sdk'
 import * as express from 'express'
 
 import { Services } from '../service'
-import { APIrequest } from '../types'
+import { APIerror, APIrequest, APIresponse } from '../types'
 
 const router: express.Router = express.Router()
 
@@ -18,21 +18,49 @@ function setRouters(app: express.Application): void {
   })
 
   router.post('/image', services.auth.verifyToken, (req: APIrequest, res: express.Response) => {
-    let email: string
-    if (req.jwt && req.jwt.email) email = req.jwt.email
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+    try {
+      if (!req.jwt || !req.jwt.uid) {
+        error = {
+          api: true,
+          code: 403,
+          message: 'Forbidden',
+          friendlyMessage: 'There was a problem updating your timeslots',
+        }
 
-    req.pipe(req.busboy)
-    req.busboy.on('file', (fieldname, file, filename) => {
-      // console.log(`Upload of '${filename}' started`)
+        throw error
+      }
 
-      uploadToS3UsingStream(
-        services,
-        req.jwt.uid + filename.slice(-5),
-        file,
-        req,
-        res,
-      )
-    })
+      req.pipe(req.busboy)
+      req.busboy.on('file', (fieldname, file, filename) => {
+        // console.log(`Upload of '${filename}' started`)
+
+        uploadToS3UsingStream(
+          services,
+          req.jwt.uid + filename.slice(-5),
+          file,
+          req,
+          res,
+        )
+      })
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.messange
+        response.friendlyMessage = err.friendlyMessage
+      }
+    }
+
+    res.status(response.code).json(response)
   })
 }
 
