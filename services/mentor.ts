@@ -367,10 +367,10 @@ export class MentorService extends Service {
                   requestBody: {
                     summary: 'Upframe Free Time Slot',
                     start: {
-                      dateTime: slot.start,
+                      dateTime: moment(slot.start).toISOString(),
                     },
                     end: {
-                      dateTime: slot.end,
+                      dateTime: moment(slot.end).toISOString(),
                     },
                     description: 'Nice slot',
                     id: slot.sid,

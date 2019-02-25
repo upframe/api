@@ -2,10 +2,7 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import {google} from 'googleapis'
 
-import {calendar_v3} from 'googleapis'
-
 import moment from 'moment'
-import * as fetch from 'node-fetch'
 
 import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot, User } from '../types'
 import { calendar, sql } from '../utils'
@@ -484,7 +481,7 @@ export class MeetupService extends Service {
       const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: meetup.menteeUID})
       const mentee: User = await this.database.query(sqlQuery2, params2)
 
-      if (mentor.googleAccessToken || mentor.googleRefreshToken) {
+      if ((mentor.googleAccessToken || mentor.googleRefreshToken) && mentor.upframeCalendarId ) {
         // refresh access token
         this.oauth.setCredentials({
           access_token: mentor.googleAccessToken,
@@ -527,7 +524,7 @@ export class MeetupService extends Service {
             status: 'confirmed',
             id: meetup.mid,
             start: {
-              dateTime: meetup.start,
+              dateTime: moment(meetup.start).toISOString(),
               timeZone: 'UTC',
             },
             end: {
@@ -539,7 +536,7 @@ export class MeetupService extends Service {
               {email: mentee.email},
             ],
           },
-        })
+      })
       }
 
     } catch (err) {
