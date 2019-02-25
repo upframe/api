@@ -521,6 +521,7 @@ export class MeetupService extends Service {
             summary: `Upframe Meetup w/${mentee.name}`,
             description: `Meetup with ${mentee.name} at ${meetup.location}`,
             location: meetup.location,
+            status: 'confirmed',
             id: meetup.mid,
             start: {
               dateTime: meetup.start,
@@ -530,6 +531,10 @@ export class MeetupService extends Service {
               dateTime: moment(meetup.start).add(1, 'hours').toISOString(),
               timeZone: 'UTC',
             },
+            attendees: [
+              {email: mentor.email},
+              {email: mentee.email},
+            ],
           },
         })
       }
