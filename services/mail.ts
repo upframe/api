@@ -6,7 +6,7 @@ import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
 
 import { DatabaseService } from '../service'
-import { APIerror, Email, User } from '../types'
+import { APIerror, Email, Meetup, User } from '../types'
 
 export class Mail {
   private database!: DatabaseService
@@ -114,7 +114,7 @@ export class Mail {
 
     try {
       // get meetup by id
-      const meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
+      const meetup: Meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
       if (!meetup || !Object.keys(meetup).length) {
         error = {
           api: true,
@@ -157,12 +157,23 @@ export class Mail {
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
-      const placeholders = {
+      const placeholders: any = {
           USER: mentee.name,
           LOCATION: meetup.location,
           TIME: new Date(meetup.start).toLocaleString(),
           MID: meetupID,
         }
+
+      if (meetup.message) {
+        placeholders.MESSAGE = `
+          ${mentee.name} left a message:<br>
+          <i>${meetup.message}</i>
+        `
+      } else {
+        placeholders.MESSAGE = `
+          ${mentee.name} did not left a message.<br>
+        `
+      }
 
       data.html = this.getTemplate('meetupInvitation', placeholders)
 

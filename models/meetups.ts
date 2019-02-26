@@ -4,6 +4,7 @@ export const fields: string[] = [
   'menteeUID',
   'mentorUID',
   'location',
+  'message',
   'start',
   'status',
 ]

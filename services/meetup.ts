@@ -183,6 +183,7 @@ export class MeetupService extends Service {
         mid: randomMid,
         mentorUID: slot.mentorUID,
         menteeUID: newUser.uid,
+        message: json.message,
         location: json.location,
         start: slot.start,
         status: 'pending',

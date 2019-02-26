@@ -24,6 +24,7 @@ export interface APIRequestBody {
   menteeUID?: string
   mentorUID?: string
   location?: string
+  message?: string
 
   token?: string
 
@@ -83,6 +84,7 @@ export interface Meetup {
   sid: string
   menteeUID: string
   mentorUID: string
+  message?: string
   location: string
   status: string
   start: string | Date
