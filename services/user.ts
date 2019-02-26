@@ -1,4 +1,6 @@
+import * as AWS from 'aws-sdk'
 import * as express from 'express'
+import * as path from 'path'
 
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, User } from '../types'
@@ -109,17 +111,21 @@ export class UserService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async image(url: string, userEmail: string, res: express.Response) {
+  public async image(url: string, userEmail: string, res: express.Response, req: APIrequest) {
     let response: APIresponse = {
         ok: 1,
         code: 200,
         url,
       }
     let error: APIerror
-
     try {
-      const sqlQuery = 'UPDATE users SET profilePic = ? WHERE email = ?'
-      const result = await this.database.query(sqlQuery, [url, userEmail])
+      if (!req.jwt) throw 403
+      const newExtension = path.parse(url.slice(-7)).ext
+      const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
+      const user = await this.database.query(sqlQuery, params)
+      const oldExtension = path.parse(user.profilePic.slice(-7)).ext
+      const sqlQuery2 = 'UPDATE users SET profilePic = ? WHERE email = ?'
+      const result = await this.database.query(sqlQuery2, [url, userEmail])
       if (result.changedRows) response.code = 202
       else {
         error = {
@@ -128,8 +134,22 @@ export class UserService extends Service {
           message: 'User profile picture could not be updated',
           friendlyMessage: 'It was not possible to update the user\'s profile picture',
         }
-
         throw error
+      }
+      const deleteParams = {
+        Bucket: process.env.BUCKET_NAME || 'connect-api-profile-pictures',
+        Key: req.jwt.uid + oldExtension,
+      }
+      if (newExtension !== oldExtension && !user.profilePic.includes('default.png')) {
+        const s3 = new AWS.S3({
+          accessKeyId: process.env.IAM_USER_KEY,
+          secretAccessKey: process.env.IAM_USER_SECRET,
+        })
+        s3.deleteObject(deleteParams, (err, data) => {
+          res.status(response.code).json(response)
+        })
+      } else {
+        res.status(response.code).json(response)
       }
     } catch (err) {
       response = {
@@ -143,8 +163,6 @@ export class UserService extends Service {
         response.friendlyMessage = err.friendlyMessage
       }
     }
-
-    res.status(response.code).json(response)
   }
 
 }

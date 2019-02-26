@@ -70,7 +70,7 @@ export interface SearchService {
 export interface UserService {
   get(req: express.Request, res: express.Response): void
   update(req: express.Request, res: express.Response): void
-  image(url, userEmail, res): void
+  image(url, userEmail, res, req): void
 }
 
 export interface UrlService {
