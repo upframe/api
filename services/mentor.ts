@@ -362,21 +362,21 @@ export class MentorService extends Service {
               // }
 
               // if (!found) {
-              //await 
-                googleCalendar.events.insert({
-                  calendarId: mentor.upframeCalendarId,
-                  requestBody: {
-                    summary: 'Upframe Free Time Slot',
-                    start: {
-                      dateTime: moment(slot.start).toISOString(),
-                    },
-                    end: {
-                      dateTime: moment(slot.end).toISOString(),
-                    },
-                    description: 'Nice slot',
-                    id: slot.sid,
+              // await
+              googleCalendar.events.insert({
+                calendarId: mentor.upframeCalendarId,
+                requestBody: {
+                  summary: 'Upframe Free Time Slot',
+                  start: {
+                    dateTime: moment(slot.start).toISOString(),
                   },
-                })
+                  end: {
+                    dateTime: moment(slot.end).toISOString(),
+                  },
+                  description: 'Nice slot',
+                  id: slot.sid,
+                },
+              })
                 // .then((googleRes: GaxiosResponse) => {
                 //   if (googleRes.status !== 200) {
                 //     response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
