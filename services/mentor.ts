@@ -301,7 +301,7 @@ export class MentorService extends Service {
 
         for (const slotID of deletedSlots) {
           try {
-            await googleCalendar.events.delete({
+            googleCalendar.events.delete({
               calendarId: mentor.upframeCalendarId,
               eventId: slotID,
             })
@@ -351,18 +351,19 @@ export class MentorService extends Service {
               continue
             } else {
               // find out if event has been saved
-              let found = true
-              try {
-                await googleCalendar.events.get({
-                  calendarId: mentor.upframeCalendarId,
-                  eventId: slot.sid,
-                })
-              } catch (err) {
-                if (err.response.status === 404) found = false
-              }
+              // let found = true
+              // try {
+              //   await googleCalendar.events.get({
+              //     calendarId: mentor.upframeCalendarId,
+              //     eventId: slot.sid,
+              //   })
+              // } catch (err) {
+              //   if (err.response.status === 404) found = false
+              // }
 
-              if (!found) {
-                await googleCalendar.events.insert({
+              // if (!found) {
+              //await 
+                googleCalendar.events.insert({
                   calendarId: mentor.upframeCalendarId,
                   requestBody: {
                     summary: 'Upframe Free Time Slot',
@@ -376,12 +377,12 @@ export class MentorService extends Service {
                     id: slot.sid,
                   },
                 })
-                .then((googleRes: GaxiosResponse) => {
-                  if (googleRes.status !== 200) {
-                    response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
-                  }
-                })
-              }
+                // .then((googleRes: GaxiosResponse) => {
+                //   if (googleRes.status !== 200) {
+                //     response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
+                //   }
+                // })
+              // }
 
               await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
             }
