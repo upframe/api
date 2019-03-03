@@ -510,7 +510,7 @@ export class MeetupService extends Service {
         })
 
         // delete slot
-        await googleCalendar.events.delete({
+        googleCalendar.events.delete({
           calendarId: mentor.upframeCalendarId,
           eventId: meetup.sid,
         })
@@ -537,7 +537,7 @@ export class MeetupService extends Service {
               {email: mentee.email},
             ],
           },
-      })
+        })
       }
 
     } catch (err) {
