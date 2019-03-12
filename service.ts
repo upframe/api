@@ -55,6 +55,7 @@ export interface MeetupService {
 
 export interface MentorService {
   get(req: express.Request , res: express.Response): void
+  getAll(req: express.Request, res: express.Response): void
   getRandom(req: express.Request , res: express.Response): void
   getTimeSlots(req: express.Request , res: express.Response): void
   updateTimeSlots(req: express.Request , res: express.Response): void

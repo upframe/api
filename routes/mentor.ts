@@ -8,6 +8,10 @@ const router: express.Router = express.Router()
 function setRouters(app: express.Application): void {
   const services: Services = app.get('services')
 
+  router.get('/all', (req: APIrequest, res: express.Response) => {
+    services.mentor.getAll(req, res)
+  })
+
   router.get('/random', (req: APIrequest , res: express.Response) => {
     services.mentor.getRandom(req, res)
   })

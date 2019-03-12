@@ -120,6 +120,50 @@ export class MentorService extends Service {
   }
 
   /**
+   * @description Returns all mentors on the platform
+   * @param {express.Request} req Express request
+   * @param {express.Response} res Express response
+   */
+  public async getAll(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    try {
+      const sqlQuery = "SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = 'mentor' ORDER BY RAND()"
+
+      const mentorList = await this.database.query(sqlQuery)
+      if (!Object.keys(mentorList).length) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentors not found',
+          friendlyMessage: 'Mentors not found',
+        }
+
+        throw error
+      }
+
+      response.mentors = mentorList
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
+  /**
    * @description Fetches random mentors (max: 5)
    * @param {express.Request} req Express request
    * @param {express.Response} res Express response
@@ -132,7 +176,7 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5'
+      const sqlQuery = "SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = 'mentor' ORDER BY RAND() LIMIT 5"
 
       const mentorList = await this.database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
