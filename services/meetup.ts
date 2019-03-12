@@ -474,6 +474,18 @@ export class MeetupService extends Service {
         throw error
       }
 
+      // fetch slot info
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'timeSlots', {sid: meetup.sid})
+      const slot: Slot = await this.database.query(sqlQuery, params)
+
+      // calculate slot duration
+      let duration
+      let unit: string = 'minutes'
+      if (moment(slot.end).diff(slot.start, 'hours')) {
+        duration = moment(slot.end).diff(slot.start, 'hours')
+        unit = 'hours'
+      } else duration = moment(slot.end).diff(slot.start, 'minutes');
+
       // fetch mentor info
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
       const mentor: Mentor = await this.database.query(sqlQuery, params)
@@ -529,7 +541,7 @@ export class MeetupService extends Service {
               timeZone: 'UTC',
             },
             end: {
-              dateTime: moment(meetup.start).add(1, 'hours').toISOString(),
+              dateTime: moment(meetup.start).add(duration, unit).toISOString(),
               timeZone: 'UTC',
             },
             attendees: [
