@@ -208,7 +208,9 @@ export class MentorService extends Service {
   }
 
   /**
-   * @description Returns mentor's time slots
+   * @description Returns mentor's time slots. There are two possibilities here,
+   * either the user is Google Synced and we need to take that into consideration,
+   * or we simply don't care about that.
    * @param {APIrequest} req
    * @param {express.Response} res
    */
