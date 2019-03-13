@@ -259,6 +259,7 @@ export class MentorService extends Service {
 
       const deletedSlots: string[] = req.body.deleted
       const updatedSlots: Slot[] = req.body.updated
+      const splitSlots: Slot[] = []
       let sqlQuery: string
       let params: string | string[]
 
@@ -324,67 +325,68 @@ export class MentorService extends Service {
 
         for (const slot of updatedSlots) {
           try {
-            if (!slot.sid) slot.sid = crypto.randomBytes(20).toString('hex')
+            // calculate how many hours are between slot end and slot start
+            // and determine how many 2h slots and 1h slots fill this better
+            const hourDiff: number = moment(slot.end).diff(slot.start, 'hours')
+            let twoHourSlots: number = Math.floor(hourDiff / 2)
+            let oneHourSlots: number = Math.floor(hourDiff - (twoHourSlots * 2))
 
-            /** let's figure out if the slot is +1h
-             *  so we can divide it into multiple slots
-             */
-            const timeDiff: number = new Date(slot.end).getTime() - new Date(slot.start).getTime()
-            let hourDiff = Math.floor(Math.abs(timeDiff) / 3.6e6)
+            // determine directly how many 30-min slots can fill
+            let halfHourSlots: number = moment(slot.end).subtract(hourDiff, 'hours').diff(slot.start, 'minutes') / 30
 
-            // divide slots
-            if (hourDiff > 1) {
-              // iterator
-              let slotStart = new Date(slot.start)
-              while (hourDiff--) {
-                updatedSlots.push({
-                  end: new Date(new Date(slotStart).setHours(new Date(slotStart).getHours() + 1)),
-                  mentorUID: req.jwt.uid,
-                  recurrency: slot.recurrency,
-                  sid: crypto.randomBytes(20).toString('hex'),
-                  start: slotStart,
-                })
+            const it = moment(slot.start)
+            const itStart = moment(slot.start)
+            let mode: number = 2
+            while (true) {
+              if (twoHourSlots) {
+                it.add('2', 'hours')
+                twoHourSlots--
+              } else if (oneHourSlots) {
+                it.add('1', 'hours')
+                mode = 1
+                oneHourSlots--
+              } else if (halfHourSlots) {
+                it.add('30', 'minutes')
+                mode = 0
+                halfHourSlots--
+              } else break
 
-                // next event starts at the end of the previous one
-                slotStart = new Date(new Date(slotStart).setHours(new Date(slotStart).getHours() + 1))
+              const newSlot: Slot = {
+                sid: crypto.randomBytes(20).toString('hex'),
+                start: itStart.toDate(),
+                end: it.toDate(),
+                mentorUID: req.jwt.uid,
+                recurrency: slot.recurrency,
               }
-              continue
-            } else {
-              // find out if event has been saved
-              // let found = true
-              // try {
-              //   await googleCalendar.events.get({
-              //     calendarId: mentor.upframeCalendarId,
-              //     eventId: slot.sid,
-              //   })
-              // } catch (err) {
-              //   if (err.response.status === 404) found = false
-              // }
 
-              // if (!found) {
-              // await
+              // set next slot starting time
+              if (mode === 2) itStart.add('2', 'hours')
+              else if (mode === 1) itStart.add('1', 'hour')
+              else if (mode === 0) itStart.add('30', 'minutes')
+
+              // save slot to database
+              await this.database.query(sqlQuery, [newSlot.sid,
+                newSlot.mentorUID,
+                newSlot.start,
+                newSlot.end,
+                newSlot.recurrency,
+              ])
+
+              // save event in mentor's Google Calendar
               googleCalendar.events.insert({
                 calendarId: mentor.upframeCalendarId,
                 requestBody: {
                   summary: 'Upframe Free Time Slot',
                   start: {
-                    dateTime: moment(slot.start).toISOString(),
+                    dateTime: moment(newSlot.start).toISOString(),
                   },
                   end: {
-                    dateTime: moment(slot.end).toISOString(),
+                    dateTime: moment(newSlot.end).toISOString(),
                   },
                   description: 'Nice slot',
-                  id: slot.sid,
+                  id: newSlot.sid,
                 },
               })
-                // .then((googleRes: GaxiosResponse) => {
-                //   if (googleRes.status !== 200) {
-                //     response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
-                //   }
-                // })
-              // }
-
-              await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
             }
           } catch (err) {
             response.ok = 0
