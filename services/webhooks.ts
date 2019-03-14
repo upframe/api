@@ -40,7 +40,7 @@ export class WebhooksService extends Service {
         auth: this.oauth.OAuthClient,
       })
 
-      const res = await googleCalendar.events.list({
+      const googleResponse = await googleCalendar.events.list({
         calendarId: mentor.upframeCalendarId,
         timeMin: (new Date()).toISOString(),
         maxResults: 2400, // I believe the max is 2500
@@ -48,8 +48,8 @@ export class WebhooksService extends Service {
         orderBy: 'startTime',
       })
 
-      const googleEvents = res.data.items ? res.data.items : [];
-      
+      const googleEvents = googleResponse.data.items ? googleResponse.data.items : []
+
       if (googleEvents.length > 0) {
         const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
         let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
