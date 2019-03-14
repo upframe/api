@@ -111,6 +111,7 @@ export class UserService extends Service {
         })
 
         googleCalendar.events.watch({
+          auth: this.oauth.OAuthClient,
           calendarId: req.body.upframeCalendarId,
           requestBody: {
             id: req.jwt.uid,
