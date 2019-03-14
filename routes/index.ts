@@ -6,6 +6,7 @@ import * as Mentor from './mentor'
 import * as Profile from './profile'
 import * as Search from './search'
 import * as Url from './url'
+import * as Webhooks from './webhooks'
 
 export function init(app: express.Application): void {
   try {
@@ -15,6 +16,7 @@ export function init(app: express.Application): void {
     app.use('/search', Search.init(app))
     app.use('/profile', Profile.init(app))
     app.use('/url', Url.init(app))
+    app.use('/webhooks', Webhooks.init(app))
 
     app.get('logger').verbose('Routers loaded')
   } catch (err) {

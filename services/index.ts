@@ -10,6 +10,7 @@ import { MentorService as Mentor } from './mentor'
 import { SearchService as Search } from './search'
 import { UrlService as Url } from './url'
 import { UserService as User } from './user'
+import { WebhooksService as Webhooks } from './webhooks'
 
 import { DatabaseService, MailService, OAuthService, Services, StandaloneServices } from '../service'
 
@@ -37,6 +38,7 @@ export function init(app: express.Application): void {
     search: new Search(app, standaloneServices),
     user: new User(app, standaloneServices),
     url: new Url(app, standaloneServices),
+    webhooks: new Webhooks(app, standaloneServices),
   }
 
   app.set('services', services)

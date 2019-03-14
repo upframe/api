@@ -30,6 +30,7 @@ export interface Services {
   search: SearchService
   user: UserService
   url: UrlService
+  webhooks: WebhooksService
 }
 
 export interface AuthService {
@@ -76,6 +77,10 @@ export interface UserService {
 
 export interface UrlService {
   getRealUrl(req: express.Request, res: express.Response): void
+}
+
+export interface WebhooksService {
+  parseGoogleWebhook(req: express.Request, res: express.Response): void
 }
 
 export interface StandaloneServices {

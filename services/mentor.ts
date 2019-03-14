@@ -423,6 +423,18 @@ export class MentorService extends Service {
                   id: slot.sid,
                 },
               })
+              googleCalendar.events.watch({
+                calendarId: req.jwt.uid,
+                requestBody: {
+                  id: req.jwt.uid,
+                  type: "web_hook",
+                  address: "https://api-staging.upframe.io/webhooks/calendar",
+                  resourceId: req.jwt.uid
+                }
+              }, (error, result) => {
+                if (error) throw error;
+                console.log(result);
+              });
                 // .then((googleRes: GaxiosResponse) => {
                 //   if (googleRes.status !== 200) {
                 //     response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
