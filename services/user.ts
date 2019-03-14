@@ -1,11 +1,11 @@
 import * as AWS from 'aws-sdk'
 import * as express from 'express'
+import { google } from 'googleapis'
 import * as path from 'path'
 
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
-import { google } from 'googleapis'
 
 export class UserService extends Service {
 
@@ -96,7 +96,7 @@ export class UserService extends Service {
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
       const result = await this.database.query(sqlQuery, params)
 
-      if (req.body.googleAccessToken) { //Adicionar um Webhook
+      if (req.body.googleAccessToken) { // Adicionar um Webhook
         this.oauth.setCredentials({
           access_token: req.body.googleAccessToken,
           refresh_token: req.body.googleRefreshToken,
@@ -114,14 +114,13 @@ export class UserService extends Service {
           calendarId: req.jwt.uid,
           requestBody: {
             id: req.jwt.uid,
-            type: "web_hook",
-            address: "https://api-staging.upframe.io/webhooks/calendar",
-            resourceId: req.jwt.uid
-          }
-        }, (error, result) => {
-          if (error) throw error;
-          console.log(result);
-        });
+            type: 'web_hook',
+            address: 'https://api-staging.upframe.io/webhooks/calendar',
+            resourceId: req.jwt.uid,
+          },
+        }, (error) => {
+          if (error) throw error
+        })
       }
 
     } catch (err) {
