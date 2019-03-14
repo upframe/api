@@ -96,7 +96,7 @@ export class UserService extends Service {
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
       const result = await this.database.query(sqlQuery, params)
 
-      if (req.body.googleAccessToken) { // Adicionar um Webhook
+      if (req.body.upframeCalendarId) { // Adicionar um Webhook caso estejamos a atualizar o calendar id
         this.oauth.setCredentials({
           access_token: req.body.googleAccessToken,
           refresh_token: req.body.googleRefreshToken,
@@ -111,7 +111,7 @@ export class UserService extends Service {
         })
 
         googleCalendar.events.watch({
-          calendarId: req.jwt.uid,
+          calendarId: req.body.upframeCalendarId,
           requestBody: {
             id: req.jwt.uid,
             type: 'web_hook',
