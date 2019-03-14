@@ -238,7 +238,7 @@ export class MentorService extends Service {
       const endDate = req.query.end
 
       const slots: Slot[] = await this.database.query(sqlQuery, [req.jwt.uid])
-      if (!Object.keys(slots).length || !slots.length) {
+      if ( !Object.keys(slots).length || (Array.isArray(slots) && !slots.length) ) {
         error = {
           api: true,
           code: 404,
@@ -249,18 +249,21 @@ export class MentorService extends Service {
         throw error
       }
 
-      const genSlots = calendar.automaticGenerate(slots).filter((slot) => {
-        let ok = true
-        // verify if slot start is after the defined minimum start Date
-        if (new Date(startDate)) {
-          if (new Date(startDate).getTime() > new Date(slot.start).getTime()) ok = false
-        }
-        // verify if slot end is before the defined maximum end Date
-        if (new Date(endDate)) {
-          if (new Date(endDate).getTime() < new Date(slot.end).getTime()) ok = false
-        }
-        return ok
-      })
+      let genSlots: Slot[] = []
+      if (Array.isArray(slots)) {
+        genSlots = calendar.automaticGenerate(slots).filter((slot) => {
+          let ok = true
+          // verify if slot start is after the defined minimum start Date
+          if (new Date(startDate)) {
+            if (new Date(startDate).getTime() > new Date(slot.start).getTime()) ok = false
+          }
+          // verify if slot end is before the defined maximum end Date
+          if (new Date(endDate)) {
+            if (new Date(endDate).getTime() < new Date(slot.end).getTime()) ok = false
+          }
+          return ok
+        })
+      } else genSlots.push(slots)
 
       response.slots = genSlots
     } catch (err) {
