@@ -32,6 +32,10 @@ export interface APIRequestBody {
   updated: Slot[]
 
   code?: string
+
+  googleAccessToken?: string
+  googleRefreshToken?: string
+  upframeCalendarId?: string
 }
 
 export interface JWTpayload {
