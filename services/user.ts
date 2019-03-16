@@ -111,17 +111,30 @@ export class UserService extends Service {
           auth: this.oauth.OAuthClient,
         })
 
+        let today = new Date() //We need to use the UNIX timestamp. Google likes to complicate
+        today.setHours(today.getHours() + 3)
+        const ttl = Math.round(today.getTime())
+
         googleCalendar.events.watch({
           auth: this.oauth.OAuthClient,
           calendarId: req.body.upframeCalendarId,
           requestBody: {
-            id: req.jwt.uid,
+            kind: 'api#channel',
+            id: 'connect-upframe-' + req.jwt.uid + this.randomLetters(10),
+            resourceId: req.jwt.uid,
+            resourceUri: req.jwt.uid,
+            token: 'hello',
+            expiration: ttl,
             type: 'web_hook',
             address: 'https://api-staging.upframe.io/webhooks/calendar',
-            resourceId: req.jwt.uid,
+            payload: false,
+            params: {
+              key: 'yoooo'
+            }
           },
         }, (error) => {
           this.logger.error('Error at Google Calendar events watch')
+          this.logger.error(error)
           if (error) throw error
         })
       }
@@ -194,6 +207,16 @@ export class UserService extends Service {
         response.friendlyMessage = err.friendlyMessage
       }
     }
+  }
+
+  public randomLetters(length) {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for (var i = 0; i < length; i++)
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
   }
 
 }
