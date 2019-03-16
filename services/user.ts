@@ -97,6 +97,7 @@ export class UserService extends Service {
       const result = await this.database.query(sqlQuery, params)
 
       if (req.body.upframeCalendarId) { // Adicionar um Webhook caso estejamos a atualizar o calendar id
+        response.code = 777
         this.oauth.setCredentials({
           access_token: req.body.googleAccessToken,
           refresh_token: req.body.googleRefreshToken,
@@ -120,6 +121,7 @@ export class UserService extends Service {
             resourceId: req.jwt.uid,
           },
         }, (error) => {
+          this.logger.error('Error at Google Calendar events watch')
           if (error) throw error
         })
       }
