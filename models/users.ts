@@ -19,4 +19,5 @@ export const fields: string[] = [
   'googleRefreshToken',
   'tags',
   'upframeCalendarId',
+  'newsfeed',
 ]

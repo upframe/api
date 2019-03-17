@@ -114,7 +114,7 @@ export interface Mentor extends Account {
   upframeCalendarId?: string
   keycode?: string
   slots?: Slot[]
-  type: string
+  newsfeed?: string
 }
 
 export interface User extends Account {
