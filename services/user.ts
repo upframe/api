@@ -113,7 +113,7 @@ export class UserService extends Service {
 
         const today = new Date() // We need to use the UNIX timestamp. Google likes to complicate
         today.setHours(today.getHours() + 3)
-        const ttl = Math.round(today.getTime())
+        const ttl = Math.round(today.getTime()).toString()
 
         googleCalendar.events.watch({
           auth: this.oauth.OAuthClient,
