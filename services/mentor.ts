@@ -132,7 +132,7 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = \'mentor\' ORDER BY RAND()'
+      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = \'mentor\' AND newsfeed = \'Y\' ORDER BY RAND()'
 
       const mentorList = await this.database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
