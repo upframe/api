@@ -52,6 +52,53 @@ export class MentorService extends Service {
       }
       response.mentor = mentorInfo
 
+      if (mentorInfo.googleAccessToken) { //FIXME - Improve this, it's slow and inneficient
+        //Relies on Google - delete slots not on Google
+
+        const mentorUid = mentorInfo.uid
+
+        this.oauth.setCredentials({
+          access_token: mentorInfo.googleAccessToken,
+          refresh_token: mentorInfo.googleRefreshToken,
+        })
+
+        const googleCalendar = google.calendar({
+          version: 'v3',
+        })
+
+        google.options({
+          auth: this.oauth.OAuthClient,
+        })
+
+        const googleResponse = await googleCalendar.events.list({
+          calendarId: mentorInfo.upframeCalendarId,
+          timeMin: (new Date()).toISOString(),
+          maxResults: 2400, // I believe the max is 2500
+          singleEvents: true,
+          orderBy: 'startTime',
+        })
+
+        const googleEvents = googleResponse.data.items ? googleResponse.data.items : []
+
+        if (googleEvents.length > 0) {
+          const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+          let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
+          if (!dbSlots.length) {
+            dbSlots = [dbSlots]
+          }
+          const finalDbSlotsToRemove = dbSlots.filter((slot) => {
+            return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
+          })
+          const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
+          for (const slot of finalDbSlotsToRemove) {
+            await this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
+          }
+        } else {
+          const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
+          await this.database.query(deleteAllTimeSlotsQuery, mentorUid)
+        }
+      }
+
       // fetch mentor time slots
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       params = [response.mentor.uid]
@@ -232,6 +279,76 @@ export class MentorService extends Service {
 
         throw error
       }
+
+      ////////////////////////////////////
+      let firstSqlQuery: string
+      let params: string[] | string | date[]
+      [firstSqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users',
+        {
+          uid: req.jwt.uid,
+          type: 'mentor',
+        })
+
+      const mentorInfo: Mentor = await this.database.query(firstSqlQuery, params)
+      if (!Object.keys(mentorInfo).length) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentor not found',
+          friendlyMessage: 'There is no mentor with the provided keycode',
+        }
+
+        throw error
+      }
+      response.mentor = mentorInfo
+
+      if (mentorInfo.googleAccessToken) { //FIXME - Improve this, it's slow and inneficient
+        //Relies on Google - delete slots not on Google
+
+        const mentorUid = mentorInfo.uid
+
+        this.oauth.setCredentials({
+          access_token: mentorInfo.googleAccessToken,
+          refresh_token: mentorInfo.googleRefreshToken,
+        })
+
+        const googleCalendar = google.calendar({
+          version: 'v3',
+        })
+
+        google.options({
+          auth: this.oauth.OAuthClient,
+        })
+
+        const googleResponse = await googleCalendar.events.list({
+          calendarId: mentorInfo.upframeCalendarId,
+          timeMin: (new Date()).toISOString(),
+          maxResults: 2400, // I believe the max is 2500
+          singleEvents: true,
+          orderBy: 'startTime',
+        })
+
+        const googleEvents = googleResponse.data.items ? googleResponse.data.items : []
+
+        if (googleEvents.length > 0) {
+          const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+          let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
+          if (!dbSlots.length) {
+            dbSlots = [dbSlots]
+          }
+          const finalDbSlotsToRemove = dbSlots.filter((slot) => {
+            return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
+          })
+          const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
+          for (const slot of finalDbSlotsToRemove) {
+            await this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
+          }
+        } else {
+          const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
+          await this.database.query(deleteAllTimeSlotsQuery, mentorUid)
+        }
+      }
+      ////////////////////////////////////
 
       const sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       const startDate = req.query.start
