@@ -539,7 +539,7 @@ export class MentorService extends Service {
               ])
 
               // save event in mentor's Google Calendar
-              googleCalendar.events.insert({
+              await googleCalendar.events.insert({
                 calendarId: mentor.upframeCalendarId,
                 requestBody: {
                   summary: 'Upframe Free Time Slot',
