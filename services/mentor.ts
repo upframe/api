@@ -52,8 +52,8 @@ export class MentorService extends Service {
       }
       response.mentor = mentorInfo
 
-      if (mentorInfo.googleAccessToken) { //FIXME - Improve this, it's slow and inneficient
-        //Relies on Google - delete slots not on Google
+      if (mentorInfo.googleAccessToken) { // FIXME - Improve this, it's slow and inneficient
+        // Relies on Google - delete slots not on Google
 
         const mentorUid = mentorInfo.uid
 
@@ -302,8 +302,8 @@ export class MentorService extends Service {
       }
       response.mentor = mentorInfo
 
-      if (mentorInfo.googleAccessToken) { //FIXME - Improve this, it's slow and inneficient
-        //Relies on Google - delete slots not on Google
+      if (mentorInfo.googleAccessToken) { // FIXME - Improve this, it's slow and inneficient
+        // Relies on Google - delete slots not on Google
 
         const mentorUid = mentorInfo.uid
 
