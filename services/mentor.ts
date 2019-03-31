@@ -637,6 +637,27 @@ export class MentorService extends Service {
     res.status(response.code).json(response)
   }
 
+  /**
+ * @description Request time slots to the mentor
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+  public async request(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    const keycode = req.body.keycode
+    const date = req.body.date
+    const time = req.body.time
+    const message = req.body.message
+    const name = req.body.name
+    const email = req.body.email
+
+    res.status(response.code).json(response)
+  }
 }
 
 function shuffle(a: any[]) {

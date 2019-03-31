@@ -28,6 +28,10 @@ function setRouters(app: express.Application): void {
     },
   )
 
+  router.post('/request', (req: APIrequest, res: express.Response) => {
+    services.mentor.request(req, res)
+  })
+
   router.get('/verify', (req: APIrequest , res: express.Response) => {
     services.mentor.verify(req, res)
   })

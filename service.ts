@@ -59,6 +59,7 @@ export interface MentorService {
   getAll(req: express.Request, res: express.Response): void
   getRandom(req: express.Request , res: express.Response): void
   getTimeSlots(req: express.Request , res: express.Response): void
+  request(req: express.Request, res: express.Response): void
   updateTimeSlots(req: express.Request , res: express.Response): void
   verify(req: express.Request , res: express.Response): void
 }
