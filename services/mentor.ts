@@ -105,7 +105,7 @@ export class MentorService extends Service {
 
       let mentorSlots = await this.database.query(sqlQuery, params)
       
-      if (mentorSlots.sid) {
+      if (mentorSlots.sid) { //FIXME - I believe this breaks recurrency
         response.mentor.slots = [mentorSlots]
       } else if (!Array.isArray(mentorSlots)) {
         response.mentor.slots = []      
