@@ -23,7 +23,7 @@ export class OAuth {
     this.OAuthClient.setCredentials(credentials)
   }
 
-  public async refreshAccessToken() {
-    return await this.OAuthClient.refreshAccessToken()
-  }
+  // public async refreshAccessToken() {
+  //   return await this.OAuthClient.refreshAccessToken()
+  // }
 }

@@ -155,6 +155,7 @@ export class MentorService extends Service {
         response.mentor.slots = mentorSlots
       }
     } catch (err) {
+      console.log(err)
       response = {
         ok: 0,
         code: 500,
@@ -444,16 +445,16 @@ export class MentorService extends Service {
           refresh_token: mentor.googleRefreshToken,
         })
 
-        const tokens = await this.oauth.refreshAccessToken()
-        if (!tokens.credentials.access_token) {
-          error = {
-            api: true,
-            code: 500,
-            message: 'Could not get updated access token',
-            friendlyMessage: 'There was an error fetching the user\'s info',
-          }
-          throw error
-        }
+        // const tokens = await this.oauth.refreshAccessToken()
+        // if (!tokens.credentials.access_token) {
+        //   error = {
+        //     api: true,
+        //     code: 500,
+        //     message: 'Could not get updated access token',
+        //     friendlyMessage: 'There was an error fetching the user\'s info',
+        //   }
+        //   throw error
+        // }
       }
 
       // create Calendar instance
