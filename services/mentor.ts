@@ -155,7 +155,6 @@ export class MentorService extends Service {
         response.mentor.slots = mentorSlots
       }
     } catch (err) {
-      console.log(err)
       response = {
         ok: 0,
         code: 500,
