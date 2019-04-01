@@ -103,9 +103,13 @@ export class MentorService extends Service {
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       params = [response.mentor.uid]
 
-      let mentorSlots: Slot[] = await this.database.query(sqlQuery, params)
-      if (!Object.keys(mentorSlots).length || !mentorSlots.length) response.mentor.slots = []
-      else {
+      let mentorSlots = await this.database.query(sqlQuery, params)
+      
+      if (mentorSlots.sid) {
+        response.mentor.slots = [mentorSlots]
+      } else if (!Array.isArray(mentorSlots)) {
+        response.mentor.slots = []      
+      } else {
         const verified: string[] = []
 
         // generate slots from today to 7 days from now
