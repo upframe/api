@@ -109,4 +109,5 @@ export interface OAuthService {
   generateAuthUrl(config: object)
   getToken(code: string)
   setCredentials(credentials: object)
+  refreshAccessToken()
 }

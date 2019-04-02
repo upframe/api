@@ -45,17 +45,17 @@ export class UserService extends Service {
           refresh_token: user.googleRefreshToken,
         })
 
-        // const tokens = await this.oauth.refreshAccessToken()
-        // if (!tokens.credentials.access_token) {
-        //   error = {
-        //     api: true,
-        //     code: 500,
-        //     message: 'Could not get updated access token',
-        //     friendlyMessage: 'There was an error fetching the user\'s info',
-        //   }
-        //   throw error
-        // }
-        // user.googleAccessToken = tokens.credentials.access_token
+        const tokens = await this.oauth.refreshAccessToken()
+        if (!tokens.credentials.access_token) {
+          error = {
+            api: true,
+            code: 500,
+            message: 'Could not get updated access token',
+            friendlyMessage: 'There was an error fetching the user\'s info',
+          }
+          throw error
+        }
+        user.googleAccessToken = tokens.credentials.access_token
       }
 
       response.user = user

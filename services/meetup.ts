@@ -500,17 +500,17 @@ export class MeetupService extends Service {
           access_token: mentor.googleAccessToken,
           refresh_token: mentor.googleRefreshToken,
         })
-        // const tokens = await this.oauth.refreshAccessToken()
+        const tokens = await this.oauth.refreshAccessToken()
 
-        // if (!tokens.credentials.access_token) {
-        //   error = {
-        //     api: true,
-        //     code: 500,
-        //     message: 'Could not get updated access token',
-        //     friendlyMessage: 'There was an error fetching the user\'s info',
-        //   }
-        //   throw error
-        // }
+        if (!tokens.credentials.access_token) {
+          error = {
+            api: true,
+            code: 500,
+            message: 'Could not get updated access token',
+            friendlyMessage: 'There was an error fetching the user\'s info',
+          }
+          throw error
+        }
 
         // create Calendar instance
         const googleCalendar = google.calendar({
