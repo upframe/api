@@ -100,6 +100,7 @@ export interface MailService {
   sendEmailChange(toAddress: string): Promise<number>
   sendMeetupInvitation(meetupID: string): Promise<APIerror | number>
   sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)>
+  sendTimeSlotRequest(mentorEmail: string, email: string, name: string, message: string): Promise<(APIerror | number)>
 }
 
 export interface OAuthService {

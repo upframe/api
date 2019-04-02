@@ -638,10 +638,10 @@ export class MentorService extends Service {
   }
 
   /**
- * @description Request time slots to the mentor
- * @param {express.Request} req
- * @param {express.Response} res
- */
+   * @description Request time slots to the mentor
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
   public async request(req: express.Request, res: express.Response) {
     let response: APIresponse = {
       ok: 1,
@@ -649,12 +649,49 @@ export class MentorService extends Service {
     }
     let error: APIerror
 
-    const keycode = req.body.keycode
-    const date = req.body.date
-    const time = req.body.time
-    const message = req.body.message
-    const name = req.body.name
-    const email = req.body.email
+    try {
+      const sqlQuery = 'SELECT email FROM users WHERE keycode = ?'
+      const mentor = await this.database.query(sqlQuery, req.body.keycode)
+
+      if (!mentor.email) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Keycode returned no information',
+          friendlyMessage: 'No information found for this mentor',
+        }
+        throw error
+      }
+
+      const result = await this.mail.sendTimeSlotRequest(
+        mentor.email,
+        req.body.email,
+        req.body.name,
+        req.body.message,
+      )
+
+      if (result !== 0) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Error while sending email',
+          friendlyMessage: 'Error while sending email',
+        }
+        throw error
+      }
+
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
+    }
 
     res.status(response.code).json(response)
   }

@@ -52,7 +52,7 @@ export class Mail {
 
       if (passwordResetRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: toAddress,
           subject: 'Password reset',
         }
@@ -84,7 +84,7 @@ export class Mail {
 
       if (emailChangeRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: toAddress,
           subject: 'Email change',
         }
@@ -153,7 +153,7 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
@@ -233,7 +233,7 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: mentee.email,
           subject: `${mentor.name} accepted to meetup with you`,
         }
@@ -248,6 +248,33 @@ export class Mail {
       return this.mailgun.messages().send(data)
         .then((res) => {
           if (res.message !== '' && res.id !== '') return 0
+          else throw 1
+        })
+    } catch (err) {
+      if (err.api) return err
+      else return 1
+    }
+  }
+
+  public async sendTimeSlotRequest(mentorEmail: string, email: string, name: string, message: string): Promise<(APIerror | number)> {
+
+    try {
+      const data: Email = {
+        from: 'meetups@upframe.io',
+        to: mentorEmail,
+        subject: `${name} requested some free time of yours`,
+      }
+      const placeholders: any = {
+        USER: name,
+        EMAIL: email,
+        MESSAGE: message,
+      }
+
+      data.html = this.getTemplate('timeSlotRequest', placeholders)
+
+      return this.mailgun.messages().send(data)
+        .then((res) => {
+          if ((res.message !== '') && (res.id !== '')) return 0
           else throw 1
         })
     } catch (err) {
