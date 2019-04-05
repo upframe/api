@@ -80,7 +80,7 @@ export class SearchService extends Service {
 
     try {
       const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ? AND type = \'mentor\' AND newsfeed = \'Y\''
-      let user = await this.database.query(sqlQuery, [`%${req.query.term}%`])
+      let user = await this.database.query(sqlQuery, [`${req.query.term}%`])
       if (!Object.keys(user).length) {
         error = {
           api: true,
