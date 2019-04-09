@@ -6,40 +6,56 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
 
+  <link href="https://fonts.googleapis.com/css?family=Poppins:400,600" rel="stylesheet">
+
   <style>
     html,
     body {
       margin: 0;
-      font-family:'Open Sans', 'Helvetica Neue', sans-serif
+      font-family: 'Poppins', sans-serif;
+      font-display: swap;
+      font-weight: 400;
     }
   
     div#main {
       padding: 2em;
-      border: 1.5em solid #ccc;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      letter-spacing: 0.03125rem;
     }
   
-    div#main h1 {
+    div#main #logo {
       text-align: center;
-      margin: 1em 0em;
-      font-size: 3em;
+    }
+
+    div#main #message-box {
+      background-color: #f0f1f5;
+    }
+
+    div#main .btn {
+      width: 10rem;
+      color: #fff;
+      background-color: #ff004b;
+      font-weight: 600;
+      padding: 1rem;
+      border: none;
+      border-radius: 0.25rem;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
   <div id="main">
-    <h1>Meetup invitation @ Connect</h1>
+    <img id='logo' src='https://connect.upframe.io/logo.svg'></img>
   
-    <p>Hey there! We're sending you this email because USER invited you a meetup in LOCATION at TIME.</p>
-    <p>MESSAGE</p>
+    <p>Hi MENTORNAME, We're reaching out to you to let you know USER invited you for a MEETUPTYPE at LOCATION on DATE at TIME.</p>
     <p>All you have to do now, is confirm the meetup if you want it to make it happen by clicking the URL link below.</p>
     <a href="https://connect.upframe.io/meetup/confirm/MID">https://connect.upframe.io/meetup/confirm/MID</a>
     <p>If you are unavailable for this meetup, please cancel it by clicking the URL link below.</p>
     <a href="https://connect.upframe.io/meetup/refuse/MID">https://connect.upframe.io/meetup/refuse/MID</a>
     
-    <p>
-      Thanks for being part of Connect, <br>
-      the Upframe team
-    </p>
+    <button class='btn btn-fill'>Accept Invitation</button>
   </div>
 </body>
 </html>
