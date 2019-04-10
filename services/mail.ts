@@ -4,6 +4,7 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
+import moment from 'moment'
 
 import { DatabaseService } from '../service'
 import { APIerror, Email, Meetup, Mentor, User } from '../types'
@@ -166,11 +167,15 @@ export class Mail {
           subject: `${mentee.name} invited you for a meetup`,
         }
 
+      const beautifulDate = `${moment(meetup.start).format('Do')} of ${moment(meetup.start).format('MMMM(dddd)')}`
+      const beautifulTime = `${moment(meetup.start).format('HH:mma')}`
+
       const placeholders: any = {
           MENTOR: mentorFirstName,
           USER: mentee.name,
           LOCATION: meetup.location,
-          TIME: new Date(meetup.start).toLocaleString(),
+          DATE: beautifulDate,
+          TIME: beautifulTime,
           MID: meetupID,
           MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
         }
@@ -215,7 +220,7 @@ export class Mail {
       }
 
       // get mentee email
-      const mentee = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.menteeUID)
+      const mentee = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.menteeUID)
       if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
@@ -243,11 +248,18 @@ export class Mail {
           to: mentee.email,
           subject: `${mentor.name} accepted to meetup with you`,
         }
+
+      const beautifulDate = `${moment(meetup.start).format('Do')} of ${moment(meetup.start).format('MMMM(dddd)')}`
+      const beautifulTime = `${moment(meetup.start).format('HH:mma')}`
+
       const placeholders = {
+          USER: mentee.name,
           MENTOR: mentor.name,
           LOCATION: meetup.location,
-          TIME: new Date(meetup.start).toLocaleString(),
+          DATE: beautifulDate,
+          TIME: beautifulTime,
           MID: meetupID,
+          MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
         }
       data.html = this.getTemplate('meetupConfirmation', placeholders)
 
