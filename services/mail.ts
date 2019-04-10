@@ -172,7 +172,7 @@ export class Mail {
           LOCATION: meetup.location,
           TIME: new Date(meetup.start).toLocaleString(),
           MID: meetupID,
-          MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee'
+          MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
         }
 
       if (meetup.message) {
