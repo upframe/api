@@ -650,22 +650,21 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      const sqlQuery = 'SELECT email FROM users WHERE keycode = ?'
-      const mentor = await this.database.query(sqlQuery, req.body.keycode)
-
-      if (!mentor.email) {
+      const mentor = await this.database.query('SELECT name, email FROM users WHERE keycode = ?', req.body.keycode)
+      if (!mentor.email || !mentor.name) {
         error = {
           api: true,
           code: 404,
           message: 'Keycode returned no information',
           friendlyMessage: 'No information found for this mentor',
         }
+
         throw error
       }
 
       const result = await this.mail.sendTimeSlotRequest(
         mentor.email,
-        req.body.email,
+        mentor.name,
         req.body.name,
         req.body.message,
       )

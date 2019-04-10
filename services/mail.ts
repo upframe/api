@@ -262,18 +262,25 @@ export class Mail {
     }
   }
 
-  public async sendTimeSlotRequest(mentorEmail: string, email: string, name: string, message: string): Promise<(APIerror | number)> {
-
+  /**
+   * @description Sends slot request email
+   * @param {String} mentorEmail
+   * @param {String} mentorName
+   * @param {String} menteeName
+   * @param {String} menteeMessage
+   */
+  public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeMessage: string): Promise<(APIerror | number)> {
     try {
       const data: Email = {
         from: 'meetups@upframe.io',
         to: mentorEmail,
-        subject: `${name} requested some free time of yours`,
+        subject: `${menteeName} requested some free time of yours`,
       }
+
       const placeholders: any = {
-        USER: name,
-        EMAIL: email,
-        MESSAGE: message,
+        MENTOR: mentorName.split(' ')[0],
+        USER: menteeName,
+        MESSAGE: menteeMessage,
       }
 
       data.html = this.getTemplate('timeSlotRequest', placeholders)
