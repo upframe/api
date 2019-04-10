@@ -6,7 +6,7 @@ import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
 
 import { DatabaseService } from '../service'
-import { APIerror, Email, Meetup, User } from '../types'
+import { APIerror, Email, Meetup, Mentor, User } from '../types'
 
 export class Mail {
   private database!: DatabaseService
@@ -32,13 +32,20 @@ export class Mail {
 
   public getTemplate(name: string, args: any) {
     let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
-    if (args) {
+    try {
+      if (!args) throw new Error('Undefined props')
+
       for (const prop of Object.keys(args)) {
+        // undefined prop
+        if (!args[prop]) throw new Error(`Undefined prop ${prop}`)
+
         file = file.replace(new RegExp(prop, 'g'), args[prop])
       }
-    }
 
-    return file
+      return file
+    } catch (err) {
+      throw err
+    }
   }
 
   /**
@@ -139,8 +146,8 @@ export class Mail {
         throw error
       }
 
-      // get mentor email
-      const mentor = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.mentorUID)
+      // get mentor name and email
+      const mentor: Mentor = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.mentorUID)
       if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
@@ -151,31 +158,30 @@ export class Mail {
 
         throw error
       }
+      const mentorFirstName = mentor.name.split(' ')[0]
 
       const data: Email = {
           from: 'meetups@upframe.io',
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
+
       const placeholders: any = {
+          MENTOR: mentorFirstName,
           USER: mentee.name,
           LOCATION: meetup.location,
           TIME: new Date(meetup.start).toLocaleString(),
           MID: meetupID,
+          MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee'
         }
 
       if (meetup.message) {
-        placeholders.MESSAGE = `
-          ${mentee.name} left a message:<br>
-          <i>${meetup.message}</i>
-        `
-      } else {
-        placeholders.MESSAGE = `
-          ${mentee.name} did not left a message.<br>
-        `
-      }
+        placeholders.MESSAGE = meetup.message
 
-      data.html = this.getTemplate('meetupInvitation', placeholders)
+        data.html = this.getTemplate('meetupInvitationMessage', placeholders)
+      } else {
+        data.html = this.getTemplate('meetupInvitation', placeholders)
+      }
 
       return this.mailgun.messages().send(data)
         .then((res) => {
