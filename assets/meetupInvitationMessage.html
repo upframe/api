@@ -15,27 +15,15 @@
       font-family: 'Poppins', sans-serif;
       font-display: swap;
       font-weight: 400;
+      letter-spacing: 0.03125rem;
       color: #5f6163;
     }
-  
-    div#main {
-      padding: 2em;
-      display: flex;
-      flex-wrap: wrap;
-      flex-direction: column;
-      letter-spacing: 0.03125rem;
-    }
-  
-    div#main #logo {
-      text-align: center;
-      margin-bottom: 3rem;
+    
+    p {
+      line-height: 2rem;
     }
 
-    div#main p:first-of-type {
-      margin: 0 0 1.5rem 0;
-    }
-
-    div#main p.textarea {
+    p.textarea {
       background-color: #f0f1f5;
       margin-top: 0rem;
       margin-bottom: 2.5rem;
@@ -43,11 +31,11 @@
       border-radius: 0.25rem;
     }
 
-    div#main a {
-      margin: 0 auto;
+    .textalign-center {
+      text-align: center;
     }
 
-    div#main .btn {
+    .btn {
       width: 10rem;
       color: #fff;
       background-color: #ff004b;
@@ -59,20 +47,63 @@
       cursor: pointer;
       outline: none;
     }
+
+    table {
+      width: 100%;
+    }
+  
+    div#main {
+      padding: 2em;
+    }
+    
+    table #logo img {
+      display: block;
+      margin: 0 auto 2rem auto;
+    }
+
+    table p:first-of-type {
+      margin: 0 0 1.5rem 0;
+    }
+
+    table a {
+      margin: 0 auto;
+      text-decoration: none;
+    }
   </style>
 </head>
+
 <body>
   <div id="main">
-    <img id='logo' src='https://beta.upframe.io/logo.png' alt='Upframe' title='Upframe' style='display: block' width='203' height='41'></img>
-  
-    <p>Hi MENTOR, we're reaching out to you to let you know USER invited
-      you for a MEETUPTYPE at <strong>LOCATION</strong> on the <strong>DATE at TIME</strong>.</p>
-    
-    <p>USER left a message:</p>
-    <p class='textarea'>MESSAGE</p>
-    <a target='_blank noreferrer' href='https://connect.upframe.io/meetup/confirm/MID'>
-      <button class='btn btn-fill'>Accept Invitation</button>
-    </a>
+    <table>
+      <tr id='logo'>
+        <td class='textalign-center'>
+          <img src='https://beta.upframe.io/logo.png' alt='Upframe' title='Upframe' style='display: block' width='203' height='41'></img>
+        </td>    
+      </tr>
+
+      <tr>
+        <td>
+          <p>Hi MENTOR, we're reaching out to let you know USER invited
+          you for a MEETUPTYPE at <strong>LOCATION</strong> on the <strong>DATE at TIME</strong>.
+          </p>
+        </td>
+      </tr>
+      
+      <tr>
+        <td>
+          <p>USER left a message:</p>
+          <p class='textarea'>MESSAGE</p>
+        </td>
+      </tr>
+      
+      <tr>
+        <td class='textalign-center'>
+          <a target='_blank noreferrer' href='https://beta.upframe.io/meetup/confirm/MID'>
+            <button class='btn btn-fill'>Accept Invitation</button>
+          </a>
+        </td>
+      </tr>
+    </table>
   </div>
 </body>
 </html>
