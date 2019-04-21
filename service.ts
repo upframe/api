@@ -30,6 +30,7 @@ export interface Services {
   search: SearchService
   user: UserService
   url: UrlService
+  webhooks: WebhooksService
 }
 
 export interface AuthService {
@@ -55,8 +56,10 @@ export interface MeetupService {
 
 export interface MentorService {
   get(req: express.Request , res: express.Response): void
+  getAll(req: express.Request, res: express.Response): void
   getRandom(req: express.Request , res: express.Response): void
   getTimeSlots(req: express.Request , res: express.Response): void
+  request(req: express.Request, res: express.Response): void
   updateTimeSlots(req: express.Request , res: express.Response): void
   verify(req: express.Request , res: express.Response): void
 }
@@ -77,6 +80,10 @@ export interface UrlService {
   getRealUrl(req: express.Request, res: express.Response): void
 }
 
+export interface WebhooksService {
+  parseGoogleWebhook(req: express.Request, res: express.Response): void
+}
+
 export interface StandaloneServices {
   db: DatabaseService
   mail: MailService
@@ -93,6 +100,7 @@ export interface MailService {
   sendEmailChange(toAddress: string): Promise<number>
   sendMeetupInvitation(meetupID: string): Promise<APIerror | number>
   sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)>
+  sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeMessage: string): Promise<(APIerror | number)>
 }
 
 export interface OAuthService {

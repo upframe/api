@@ -52,13 +52,64 @@ export class MentorService extends Service {
       }
       response.mentor = mentorInfo
 
+      if (mentorInfo.googleAccessToken) { // FIXME - Improve this, it's slow and inneficient
+        // Relies on Google - delete slots not on Google
+
+        const mentorUid = mentorInfo.uid
+
+        this.oauth.setCredentials({
+          access_token: mentorInfo.googleAccessToken,
+          refresh_token: mentorInfo.googleRefreshToken,
+        })
+
+        const googleCalendar = google.calendar({
+          version: 'v3',
+        })
+
+        google.options({
+          auth: this.oauth.OAuthClient,
+        })
+
+        const googleResponse = await googleCalendar.events.list({
+          calendarId: mentorInfo.upframeCalendarId,
+          timeMin: (new Date()).toISOString(),
+          maxResults: 2400, // I believe the max is 2500
+          singleEvents: true,
+          orderBy: 'startTime',
+        })
+
+        const googleEvents = googleResponse.data.items ? googleResponse.data.items : []
+
+        if (googleEvents.length > 0) {
+          const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+          let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
+          if (!dbSlots.length) {
+            dbSlots = [dbSlots]
+          }
+          const finalDbSlotsToRemove = dbSlots.filter((slot) => {
+            return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
+          })
+          const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
+          for (const slot of finalDbSlotsToRemove) {
+            await this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
+          }
+        } else {
+          const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
+          await this.database.query(deleteAllTimeSlotsQuery, mentorUid)
+        }
+      }
+
       // fetch mentor time slots
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       params = [response.mentor.uid]
 
-      let mentorSlots: Slot[] = await this.database.query(sqlQuery, params)
-      if (!Object.keys(mentorSlots).length || !mentorSlots.length) response.mentor.slots = []
-      else {
+      let mentorSlots = await this.database.query(sqlQuery, params)
+
+      if (mentorSlots.sid) { // FIXME - I believe this breaks recurrency
+        response.mentor.slots = [mentorSlots]
+      } else if (!Array.isArray(mentorSlots)) {
+        response.mentor.slots = []
+      } else {
         const verified: string[] = []
 
         // generate slots from today to 7 days from now
@@ -120,6 +171,50 @@ export class MentorService extends Service {
   }
 
   /**
+   * @description Returns all mentors on the platform
+   * @param {express.Request} req Express request
+   * @param {express.Response} res Express response
+   */
+  public async getAll(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    try {
+      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = \'mentor\' AND newsfeed = \'Y\' ORDER BY RAND()'
+
+      const mentorList = await this.database.query(sqlQuery)
+      if (!Object.keys(mentorList).length) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentors not found',
+          friendlyMessage: 'Mentors not found',
+        }
+
+        throw error
+      }
+
+      response.mentors = mentorList
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
+  /**
    * @description Fetches random mentors (max: 5)
    * @param {express.Request} req Express request
    * @param {express.Response} res Express response
@@ -132,7 +227,7 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users ORDER BY RAND() LIMIT 5'
+      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = \'mentor\' ORDER BY RAND() LIMIT 5'
 
       const mentorList = await this.database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
@@ -164,7 +259,9 @@ export class MentorService extends Service {
   }
 
   /**
-   * @description Returns mentor's time slots
+   * @description Returns mentor's time slots. There are two possibilities here,
+   * either the user is Google Synced and we need to take that into consideration,
+   * or we simply don't care about that.
    * @param {APIrequest} req
    * @param {express.Response} res
    */
@@ -187,12 +284,82 @@ export class MentorService extends Service {
         throw error
       }
 
+      ////////////////////////////////////
+      let firstSqlQuery: string
+      let params: string[] | string | date[]
+      [firstSqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users',
+        {
+          uid: req.jwt.uid,
+          type: 'mentor',
+        })
+
+      const mentorInfo: Mentor = await this.database.query(firstSqlQuery, params)
+      if (!Object.keys(mentorInfo).length) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Mentor not found',
+          friendlyMessage: 'There is no mentor with the provided keycode',
+        }
+
+        throw error
+      }
+      response.mentor = mentorInfo
+
+      if (mentorInfo.googleAccessToken) { // FIXME - Improve this, it's slow and inneficient
+        // Relies on Google - delete slots not on Google
+
+        const mentorUid = mentorInfo.uid
+
+        this.oauth.setCredentials({
+          access_token: mentorInfo.googleAccessToken,
+          refresh_token: mentorInfo.googleRefreshToken,
+        })
+
+        const googleCalendar = google.calendar({
+          version: 'v3',
+        })
+
+        google.options({
+          auth: this.oauth.OAuthClient,
+        })
+
+        const googleResponse = await googleCalendar.events.list({
+          calendarId: mentorInfo.upframeCalendarId,
+          timeMin: (new Date()).toISOString(),
+          maxResults: 2400, // I believe the max is 2500
+          singleEvents: true,
+          orderBy: 'startTime',
+        })
+
+        const googleEvents = googleResponse.data.items ? googleResponse.data.items : []
+
+        if (googleEvents.length > 0) {
+          const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+          let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
+          if (!dbSlots.length) {
+            dbSlots = [dbSlots]
+          }
+          const finalDbSlotsToRemove = dbSlots.filter((slot) => {
+            return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
+          })
+          const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
+          for (const slot of finalDbSlotsToRemove) {
+            await this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
+          }
+        } else {
+          const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
+          await this.database.query(deleteAllTimeSlotsQuery, mentorUid)
+        }
+      }
+      ////////////////////////////////////
+
       const sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       const startDate = req.query.start
       const endDate = req.query.end
 
       const slots: Slot[] = await this.database.query(sqlQuery, [req.jwt.uid])
-      if (!Object.keys(slots).length || !slots.length) {
+      if ( !Object.keys(slots).length || (Array.isArray(slots) && !slots.length) ) {
         error = {
           api: true,
           code: 404,
@@ -203,18 +370,21 @@ export class MentorService extends Service {
         throw error
       }
 
-      const genSlots = calendar.automaticGenerate(slots).filter((slot) => {
-        let ok = true
-        // verify if slot start is after the defined minimum start Date
-        if (new Date(startDate)) {
-          if (new Date(startDate).getTime() > new Date(slot.start).getTime()) ok = false
-        }
-        // verify if slot end is before the defined maximum end Date
-        if (new Date(endDate)) {
-          if (new Date(endDate).getTime() < new Date(slot.end).getTime()) ok = false
-        }
-        return ok
-      })
+      let genSlots: Slot[] = []
+      if (Array.isArray(slots)) {
+        genSlots = calendar.automaticGenerate(slots).filter((slot) => {
+          let ok = true
+          // verify if slot start is after the defined minimum start Date
+          if (new Date(startDate)) {
+            if (new Date(startDate).getTime() > new Date(slot.start).getTime()) ok = false
+          }
+          // verify if slot end is before the defined maximum end Date
+          if (new Date(endDate)) {
+            if (new Date(endDate).getTime() < new Date(slot.end).getTime()) ok = false
+          }
+          return ok
+        })
+      } else genSlots.push(slots)
 
       response.slots = genSlots
     } catch (err) {
@@ -373,7 +543,7 @@ export class MentorService extends Service {
               ])
 
               // save event in mentor's Google Calendar
-              googleCalendar.events.insert({
+              await googleCalendar.events.insert({
                 calendarId: mentor.upframeCalendarId,
                 requestBody: {
                   summary: 'Upframe Free Time Slot',
@@ -459,6 +629,63 @@ export class MentorService extends Service {
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Request time slots to the mentor
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  public async request(req: express.Request, res: express.Response) {
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    try {
+      const mentor = await this.database.query('SELECT name, email FROM users WHERE keycode = ?', req.body.keycode)
+      if (!mentor.email || !mentor.name) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'Keycode returned no information',
+          friendlyMessage: 'No information found for this mentor',
+        }
+
+        throw error
+      }
+
+      const result = await this.mail.sendTimeSlotRequest(
+        mentor.email,
+        mentor.name,
+        req.body.name,
+        req.body.message,
+      )
+
+      if (result !== 0) {
+        error = {
+          api: true,
+          code: 500,
+          message: 'Error while sending email',
+          friendlyMessage: 'Error while sending email',
+        }
+        throw error
+      }
+
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
 }
 
 function shuffle(a: any[]) {

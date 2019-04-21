@@ -4,9 +4,10 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
+import moment from 'moment'
 
 import { DatabaseService } from '../service'
-import { APIerror, Email, Meetup, User } from '../types'
+import { APIerror, Email, Meetup, Mentor, User } from '../types'
 
 export class Mail {
   private database!: DatabaseService
@@ -32,13 +33,20 @@ export class Mail {
 
   public getTemplate(name: string, args: any) {
     let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
-    if (args) {
+    try {
+      if (!args) throw new Error('Undefined props')
+
       for (const prop of Object.keys(args)) {
+        // undefined prop
+        if (!args[prop]) throw new Error(`Undefined prop ${prop}`)
+
         file = file.replace(new RegExp(prop, 'g'), args[prop])
       }
-    }
 
-    return file
+      return file
+    } catch (err) {
+      throw err
+    }
   }
 
   /**
@@ -52,7 +60,7 @@ export class Mail {
 
       if (passwordResetRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: toAddress,
           subject: 'Password reset',
         }
@@ -84,7 +92,7 @@ export class Mail {
 
       if (emailChangeRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: toAddress,
           subject: 'Email change',
         }
@@ -139,8 +147,8 @@ export class Mail {
         throw error
       }
 
-      // get mentor email
-      const mentor = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.mentorUID)
+      // get mentor name and email
+      const mentor: Mentor = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.mentorUID)
       if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
@@ -151,31 +159,34 @@ export class Mail {
 
         throw error
       }
+      const mentorFirstName = mentor.name.split(' ')[0]
 
       const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
+
+      const beautifulDate = `${moment(meetup.start).format('Do')} of ${moment(meetup.start).format('MMMM(dddd)')}`
+      const beautifulTime = `${moment(meetup.start).format('HH:mma')}`
+
       const placeholders: any = {
+          MENTOR: mentorFirstName,
           USER: mentee.name,
           LOCATION: meetup.location,
-          TIME: new Date(meetup.start).toLocaleString(),
+          DATE: beautifulDate,
+          TIME: beautifulTime,
           MID: meetupID,
+          MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
         }
 
       if (meetup.message) {
-        placeholders.MESSAGE = `
-          ${mentee.name} left a message:<br>
-          <i>${meetup.message}</i>
-        `
-      } else {
-        placeholders.MESSAGE = `
-          ${mentee.name} did not left a message.<br>
-        `
-      }
+        placeholders.MESSAGE = meetup.message
 
-      data.html = this.getTemplate('meetupInvitation', placeholders)
+        data.html = this.getTemplate('meetupInvitationMessage', placeholders)
+      } else {
+        data.html = this.getTemplate('meetupInvitation', placeholders)
+      }
 
       return this.mailgun.messages().send(data)
         .then((res) => {
@@ -209,7 +220,7 @@ export class Mail {
       }
 
       // get mentee email
-      const mentee = await this.database.query('SELECT email FROM users WHERE uid = ?', meetup.menteeUID)
+      const mentee = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.menteeUID)
       if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
@@ -233,21 +244,62 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'upframe@upframe.io',
+          from: 'meetups@upframe.io',
           to: mentee.email,
           subject: `${mentor.name} accepted to meetup with you`,
         }
+
+      const beautifulDate = `${moment(meetup.start).format('Do')} of ${moment(meetup.start).format('MMMM(dddd)')}`
+      const beautifulTime = `${moment(meetup.start).format('HH:mma')}`
+
       const placeholders = {
+          USER: mentee.name,
           MENTOR: mentor.name,
           LOCATION: meetup.location,
-          TIME: new Date(meetup.start).toLocaleString(),
+          DATE: beautifulDate,
+          TIME: beautifulTime,
           MID: meetupID,
+          MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
         }
       data.html = this.getTemplate('meetupConfirmation', placeholders)
 
       return this.mailgun.messages().send(data)
         .then((res) => {
           if (res.message !== '' && res.id !== '') return 0
+          else throw 1
+        })
+    } catch (err) {
+      if (err.api) return err
+      else return 1
+    }
+  }
+
+  /**
+   * @description Sends slot request email
+   * @param {String} mentorEmail
+   * @param {String} mentorName
+   * @param {String} menteeName
+   * @param {String} menteeMessage
+   */
+  public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeMessage: string): Promise<(APIerror | number)> {
+    try {
+      const data: Email = {
+        from: 'meetups@upframe.io',
+        to: mentorEmail,
+        subject: `${menteeName} requested some free time of yours`,
+      }
+
+      const placeholders: any = {
+        MENTOR: mentorName.split(' ')[0],
+        USER: menteeName,
+        MESSAGE: menteeMessage,
+      }
+
+      data.html = this.getTemplate('timeSlotRequest', placeholders)
+
+      return this.mailgun.messages().send(data)
+        .then((res) => {
+          if ((res.message !== '') && (res.id !== '')) return 0
           else throw 1
         })
     } catch (err) {

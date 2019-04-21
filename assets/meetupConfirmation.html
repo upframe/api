@@ -5,38 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
+  <link href="https://fonts.googleapis.com/css?family=Poppins:400,600" rel="stylesheet">
 
   <style>
     html,
     body {
       margin: 0;
-      font-family:'Open Sans', 'Helvetica Neue', sans-serif
+      font-family: 'Poppins', sans-serif;
+      font-display: swap;
+      font-weight: 400;
+      letter-spacing: 0.03125rem;
+      color: #5f6163;
+    }
+    
+    p {
+      line-height: 2rem;
+    }
+
+    .textalign-center {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
     }
   
     div#main {
       padding: 2em;
-      border: 1.5em solid #ccc;
     }
-  
-    div#main h1 {
-      text-align: center;
-      margin: 1em 0em;
-      font-size: 3em;
+    
+    table #logo img {
+      display: block;
+      margin: 0 auto 2rem auto;
     }
   </style>
 </head>
 <body>
-  <div id="main">
-    <h1>Meetup confirmation @ Connect</h1>
-  
-    <p>Hey there! We're sending you this email because MENTOR accepted to meetup with you in LOCATION at TIME.</p>
-    <p>All you have to do now, is show up at the meetup time. Please don't be late as MENTOR is a kickass mentor that wants
-      to be able to help not only you but our community.
-    </p>
-    <p>
-      Thanks for being part of Connect, <br>
-      the Upframe team
-    </p>
+  <div id="main"> 
+    <table>
+      <tr id='logo'>
+        <td clas='textalign-center'>
+          <img id='logo' src='https://beta.upframe.io/logo.png' alt='Upframe'
+            title='Upframe' style='display: block' width='203' height='41'></img>
+        </td>
+      </tr>
+      
+      <tr>
+        <td>
+          <p>Hi USER, we're reaching out to let you know MENTOR accepted your
+            invitation for a MEETUPTYPE at <strong>LOCATION</strong> on the
+            <strong>DATE at TIME.</strong>
+          </p>
+        </td>
+      </tr>
+    </table>
   </div>
 </body>
 </html>

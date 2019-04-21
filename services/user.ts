@@ -1,5 +1,6 @@
 import * as AWS from 'aws-sdk'
 import * as express from 'express'
+import { google } from 'googleapis'
 import * as path from 'path'
 
 import { Service, StandaloneServices } from '../service'
@@ -95,6 +96,49 @@ export class UserService extends Service {
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
       const result = await this.database.query(sqlQuery, params)
 
+      if (req.body.upframeCalendarId) { // Adicionar um Webhook caso estejamos a atualizar o calendar id
+        response.code = 777
+        this.oauth.setCredentials({
+          access_token: req.body.googleAccessToken,
+          refresh_token: req.body.googleRefreshToken,
+        })
+        // create Calendar instance
+        const googleCalendar = google.calendar({
+          version: 'v3',
+        })
+        // set google options
+        google.options({
+          auth: this.oauth.OAuthClient,
+        })
+
+        const today = new Date() // We need to use the UNIX timestamp. Google likes to complicate
+        today.setHours(today.getHours() + 3)
+        const ttl = Math.round(today.getTime()).toString()
+
+        googleCalendar.events.watch({
+          auth: this.oauth.OAuthClient,
+          calendarId: req.body.upframeCalendarId,
+          requestBody: {
+            kind: 'api#channel',
+            id: 'connect-upframe-' + req.jwt.uid + this.randomLetters(10),
+            resourceId: req.jwt.uid,
+            resourceUri: req.jwt.uid,
+            token: 'hello',
+            expiration: ttl,
+            type: 'web_hook',
+            address: 'https://api-staging.upframe.io/webhooks/calendar',
+            payload: false,
+            params: {
+              key: 'yoooo',
+            },
+          },
+        }, (error) => {
+          this.logger.error('Error at Google Calendar events watch')
+          this.logger.error(error)
+          if (error) throw error
+        })
+      }
+
     } catch (err) {
       response = {
         ok: 0,
@@ -163,6 +207,15 @@ export class UserService extends Service {
         response.friendlyMessage = err.friendlyMessage
       }
     }
+  }
+
+  public randomLetters(length) {
+    let text = ''
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+
+    for (let i = 0; i < length; i++) text += possible.charAt(Math.floor(Math.random() * possible.length))
+
+    return text
   }
 
 }
