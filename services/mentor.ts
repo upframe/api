@@ -557,14 +557,6 @@ export class MentorService extends Service {
                   id: newSlot.sid,
                 },
               })
-                // .then((googleRes: GaxiosResponse) => {
-                //   if (googleRes.status !== 200) {
-                //     response.friendlyMessage = 'It was not possible to save slots in Google Calendar'
-                //   }
-                // })
-              // }
-
-              await this.database.query(sqlQuery, [slot.sid, req.jwt.uid, slot.start, slot.end, slot.recurrency])
             }
           } catch (err) {
             response.ok = 0
