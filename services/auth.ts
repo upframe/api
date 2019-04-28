@@ -183,13 +183,14 @@ export class AuthService extends Service {
             api: true,
             code: 401,
             message: 'Wrong developer pass',
-            friendlyMessage: 'Unauthorized access'
+            friendlyMessage: 'Unauthorized access',
           }
 
           throw error
         }
 
-        delete json['developerPass']
+        const removeKey = 'developerPass'
+        delete json[removeKey]
 
         // hash password
         const salt = bcrypt.genSaltSync(10)
