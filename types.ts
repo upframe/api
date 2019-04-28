@@ -36,6 +36,9 @@ export interface APIRequestBody {
   googleAccessToken?: string
   googleRefreshToken?: string
   upframeCalendarId?: string
+
+  developerPass?: string
+  type? : string
 }
 
 export interface JWTpayload {
