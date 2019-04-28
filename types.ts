@@ -38,7 +38,7 @@ export interface APIRequestBody {
   upframeCalendarId?: string
 
   developerPass?: string
-  type? : string
+  type?: string
 }
 
 export interface JWTpayload {
