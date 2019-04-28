@@ -140,72 +140,94 @@ export class AuthService extends Service {
   }
 
   public async register(req: APIrequest, res: express.Response) {
-    const json = Object.assign({}, req.body)
-    let response: APIresponse = {
-      code: 200,
-      ok: 1,
-    }
-    let error: APIerror
 
-    try {
-      /* - MVP-ONLY -
-       * Disable register
-       */
-      if (!Number(process.env.REGISTER)) {
-        error = {
-          api: true,
-          code: 501,
-          message: 'Register is not allowed',
-          friendlyMessage: 'Register is not available at the moment. Please, try again later',
+    // We wait 2 seconds for each register as a way to protect ourselves against
+    // bruteforce attacks. Using extra time makes them virtually impossible.
+    setTimeout(() => {
+
+      const json = Object.assign({}, req.body)
+      let response: APIresponse = {
+        code: 200,
+        ok: 1,
+      }
+      let error: APIerror
+
+      try {
+        /* - MVP-ONLY -
+         * Disable register
+         */
+        // if (!Number(process.env.REGISTER)) {
+        //   error = {
+        //     api: true,
+        //     code: 501,
+        //     message: 'Register is not allowed',
+        //     friendlyMessage: 'Register is not available at the moment. Please, try again later',
+        //   }
+
+        //   throw error
+        // }
+
+        if (!json.email || !json.password || !json.name || !json.developerPass || !json.type) {
+          error = {
+            api: true,
+            code: 400,
+            message: 'Unsufficient fields to perform a register request',
+            friendlyMessage: 'There is a field missing in the request.',
+          }
+
+          throw error
         }
 
-        throw error
-      }
+        if (json.developerPass !== process.env.SUPERSECRETDEVPASSWORD) {
+          error = {
+            api: true,
+            code: 401,
+            message: 'Wrong developer pass',
+            friendlyMessage: 'Unauthorized access'
+          }
 
-      if (!json.email || !json.password || !json.name) {
-        error = {
-          api: true,
-          code: 400,
-          message: 'Unsufficient fields to perform a register request',
-          friendlyMessage: 'There is a field missing in the request.',
+          throw error
         }
 
-        throw error
+        delete json['developerPass']
+
+        // hash password
+        const salt = bcrypt.genSaltSync(10)
+        json.password = bcrypt.hashSync(json.password, salt)
+        // generate keycode
+        json.keycode = json.name.normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(new RegExp(' ', 'g'), '.')
+          .toLowerCase()
+        // generate unique account id
+        json.uid = crypto.randomBytes(20).toString('hex')
+
+        const [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
+        this.database.query(sqlQuery, params)
+
+      } catch (err) {
+        response = {
+          ok: 0,
+          code: 500,
+        }
+
+        // check if it's a mysql error
+        if (err.errno === 1062 && err.sqlState === '23000') {
+          response.message = 'There is already an account using that email'
+        }
+
+        // check API errors
+        if (err.api) {
+          response.code = err.code
+          response.message = err.message,
+            response.friendlyMessage = err.friendlyMessage
+        }
       }
 
-      // hash password
-      const salt = bcrypt.genSaltSync(10)
-      json.password = bcrypt.hashSync(json.password, salt)
-      // generate keycode
-      json.keycode = json.name.normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(new RegExp(' ', 'g'), '.')
-        .toLowerCase()
-      // generate unique account id
-      json.uid = crypto.randomBytes(20).toString('hex')
+      res.status(response.code).json(response)
 
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
-      await this.database.query(sqlQuery, params)
-    } catch (err) {
-      response = {
-        ok: 0,
-        code: 500,
-      }
+    }, 2000)
 
-      // check if it's a mysql error
-      if (err.errno === 1062 && err.sqlState === '23000') {
-        response.message = 'There is already an account using that email'
-      }
-
-      // check API errors
-      if (err.api) {
-        response.code = err.code
-        response.message = err.message,
-        response.friendlyMessage = err.friendlyMessage
-      }
-    }
-
-    res.status(response.code).json(response)
   }
 
   public async resetPassword(req: APIrequest, res: express.Response) {
