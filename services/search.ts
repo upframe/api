@@ -85,7 +85,7 @@ export class SearchService extends Service {
       if (search === 'Business' || search === 'business' || search === 'Design' || search === 'design' || search === 'Technology' || search === 'technology') {
 
         const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE category LIKE ? AND type = \'mentor\' AND newsfeed = \'Y\''
-        let user = await this.database.query(sqlQuery, [`${search}%`, `%${search.toLowerCase()}%`])
+        let user = await this.database.query(sqlQuery, [`%${search.toLowerCase()}%`])
         if (!Object.keys(user).length) {
           error = {
             api: true,
