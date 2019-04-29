@@ -79,8 +79,8 @@ export class SearchService extends Service {
     let error: APIerror
 
     try {
-      const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE name LIKE ? AND type = \'mentor\' AND newsfeed = \'Y\''
-      let user = await this.database.query(sqlQuery, [`${req.query.term}%`])
+      const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = \'mentor\' AND newsfeed = \'Y\''
+      let user = await this.database.query(sqlQuery, [`${req.query.term}%`, `%${req.query.term.toLowerCase()}%`])
       if (!Object.keys(user).length) {
         error = {
           api: true,
