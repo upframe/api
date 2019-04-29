@@ -78,24 +78,52 @@ export class SearchService extends Service {
     }
     let error: APIerror
 
+    const search = req.query.term
+
     try {
-      const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = \'mentor\' AND newsfeed = \'Y\''
-      let user = await this.database.query(sqlQuery, [`${req.query.term}%`, `%${req.query.term.toLowerCase()}%`])
-      if (!Object.keys(user).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'User not found',
-          friendlyMessage: 'There is no account that matches the term.',
+
+      if (search === 'Business' || search === 'business' || search === 'Design' || search === 'design' || search === 'Technology' || search === 'technology') {
+
+        const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE category LIKE ? AND type = \'mentor\' AND newsfeed = \'Y\''
+        let user = await this.database.query(sqlQuery, [`${search}%`, `%${search.toLowerCase()}%`])
+        if (!Object.keys(user).length) {
+          error = {
+            api: true,
+            code: 404,
+            message: 'User not found',
+            friendlyMessage: 'There is no account that matches the term.',
+          }
+
+          throw error
+        } else {
+          if (!Array.isArray(user)) {
+            user = [user]
+          }
+          response.search = user
         }
 
-        throw error
       } else {
-        if (!Array.isArray(user)) {
-          user = [user]
+
+        const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = \'mentor\' AND newsfeed = \'Y\''
+        let user = await this.database.query(sqlQuery, [`${search}%`, `%${search.toLowerCase()}%`])
+        if (!Object.keys(user).length) {
+          error = {
+            api: true,
+            code: 404,
+            message: 'User not found',
+            friendlyMessage: 'There is no account that matches the term.',
+          }
+
+          throw error
+        } else {
+          if (!Array.isArray(user)) {
+            user = [user]
+          }
+          response.search = user
         }
-        response.search = user
+
       }
+
     } catch (err) {
       response = {
         ok: 0,
