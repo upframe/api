@@ -135,7 +135,7 @@ export class Mail {
       }
 
       // get mentee name
-      const mentee = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.menteeUID)
+      const mentee = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.menteeUID)
       if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
@@ -173,6 +173,7 @@ export class Mail {
       const placeholders: any = {
           MENTOR: mentorFirstName,
           USER: mentee.name,
+          EMAIL: mentee.email,
           LOCATION: meetup.location,
           DATE: beautifulDate,
           TIME: beautifulTime,
@@ -281,7 +282,7 @@ export class Mail {
    * @param {String} menteeName
    * @param {String} menteeMessage
    */
-  public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeMessage: string): Promise<(APIerror | number)> {
+  public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeEmail: string, menteeMessage: string): Promise<(APIerror | number)> {
     try {
       const data: Email = {
         from: 'meetups@upframe.io',
@@ -292,6 +293,7 @@ export class Mail {
       const placeholders: any = {
         MENTOR: mentorName.split(' ')[0],
         USER: menteeName,
+        EMAIL: menteeEmail,
         MESSAGE: menteeMessage,
       }
 

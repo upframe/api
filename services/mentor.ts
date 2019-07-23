@@ -658,6 +658,7 @@ export class MentorService extends Service {
         mentor.email,
         mentor.name,
         req.body.name,
+        req.body.email,
         req.body.message,
       )
 
