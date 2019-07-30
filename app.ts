@@ -50,7 +50,7 @@ app.use((req: express.Request, res: express.Response, next: any) => {
 })
 
 /* Logs configuration */
-app.use(morgan('dev'))
+app.use(morgan(':remote-addr [:date[web]] :method :url :status :response-time ms - :res[content-length]'))
 app.set('logger', logger)
 
 /* Services */
