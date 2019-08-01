@@ -122,7 +122,7 @@ export class MentorService extends Service {
           // check if there any meetup refering to this slot and its space in time
           sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed"
          AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)`
-          params = [slot.sid, moment(slot.start).toDate(), moment(slot.start).add(1, 'h').toDate()]
+          params = [slot.sid, moment.utc(slot.start).toDate(), moment.utc(slot.start).add(1, 'h').toDate()]
           result = await this.database.query(sqlQuery, params)
           if ( result['COUNT(*)'] ) {
             // there is a confirmed meetup on that space in time
@@ -490,7 +490,7 @@ export class MentorService extends Service {
 
       // try to update events
       if (updatedSlots) {
-        sqlQuery = 'SELECT insertUpdateSlot(?, ?, ?, ?, ?)'
+        sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
         response.updateOK = 1
 
         for (const slot of updatedSlots) {
@@ -523,8 +523,8 @@ export class MentorService extends Service {
 
               const newSlot: Slot = {
                 sid: crypto.randomBytes(20).toString('hex'),
-                start: itStart.toDate(),
-                end: it.toDate(),
+                start: itStart.toISOString(),
+                end: it.toISOString(),
                 mentorUID: req.jwt.uid,
                 recurrency: slot.recurrency,
               }
