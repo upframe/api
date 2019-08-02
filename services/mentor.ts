@@ -124,7 +124,7 @@ export class MentorService extends Service {
             mentorSlots = mentorSlots.filter((eachSlot) => eachSlot.start.getTime() !== slot.start.getTime())
           }
         }
-        
+
         // Filter slots that are taking place in the future
         mentorSlots = mentorSlots.filter((slot) => {
           return new Date() < moment(slot.start).toDate()

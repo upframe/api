@@ -167,8 +167,7 @@ export class Mail {
           subject: `${mentee.name} invited you for a meetup`,
         }
 
-      
-      let UTCdate = moment.utc(meetup.start).utcOffset((mentor.timeoffset ? mentor.timeoffset : 0))
+      const UTCdate = moment.utc(meetup.start).utcOffset((mentor.timeoffset ? mentor.timeoffset : 0))
       const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format('MMMM(dddd)')}`
       const beautifulTime = `${UTCdate.format('h:mma')}`
 
@@ -252,7 +251,7 @@ export class Mail {
           subject: `${mentor.name} accepted to meetup with you`,
         }
 
-      let UTCdate = moment.utc(meetup.start).utcOffset((mentee.timeoffset ? mentee.timeoffset : 0))
+      const UTCdate = moment.utc(meetup.start).utcOffset((mentee.timeoffset ? mentee.timeoffset : 0))
 
       const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format('MMMM(dddd)')}`
       const beautifulTime = `${UTCdate.format('h:mma')}`
