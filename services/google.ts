@@ -34,7 +34,7 @@ export class OAuth {
     try {
       res = await instance.events.list({
         calendarId: calendarID,
-        timeMin: minTime,
+        timeMin: minTime.toString(),
         maxResults,
         singleEvents: true,
         orderBy: 'startTime',

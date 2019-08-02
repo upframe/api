@@ -116,7 +116,7 @@ export class MeetupService extends Service {
       // MVP ONLY SECTION END
 
       let sqlQuery: string = ''
-      let params: string[] | string = []
+      let params: any[] | string = []
       let result
 
       // MVP ONLY SECTION START

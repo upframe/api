@@ -25,9 +25,9 @@ export class Database {
   /**
    * @description Executes SQL query and filters the important and not-so-important data
    * @param {string} sqlQuery - SQL query string
-   * @param {string} parameters - String with the only parameter or an array
+   * @param {Array<any>} parameters - String with the only parameter or an array
    */
-  public async query(sqlQuery: string, parameters?: string | string[] | date[]): Promise<any> {
+  public async query(sqlQuery: string, parameters?: string | any[]): Promise<any> {
     try {
       const result: any[] = await this.pool.query(sqlQuery, parameters)
 
