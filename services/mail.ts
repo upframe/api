@@ -60,7 +60,7 @@ export class Mail {
 
       if (passwordResetRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: toAddress,
           subject: 'Password reset',
         }
@@ -92,7 +92,7 @@ export class Mail {
 
       if (emailChangeRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: toAddress,
           subject: 'Email change',
         }
@@ -162,7 +162,7 @@ export class Mail {
       const mentorFirstName = mentor.name.split(' ')[0]
 
       const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
@@ -246,7 +246,7 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: mentee.email,
           subject: `${mentor.name} accepted to meetup with you`,
         }
@@ -288,7 +288,7 @@ export class Mail {
   public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeEmail: string, menteeMessage: string): Promise<(APIerror | number)> {
     try {
       const data: Email = {
-        from: 'meetups@upframe.io',
+        from: 'team@upframe.io',
         to: mentorEmail,
         subject: (menteeMessage
           ? `${menteeName} sent you a message`
