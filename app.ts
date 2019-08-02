@@ -19,7 +19,7 @@ const corsOptions = {
   credentials: true,
   origin: process.env.NODE_ENV === 'development' ?
   'http://localhost:3000' :
-  ['https://connect.upframe.io', 'https://upfra.me', 'https://beta.upframe.io'],
+  ['https://upframe.io', 'https://connect.upframe.io', 'https://upfra.me', 'https://beta.upframe.io'],
 }
 
 app.use(cors(corsOptions))
