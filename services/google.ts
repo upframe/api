@@ -1,4 +1,4 @@
-import {google} from 'googleapis'
+import {google, calendar_v3} from 'googleapis'
 
 export class OAuth {
   public OAuthClient!: any
@@ -25,5 +25,27 @@ export class OAuth {
 
   public async refreshAccessToken() {
     return await this.OAuthClient.refreshAccessToken()
+  }
+
+  public async getEventsList(instance: calendar_v3.Calendar, calendarID: string, minTime: Date | String, maxResults: Number): Array<Object> | Object {
+    let res,
+      err = false
+
+    try {
+      res = await instance.events.list({
+        calendarId: calendarID,
+        timeMin: minTime,
+        maxResults: maxResults,
+        singleEvents: true,
+        orderBy: 'startTime',
+      })
+    } catch (err) {
+      err = true
+    }
+
+    if (res && !err) {
+      if(res.data.items) return res.data.items
+      else []
+    } else return []
   }
 }

@@ -20,10 +20,7 @@ function setRouters(app: express.Application): void {
     services.mentor.getTimeSlots(req, res)
   })
 
-  router.post('/slots',
-    services.auth.verifyToken,
-    services.auth.isMentor,
-    (req: APIrequest , res: express.Response) => {
+  router.post('/slots', services.auth.verifyToken, services.auth.isMentor, (req: APIrequest , res: express.Response) => {
       services.mentor.updateTimeSlots(req, res)
     },
   )
