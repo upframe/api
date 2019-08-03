@@ -172,7 +172,7 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      const sqlQuery = 'SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = \'mentor\' AND newsfeed = \'Y\' ORDER BY RAND()'
+      let sqlQuery = 'SELECT uid, name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = \'mentor\' AND newsfeed = \'Y\' ORDER BY RAND()'
 
       const mentorList = await this.database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
@@ -184,6 +184,29 @@ export class MentorService extends Service {
         }
 
         throw error
+      }
+
+      if (req.query.slots) {
+        for (let index in mentorList) {
+          // fetch mentor time slots
+          sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+          let params = [mentorList[index].uid]
+  
+          let mentorSlots = await this.database.query(sqlQuery, params)
+  
+          if (mentorSlots.sid) {
+            mentorList[index].slots = [mentorSlots]
+          } else if (!Array.isArray(mentorSlots)) {
+            mentorList[index].slots = []
+          } else {
+            // Filter slots that are taking place in the future
+            mentorSlots = mentorSlots.filter((slot) => {
+              return new Date() < moment(slot.start).toDate()
+            })
+  
+            mentorList[index].slots = mentorSlots
+          }
+        }
       }
 
       response.mentors = mentorList
