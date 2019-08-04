@@ -111,11 +111,12 @@ export class MeetupService extends Service {
         email: json.email,
         name: json.name,
         password: 'nologin',
+        timeoffset: (json.timeoffset ? -json.timeoffset : 0),
       }
       // MVP ONLY SECTION END
 
       let sqlQuery: string = ''
-      let params: string[] | string = []
+      let params: any[] | string = []
       let result
 
       // MVP ONLY SECTION START
@@ -124,8 +125,8 @@ export class MeetupService extends Service {
       result = await this.database.query(sqlQuery, params)
       if (!Object.keys(result).length) {
         // create new user
-        sqlQuery = `INSERT INTO users (uid, email, name, password, type) VALUES(?, ?, ?, ?, ?)`
-        params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user']
+        sqlQuery = `INSERT INTO users (uid, email, name, password, type, timeoffset) VALUES(?, ?, ?, ?, ?, ?)`
+        params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user', (newUser.timeoffset ? newUser.timeoffset : 0)]
         result = await this.database.query(sqlQuery, params)
 
         if (!result.affectedRows) {

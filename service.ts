@@ -1,7 +1,7 @@
 import * as express from 'express'
+import { calendar_v3 } from 'googleapis'
 import * as winston from 'winston'
 
-import { OAuth2Client } from 'google-auth-library'
 import { AccountTypes, APIerror, APIrequest, date, JWTpayload } from './types'
 
 export class Service {
@@ -96,11 +96,14 @@ export interface DatabaseService {
 
 export interface MailService {
   getTemplate(name: string, args: any): string
+
   sendPasswordReset(toAddress: string): Promise<number>
   sendEmailChange(toAddress: string): Promise<number>
+
   sendMeetupInvitation(meetupID: string): Promise<APIerror | number>
   sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)>
-  sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeMessage: string): Promise<(APIerror | number)>
+
+  sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeEmail: string, menteeMessage: string): Promise<(APIerror | number)>
 }
 
 export interface OAuthService {
@@ -110,4 +113,6 @@ export interface OAuthService {
   getToken(code: string)
   setCredentials(credentials: object)
   refreshAccessToken()
+
+  getEventsList(instance: calendar_v3.Calendar, calendarID: string, minTime: Date | string, maxResults: number): Promise<object[] | object>
 }

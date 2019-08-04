@@ -118,11 +118,11 @@ export function automaticGenerate(slots: Slot[], startDate?: date | undefined, l
   let arr: Slot[] = []
 
   if (!startDate) {
-    startDate = new Date()
+    startDate = moment().utc().toDate()
   }
 
-  if (!limitDate || (new Date().getTime() > new Date(limitDate).getTime()) ) {
-    limitDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+  if (!limitDate || (moment().unix() > moment(limitDate).unix()) ) {
+    limitDate = moment().utc().add('months', 1).startOf('month').toDate()
   }
 
   for (const slot of slots) {

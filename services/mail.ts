@@ -60,7 +60,7 @@ export class Mail {
 
       if (passwordResetRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: toAddress,
           subject: 'Password reset',
         }
@@ -92,7 +92,7 @@ export class Mail {
 
       if (emailChangeRequest['COUNT(*)']) {
         const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: toAddress,
           subject: 'Email change',
         }
@@ -135,7 +135,7 @@ export class Mail {
       }
 
       // get mentee name
-      const mentee = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.menteeUID)
+      const mentee = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.menteeUID)
       if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
@@ -148,7 +148,7 @@ export class Mail {
       }
 
       // get mentor name and email
-      const mentor: Mentor = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.mentorUID)
+      const mentor: Mentor = await this.database.query('SELECT name, email, timeoffset FROM users WHERE uid = ?', meetup.mentorUID)
       if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
@@ -162,17 +162,19 @@ export class Mail {
       const mentorFirstName = mentor.name.split(' ')[0]
 
       const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: mentor.email,
           subject: `${mentee.name} invited you for a meetup`,
         }
 
-      const beautifulDate = `${moment(meetup.start).format('Do')} of ${moment(meetup.start).format('MMMM(dddd)')}`
-      const beautifulTime = `${moment(meetup.start).format('HH:mma')}`
+      const UTCdate = moment.utc(meetup.start).utcOffset((mentor.timeoffset ? mentor.timeoffset : 0))
+      const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format('MMMM(dddd)')}`
+      const beautifulTime = `${UTCdate.format('h:mma')}`
 
       const placeholders: any = {
           MENTOR: mentorFirstName,
           USER: mentee.name,
+          EMAIL: mentee.email,
           LOCATION: meetup.location,
           DATE: beautifulDate,
           TIME: beautifulTime,
@@ -208,7 +210,7 @@ export class Mail {
 
     try {
       // get meetup by id
-      const meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
+      const meetup: Meetup = await this.database.query('SELECT * FROM meetups WHERE mid = ?', meetupID)
       if (!meetup || !Object.keys(meetup).length) {
         error = {
           api: true,
@@ -220,7 +222,7 @@ export class Mail {
       }
 
       // get mentee email
-      const mentee = await this.database.query('SELECT name, email FROM users WHERE uid = ?', meetup.menteeUID)
+      const mentee: User = await this.database.query('SELECT name, email, timeoffset FROM users WHERE uid = ?', meetup.menteeUID)
       if (!mentee || !Object.keys(mentee).length) {
         error = {
           api: true,
@@ -232,7 +234,7 @@ export class Mail {
       }
 
       // get mentor name
-      const mentor = await this.database.query('SELECT name FROM users WHERE uid = ?', meetup.mentorUID)
+      const mentor = await this.database.query('SELECT name, timeoffset FROM users WHERE uid = ?', meetup.mentorUID)
       if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
@@ -244,13 +246,15 @@ export class Mail {
       }
 
       const data: Email = {
-          from: 'meetups@upframe.io',
+          from: 'team@upframe.io',
           to: mentee.email,
           subject: `${mentor.name} accepted to meetup with you`,
         }
 
-      const beautifulDate = `${moment(meetup.start).format('Do')} of ${moment(meetup.start).format('MMMM(dddd)')}`
-      const beautifulTime = `${moment(meetup.start).format('HH:mma')}`
+      const UTCdate = moment.utc(meetup.start).utcOffset((mentee.timeoffset ? mentee.timeoffset : 0))
+
+      const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format('MMMM(dddd)')}`
+      const beautifulTime = `${UTCdate.format('h:mma')}`
 
       const placeholders = {
           USER: mentee.name,
@@ -281,17 +285,20 @@ export class Mail {
    * @param {String} menteeName
    * @param {String} menteeMessage
    */
-  public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeMessage: string): Promise<(APIerror | number)> {
+  public async sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeEmail: string, menteeMessage: string): Promise<(APIerror | number)> {
     try {
       const data: Email = {
-        from: 'meetups@upframe.io',
+        from: 'team@upframe.io',
         to: mentorEmail,
-        subject: `${menteeName} requested some free time of yours`,
+        subject: (menteeMessage
+          ? `${menteeName} sent you a message`
+          : `${menteeName} requested some free time of yours`),
       }
 
       const placeholders: any = {
         MENTOR: mentorName.split(' ')[0],
         USER: menteeName,
+        EMAIL: menteeEmail,
         MESSAGE: menteeMessage,
       }
 

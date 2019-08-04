@@ -39,6 +39,8 @@ export interface APIRequestBody {
 
   developerPass?: string
   type?: string
+
+  timeoffset?: number
 }
 
 export interface JWTpayload {
@@ -105,6 +107,8 @@ export interface Account {
 
   googleAccessToken?: string
   googleRefreshToken?: string
+
+  timeoffset?: number
 }
 
 export enum AccountTypes {
@@ -128,8 +132,8 @@ export interface User extends Account {
 export interface Slot {
   sid: string
   mentorUID: string
-  start: Date
-  end: Date
+  start: Date | string
+  end: Date | string
   recurrency: string
 }
 

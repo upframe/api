@@ -20,4 +20,5 @@ export const fields: string[] = [
   'tags',
   'upframeCalendarId',
   'newsfeed',
+  'timeoffset',
 ]
