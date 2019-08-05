@@ -122,7 +122,7 @@ export class MentorService extends Service {
             // there is a confirmed meetup on that space in time
             // so let's filter all the slots and remove the slot starting
             // at that time
-            mentorSlots = mentorSlots.filter((eachSlot) => moment(eachSlot.start.getTime()).unix() !== moment(slot.start.getTime()).unix())
+            mentorSlots = mentorSlots.filter((eachSlot) => moment(eachSlot.start).unix() !== moment(slot.start).unix())
             console.log(mentorSlots)
           }
         }
