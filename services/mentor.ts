@@ -149,6 +149,8 @@ export class MentorService extends Service {
         code: 500,
       }
 
+      console.log(err)
+
       if (err.api) {
         response.code = err.code
         response.message = err.message
