@@ -108,7 +108,6 @@ export class MentorService extends Service {
         // generate slots from today to 7 days from now
         mentorSlots = calendar.automaticGenerate(mentorSlots, moment().utc().toDate(), moment().utc().add(7, 'd').toDate())
 
-        console.log(mentorSlots)
         // filter available slots from all slots
         for (const slot of mentorSlots) {
           if (verified.includes(slot.sid)) continue
@@ -123,7 +122,6 @@ export class MentorService extends Service {
             // so let's filter all the slots and remove the slot starting
             // at that time
             mentorSlots = mentorSlots.filter((eachSlot) => moment(eachSlot.start).unix() !== moment(slot.start).unix())
-            console.log(mentorSlots)
           }
         }
 
@@ -150,8 +148,6 @@ export class MentorService extends Service {
         ok: 0,
         code: 500,
       }
-
-      console.log(err)
 
       if (err.api) {
         response.code = err.code
