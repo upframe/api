@@ -15,7 +15,8 @@
         "max-line-length": [
             true,
             180
-        ]
+        ],
+        "no-console" : [false, "log", "error"]
     },
     "rulesDirectory": []
 }
