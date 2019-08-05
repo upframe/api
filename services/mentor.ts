@@ -108,6 +108,7 @@ export class MentorService extends Service {
         // generate slots from today to 7 days from now
         mentorSlots = calendar.automaticGenerate(mentorSlots, moment().utc().toDate(), moment().utc().add(7, 'd').toDate())
 
+        console.log(mentorSlots)
         // filter available slots from all slots
         for (const slot of mentorSlots) {
           if (verified.includes(slot.sid)) continue
@@ -121,7 +122,8 @@ export class MentorService extends Service {
             // there is a confirmed meetup on that space in time
             // so let's filter all the slots and remove the slot starting
             // at that time
-            mentorSlots = mentorSlots.filter((eachSlot) => eachSlot.start.getTime() !== slot.start.getTime())
+            mentorSlots = mentorSlots.filter((eachSlot) => moment(eachSlot.start.getTime()).unix() !== moment(slot.start.getTime()).unix())
+            console.log(mentorSlots)
           }
         }
 
