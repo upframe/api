@@ -442,6 +442,8 @@ export class MentorService extends Service {
         }
       }
 
+      this.analytics.addFreeSlot(mentor.keycode ,moment().utc().toDate())
+
       // create Calendar instance
       const googleCalendar = google.calendar({
         version: 'v3',
@@ -657,6 +659,8 @@ export class MentorService extends Service {
         }
         throw error
       }
+      
+      this.analytics.addMeetup(req.body.email, moment().utc().toDate())
 
     } catch (err) {
       response = {

@@ -2,9 +2,11 @@ import * as express from 'express'
 import { calendar_v3 } from 'googleapis'
 import * as winston from 'winston'
 
+import { Analytics } from './services/analytics';
 import { AccountTypes, APIerror, APIrequest, date, JWTpayload } from './types'
 
 export class Service {
+  public analytics: any
   public database: DatabaseService
   public logger: winston.Logger
   public mail: MailService
@@ -85,6 +87,7 @@ export interface WebhooksService {
 }
 
 export interface StandaloneServices {
+  analytics: any
   db: DatabaseService
   mail: MailService
   oAuth: OAuthService
