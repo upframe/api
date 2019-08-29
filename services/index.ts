@@ -1,5 +1,6 @@
 import * as express from 'express'
 
+import { Analytics } from './analytics'
 import { Database } from './database'
 import { OAuth } from './google'
 import { Mail } from './mail'
@@ -18,10 +19,12 @@ export function init(app: express.Application): void {
   /*
    * Independent services that work alone
    */
+  const analytics = new Analytics(app)
   const database: DatabaseService = new Database(app)
   const mailer: MailService = new Mail(app, database)
   const oauth: OAuthService = new OAuth()
   const standaloneServices: StandaloneServices = {
+    analytics: analytics,
     db: database,
     mail: mailer,
     oAuth: oauth,
