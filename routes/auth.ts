@@ -8,7 +8,6 @@ function setRouters(app: express.Application): void {
   const services: Services = app.get('services')
 
   router.post('/login', (req, res) => {
-    console.log('Hey')
     services.auth.login(req, res)
   })
 

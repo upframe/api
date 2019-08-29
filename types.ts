@@ -112,8 +112,8 @@ export interface Account {
 }
 
 export enum AccountTypes {
-  'user',
-  'mentor',
+  user = 'user',
+  mentor = 'mentor',
 }
 
 export interface Mentor extends Account {
@@ -125,7 +125,7 @@ export interface Mentor extends Account {
 }
 
 export interface User extends Account {
-  type?: AccountTypes
+  type: AccountTypes
   upframeCalendarId?: string
 }
 

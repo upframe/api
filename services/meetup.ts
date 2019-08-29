@@ -143,6 +143,10 @@ export class MeetupService extends Service {
         // assign existing account UID
         newUser.uid = result.uid
       }
+
+      // Record userLogin event
+      this.analytics.userLogin(newUser)
+
       // MVP ONLY SECTION END
 
       // get slot info using Slot ID
@@ -261,6 +265,9 @@ export class MeetupService extends Service {
 
               throw error
             }
+
+            // Record RequestMeetup event
+            this.analytics.meetupRequest(meetup, mentor, newUser)
 
             // send email
             result = await this.mail.sendMeetupInvitation(meetup.mid)
@@ -491,6 +498,9 @@ export class MeetupService extends Service {
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
       const mentor: Mentor = await this.database.query(sqlQuery, params)
 
+      // Record MeetupConfirm event
+      this.analytics.meetupConfirm(meetup, mentor)
+
       // fetch mentee info
       const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: meetup.menteeUID})
       const mentee: User = await this.database.query(sqlQuery2, params2)
@@ -623,6 +633,13 @@ export class MeetupService extends Service {
 
         throw error
       }
+
+      // fetch mentor info
+      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
+      const mentor: Mentor = await this.database.query(sqlQuery, params)
+
+      // Record MeetupRefuse event
+      this.analytics.meetupRefuse(meetup, mentor)
     } catch (err) {
       response = {
         ok: 0,

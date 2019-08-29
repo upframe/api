@@ -86,6 +86,7 @@ export class AuthService extends Service {
 
       const sqlQuery = 'SELECT * FROM users WHERE email = ?'
       const user = await this.database.query(sqlQuery, [req.body.email])
+
       if (Object.keys(user).length) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
           response.token = this.createToken({
@@ -94,6 +95,8 @@ export class AuthService extends Service {
           }, user.type)
 
           res.cookie('access_token', response.token, { expires: new Date(Date.now() + 86400 * 15e3), httpOnly: true })
+
+          this.analytics.userLogin(user)
         } else {
           error = {
             api: true,
