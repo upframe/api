@@ -28,6 +28,29 @@ export class Analytics {
     }
   }
 
+  public async getWeeklyActiveUsers(startTime: Date, endTime: Date) {
+    try {
+
+      const result = await this.pool.query('SELECT uid, time FROM events')
+      // Filter events inbetween start and end time
+      const events = result[0].filter((event) => {
+        return event.time >= startTime && event.time <= endTime
+      })
+      // Filter events with different IDs
+      const seen = new Set()
+      const filteredArr = events.filter((el) => {
+        const duplicate = seen.has(el.uid)
+        seen.add(el.uid)
+        return !duplicate
+      })
+      // Return number of different IDs
+      return filteredArr.length
+
+    } catch (err) {
+      throw err
+    }
+  }
+
   public async addMeetup(mentee: string, data: string) {
     try {
       const result = await this.pool.query('INSERT INTO meetups VALUES(?,?)', [mentee, data])

@@ -45,5 +45,6 @@ export function init(app: express.Application): void {
   }
 
   app.set('services', services)
+  app.set('analytics', analytics)
   app.get('logger').verbose('Services loaded')
 }
