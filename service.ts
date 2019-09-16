@@ -2,9 +2,10 @@ import * as express from 'express'
 import { calendar_v3 } from 'googleapis'
 import * as winston from 'winston'
 
-import { AccountTypes, APIerror, APIrequest, date, JWTpayload } from './types'
+import { AccountTypes, APIerror, APIrequest, date, JWTpayload, Meetup, Mentor, Slot, User } from './types'
 
 export class Service {
+  public analytics: AnalyticsService
   public database: DatabaseService
   public logger: winston.Logger
   public mail: MailService
@@ -12,6 +13,7 @@ export class Service {
 
   constructor(app: express.Application, standaloneServices: StandaloneServices) {
     // inject independent services
+    this.analytics = standaloneServices.analytics
     this.database = standaloneServices.db
     this.mail = standaloneServices.mail
     this.oauth = standaloneServices.oAuth
@@ -85,9 +87,19 @@ export interface WebhooksService {
 }
 
 export interface StandaloneServices {
+  analytics: AnalyticsService
   db: DatabaseService
   mail: MailService
   oAuth: OAuthService
+}
+
+export interface AnalyticsService {
+  meetupRequest(meetup: Meetup, mentor: Mentor, user: User): void
+  meetupConfirm(meetup: Meetup, mentor: Mentor): void
+  meetupRefuse(meetup: Meetup, mentor: Mentor): void
+  mentorAddSlots(mentor: Mentor, slot: Slot): void
+  mentorRemoveSlots(mentor: Mentor): void
+  userLogin(user: User): void
 }
 
 export interface DatabaseService {

@@ -113,9 +113,9 @@ export class MentorService extends Service {
           if (verified.includes(slot.sid)) continue
 
           // check if there any meetup refering to this slot and its space in time
-          sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND status = "confirmed"
-         AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)`
-          params = [slot.sid, moment.utc(slot.start).toDate(), moment.utc(slot.start).add(1, 'h').toDate()]
+          sqlQuery = `SELECT COUNT(*) FROM api.meetups WHERE sid = ? AND status = "confirmed"
+            AND TIMESTAMP(start) BETWEEN TIMESTAMP(?) AND TIMESTAMP(?)`
+          params = [slot.sid, moment.utc(slot.start).toISOString(), moment.utc(slot.start).add(1, 'h').toISOString()]
           result = await this.database.query(sqlQuery, params)
           if ( result['COUNT(*)'] ) {
             // there is a confirmed meetup on that space in time
@@ -452,9 +452,11 @@ export class MentorService extends Service {
       })
 
       // delete events
-      if (deletedSlots) {
+      if (deletedSlots.length) {
         sqlQuery = 'SELECT deleteSlot(?, ?)'
         response.deleteOK = 1
+
+        this.analytics.mentorRemoveSlots(mentor)
 
         for (const slotID of deletedSlots) {
           try {
@@ -475,7 +477,7 @@ export class MentorService extends Service {
       }
 
       // try to update events
-      if (updatedSlots) {
+      if (updatedSlots.length) {
         sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
         response.updateOK = 1
 
@@ -527,6 +529,8 @@ export class MentorService extends Service {
                 newSlot.end,
                 newSlot.recurrency,
               ])
+
+              this.analytics.mentorAddSlots(mentor, newSlot)
 
               // save event in mentor's Google Calendar
               await googleCalendar.events.insert({
@@ -657,7 +661,6 @@ export class MentorService extends Service {
         }
         throw error
       }
-
     } catch (err) {
       response = {
         ok: 0,

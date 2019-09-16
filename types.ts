@@ -75,6 +75,8 @@ export interface APIresponse {
 
   url?: string
 
+  wau?: object[]
+
   refreshToken?: string
 }
 
@@ -112,8 +114,8 @@ export interface Account {
 }
 
 export enum AccountTypes {
-  'user',
-  'mentor',
+  user = 'user',
+  mentor = 'mentor',
 }
 
 export interface Mentor extends Account {
@@ -125,7 +127,7 @@ export interface Mentor extends Account {
 }
 
 export interface User extends Account {
-  type?: AccountTypes
+  type: AccountTypes
   upframeCalendarId?: string
 }
 
@@ -143,4 +145,28 @@ export interface Email {
   to: string
   subject: string
   html?: string
+}
+
+/* Analytics */
+export interface AnalyticsEvent {
+  uid: string
+  time: Date | string
+}
+
+export interface AnalyticsResponseRecord {
+  // Day String
+  day?: string
+
+  // Weekly Active Users
+  wau?: number | null
+
+  // Array of users UIDs
+  users?: string[]
+}
+
+export interface AnalyticsResponse {
+  ok?: number
+
+  // Weekly Active Users
+  wau: AnalyticsResponseRecord[]
 }

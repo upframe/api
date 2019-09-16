@@ -1,5 +1,6 @@
 import * as express from 'express'
 
+import { Analytics } from './analytics'
 import { Database } from './database'
 import { OAuth } from './google'
 import { Mail } from './mail'
@@ -12,16 +13,18 @@ import { UrlService as Url } from './url'
 import { UserService as User } from './user'
 import { WebhooksService as Webhooks } from './webhooks'
 
-import { DatabaseService, MailService, OAuthService, Services, StandaloneServices } from '../service'
+import { AnalyticsService, DatabaseService, MailService, OAuthService, Services, StandaloneServices } from '../service'
 
 export function init(app: express.Application): void {
   /*
    * Independent services that work alone
    */
+  const analytics: AnalyticsService = new Analytics(app)
   const database: DatabaseService = new Database(app)
   const mailer: MailService = new Mail(app, database)
   const oauth: OAuthService = new OAuth()
   const standaloneServices: StandaloneServices = {
+    analytics,
     db: database,
     mail: mailer,
     oAuth: oauth,
@@ -42,5 +45,6 @@ export function init(app: express.Application): void {
   }
 
   app.set('services', services)
+  app.set('analytics', analytics)
   app.get('logger').verbose('Services loaded')
 }
