@@ -4,7 +4,7 @@ import { Logger } from 'winston'
 
 import moment = require('moment')
 
-import { AccountTypes, Meetup, Mentor, Slot, User } from '../types'
+import { AccountTypes, AnalyticsResponseRecord, Meetup, Mentor, Slot, User } from '../types'
 
 export class Analytics {
   private logger: Logger
@@ -39,41 +39,57 @@ export class Analytics {
       const result = await this.pool.query(`SELECT uid, time FROM events WHERE time BETWEEN '${UTCstartOfMonth}' AND '${UTCnow}'`)
 
       // create an array with every single day of data
-      const wau: object[] = []
+      const wau: AnalyticsResponseRecord[] = []
 
       let pointerDay = moment().startOf('month').utc()
       let pointerDayEvents = []
       while (true) {
         // if the number of days from the current day pointer is negative,
         // it means the current day pointer has passed today
-        if (moment().utc().diff(pointerDay, 'days') < 0) {
+        if (moment(UTCstartOfMonth).add('months', 1).diff(pointerDay, 'days') < 0) {
           break
         }
 
         // new day
         const dayStr = pointerDay.format('YYYY-MM-DD')
-        const dayObject: any = {
+        const dayObject: AnalyticsResponseRecord = {
           day: dayStr,
           wau: 0,
           users: [],
         }
 
-        // get all events on this day
-        pointerDayEvents = result[0].filter((event) => {
-          if (moment(event.time).format('YYYY-MM-DD') === pointerDay.format('YYYY-MM-DD')) return true
-        })
+        if (dayObject.users && dayObject.wau) {
+          if (moment().utc().diff(pointerDay, 'days') >= 0) {
+            // get all events on this day
+            pointerDayEvents = result[0].filter((event) => {
+              if (moment(event.time).format('YYYY-MM-DD') === pointerDay.format('YYYY-MM-DD')) return true
+            })
 
-        for (const event of pointerDayEvents) {
-          if (!dayObject.users.includes(event.uid)) {
-            dayObject.users.push(event.uid)
-            dayObject.wau += 1
+            for (const event of pointerDayEvents) {
+              if (!dayObject.users.includes(event.uid)) {
+                dayObject.users.push(event.uid)
+                dayObject.wau += 1
+              }
+            }
+          } else {
+            dayObject.wau = null
           }
-        }
+        } else throw 500
 
         wau.push(dayObject)
 
         // go one day further
         pointerDay = pointerDay.add(1, 'days')
+      }
+
+      // In the first hour(s) of the month, the UTC date will still be of the last month
+      // so we should concatenate those events into the first day of the month events~
+      if (wau[0].users && wau[1].users) {
+        wau[1].users = wau[1].users.concat(wau[0].users)
+        wau[1].wau = wau[1].users.length
+
+        // remove first day data as it was merged with first day
+        wau.shift()
       }
 
       return wau

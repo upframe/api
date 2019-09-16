@@ -152,3 +152,21 @@ export interface Event {
   uid: string
   time: Date | string
 }
+
+export interface AnalyticsResponseRecord {
+  // Day String
+  day?: string
+
+  // Weekly Active Users
+  wau?: number | null
+
+  // Array of users UIDs
+  users?: string[]
+}
+
+export interface AnalyticsResponse {
+  ok?: number
+
+  // Weekly Active Users
+  wau: AnalyticsResponseRecord[]
+}
