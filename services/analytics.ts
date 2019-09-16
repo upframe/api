@@ -46,7 +46,7 @@ export class Analytics {
       while (true) {
         // if the number of days from the current day pointer is negative,
         // it means the current day pointer has passed today
-        if (moment(UTCstartOfMonth).add('months', 1).diff(pointerDay, 'days') < 0) {
+        if (moment(UTCstartOfMonth).add(1, 'months').diff(pointerDay, 'days') < 0) {
           break
         }
 
@@ -58,7 +58,7 @@ export class Analytics {
           users: [],
         }
 
-        if (dayObject.users && dayObject.wau) {
+        if (dayObject.users !== undefined && dayObject.wau !== undefined) {
           if (moment().utc().diff(pointerDay, 'days') >= 0) {
             // get all events on this day
             pointerDayEvents = result[0].filter((event) => {
