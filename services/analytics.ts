@@ -33,7 +33,7 @@ export class Analytics {
 
   public async getWeeklyActiveUsers(startTime: Date, endTime: Date) {
     try {
-      const UTCstartOfMonth = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+      const UTCstartOfMonth = moment().utc().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
       const UTCnow = moment().utc().format('YYYY-MM-DD HH:mm:ss')
 
       const result = await this.pool.query(`SELECT uid, time FROM events WHERE time BETWEEN '${UTCstartOfMonth}' AND '${UTCnow}'`)
@@ -86,13 +86,13 @@ export class Analytics {
 
       // In the first hour(s) of the month, the UTC date will still be of the last month
       // so we should concatenate those events into the first day of the month events~
-      // if (wau[0].users && wau[1].users) {
-      //   wau[1].users = wau[1].users.concat(wau[0].users)
-      //   wau[1].wau = wau[1].users.length
+      if (wau[0].users && wau[1].users) {
+        wau[1].users = wau[1].users.concat(wau[0].users)
+        wau[1].wau = wau[1].users.length
 
-      //   // remove first day data as it was merged with first day
-      //   wau.shift()
-      // }
+        // remove first day data as it was merged with first day
+        wau.shift()
+      }
 
       return wau
     } catch (err) {
