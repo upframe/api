@@ -4,7 +4,7 @@ import { Logger } from 'winston'
 
 import moment = require('moment')
 
-import { AccountTypes, AnalyticsResponseRecord, Meetup, Mentor, Slot, User } from '../types'
+import { AccountTypes, AnalyticsEvent, AnalyticsResponseRecord, Meetup, Mentor, Slot, User } from '../types'
 
 export class Analytics {
   private logger: Logger
@@ -42,7 +42,7 @@ export class Analytics {
       const wau: AnalyticsResponseRecord[] = []
 
       let pointerDay = moment().startOf('month').utc()
-      let pointerDayEvents = []
+      let pointerDayEvents: AnalyticsEvent[] = []
       while (true) {
         // if the number of days from the current day pointer is negative,
         // it means the current day pointer has passed today
@@ -58,7 +58,7 @@ export class Analytics {
           users: [],
         }
 
-        if (dayObject.users !== undefined && dayObject.wau !== undefined) {
+        if (dayObject.users !== undefined && dayObject.wau !== undefined && dayObject.wau !== null) {
           if (moment().utc().diff(pointerDay, 'days') >= 0) {
             // get all events on this day
             pointerDayEvents = result[0].filter((event) => {
@@ -66,9 +66,11 @@ export class Analytics {
             })
 
             for (const event of pointerDayEvents) {
-              if (!dayObject.users.includes(event.uid)) {
-                dayObject.users.push(event.uid)
-                dayObject.wau += 1
+              if (event.uid) {
+                if (!dayObject.users.includes(event.uid)) {
+                  dayObject.users.push(event.uid)
+                  dayObject.wau += 1
+                }
               }
             }
           } else {

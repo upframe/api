@@ -148,7 +148,7 @@ export interface Email {
 }
 
 /* Analytics */
-export interface Event {
+export interface AnalyticsEvent {
   uid: string
   time: Date | string
 }
