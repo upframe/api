@@ -75,6 +75,8 @@ export interface APIresponse {
 
   url?: string
 
+  wau?: object[]
+
   refreshToken?: string
 }
 
@@ -143,4 +145,10 @@ export interface Email {
   to: string
   subject: string
   html?: string
+}
+
+/* Analytics */
+export interface Event {
+  uid: string
+  time: Date | string
 }

@@ -1,7 +1,8 @@
 import * as express from 'express'
-import moment = require('moment')
 import * as mysql from 'mysql2/promise'
 import { Logger } from 'winston'
+
+import moment = require('moment')
 
 import { AccountTypes, Meetup, Mentor, Slot, User } from '../types'
 
@@ -28,29 +29,60 @@ export class Analytics {
     }
   }
 
+  // Fetch Records
+
   public async getWeeklyActiveUsers(startTime: Date, endTime: Date) {
     try {
+      const UTCstartOfMonth = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+      const UTCnow = moment().utc().format('YYYY-MM-DD HH:mm:ss')
 
-      const result = await this.pool.query('SELECT uid, time FROM events')
-      // Filter events inbetween start and end time
-      const events = result[0].filter((event) => {
-        return event.time >= startTime && event.time <= endTime
-      })
-      // Filter events with different IDs
-      const seen = new Set()
-      const filteredArr = events.filter((el) => {
-        const duplicate = seen.has(el.uid)
-        seen.add(el.uid)
-        return !duplicate
-      })
-      // Return number of different IDs
-      return filteredArr.length
+      const result = await this.pool.query(`SELECT uid, time FROM events WHERE time BETWEEN '${UTCstartOfMonth}' AND '${UTCnow}'`)
 
+      // create an array with every single day of data
+      const wau: object[] = []
+
+      let pointerDay = moment().startOf('month').utc()
+      let pointerDayEvents = []
+      while (true) {
+        // if the number of days from the current day pointer is negative,
+        // it means the current day pointer has passed today
+        if (moment().utc().diff(pointerDay, 'days') < 0) {
+          break
+        }
+
+        // new day
+        const dayStr = pointerDay.format('YYYY-MM-DD')
+        const dayObject: any = {
+          day: dayStr,
+          wau: 0,
+          users: [],
+        }
+
+        // get all events on this day
+        pointerDayEvents = result[0].filter((event) => {
+          if (moment(event.time).format('YYYY-MM-DD') === pointerDay.format('YYYY-MM-DD')) return true
+        })
+
+        for (const event of pointerDayEvents) {
+          if (!dayObject.users.includes(event.uid)) {
+            dayObject.users.push(event.uid)
+            dayObject.wau += 1
+          }
+        }
+
+        wau.push(dayObject)
+
+        // go one day further
+        pointerDay = pointerDay.add(1, 'days')
+      }
+
+      return wau
     } catch (err) {
       throw err
     }
   }
 
+  // Add Records
   public async addMeetup(mentee: string, data: string) {
     try {
       const result = await this.pool.query('INSERT INTO meetups VALUES(?,?)', [mentee, data])

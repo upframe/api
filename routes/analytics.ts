@@ -8,7 +8,6 @@ function setRouters(app: express.Application): void {
   const analytics: any = app.get('analytics')
 
   router.get('/wau', async (req, res) => {
-
     const startTime = req.query.startTime
     const endTime = req.query.endTime
 
