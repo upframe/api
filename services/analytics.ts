@@ -86,13 +86,13 @@ export class Analytics {
 
       // In the first hour(s) of the month, the UTC date will still be of the last month
       // so we should concatenate those events into the first day of the month events~
-      if (wau[0].users && wau[1].users) {
-        wau[1].users = wau[1].users.concat(wau[0].users)
-        wau[1].wau = wau[1].users.length
+      // if (wau[0].users && wau[1].users) {
+      //   wau[1].users = wau[1].users.concat(wau[0].users)
+      //   wau[1].wau = wau[1].users.length
 
-        // remove first day data as it was merged with first day
-        wau.shift()
-      }
+      //   // remove first day data as it was merged with first day
+      //   wau.shift()
+      // }
 
       return wau
     } catch (err) {
