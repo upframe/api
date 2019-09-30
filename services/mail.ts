@@ -116,8 +116,9 @@ export class Mail {
   /**
    * @description Sends meetup invite notification to mentor by email
    * @param {string} meetupID
+   * @param {string} message
    */
-  public async sendMeetupInvitation(meetupID: string): Promise<(APIerror | number)> {
+  public async sendMeetupInvitation(meetupID: string, message: string | undefined): Promise<(APIerror | number)> {
     let error: APIerror
 
     try {
@@ -182,8 +183,8 @@ export class Mail {
           MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
         }
 
-      if (meetup.message) {
-        placeholders.MESSAGE = meetup.message
+      if (message) {
+        placeholders.MESSAGE = message
 
         data.html = this.getTemplate('meetupInvitationMessage', placeholders)
       } else {

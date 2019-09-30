@@ -188,7 +188,6 @@ export class MeetupService extends Service {
         mid: randomMid,
         mentorUID: slot.mentorUID,
         menteeUID: newUser.uid,
-        message: json.message,
         location: json.location,
         start: slot.start,
         status: 'pending',
@@ -270,7 +269,7 @@ export class MeetupService extends Service {
             this.analytics.meetupRequest(meetup, mentor, newUser)
 
             // send email
-            result = await this.mail.sendMeetupInvitation(meetup.mid)
+            result = await this.mail.sendMeetupInvitation(meetup.mid, json.message)
             if (result.api) throw result
             else if (result) {
               error = {
