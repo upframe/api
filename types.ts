@@ -68,9 +68,9 @@ export interface APIresponse {
   slots?: Slot[]
 
   search?: {
-    companies?: any[],
-    expertise?: any[],
-    people?: any[],
+    companies?: any[]
+    expertise?: any[]
+    people?: any[]
   }
 
   url?: string

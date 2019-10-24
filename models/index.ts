@@ -13,7 +13,7 @@ const models: any = {
 }
 
 export function get(name: string) {
-  if ( Object.keys(models).includes(name) ) {
+  if (Object.keys(models).includes(name)) {
     return models[name]
   }
 }

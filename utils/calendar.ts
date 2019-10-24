@@ -43,15 +43,19 @@ export function genDaily(slot: Slot, start: date, end: date): Slot[] {
     const newSlot = Object.assign({}, slot)
 
     // increment day
-    newSlot.start = moment(slot.start).add(i, 'd').toDate()
-    newSlot.end = moment(slot.end).add(i, 'd').toDate()
+    newSlot.start = moment(slot.start)
+      .add(i, 'd')
+      .toDate()
+    newSlot.end = moment(slot.end)
+      .add(i, 'd')
+      .toDate()
 
     arr.push(newSlot)
     i++
   }
 
   arr = arr.filter((item: Slot) => {
-    return (new Date(item.start).getTime() >= new Date(start).getTime())
+    return new Date(item.start).getTime() >= new Date(start).getTime()
   })
   return arr
 }
@@ -70,15 +74,19 @@ export function genWeekly(slot: Slot, start: date, end: date): Slot[] {
 
   while (i <= num) {
     const newSlot = Object.assign({}, slot)
-    newSlot.start = moment(slot.start).add(i, 'w').toDate()
-    newSlot.end = moment(slot.end).add(i, 'w').toDate()
+    newSlot.start = moment(slot.start)
+      .add(i, 'w')
+      .toDate()
+    newSlot.end = moment(slot.end)
+      .add(i, 'w')
+      .toDate()
 
     arr.push(newSlot)
     i++
   }
 
-  return arr.filter((item) => {
-    return (new Date(item.start).getTime() >= new Date(start).getTime())
+  return arr.filter(item => {
+    return new Date(item.start).getTime() >= new Date(start).getTime()
   })
 }
 
@@ -96,15 +104,19 @@ export function genMonthly(slot: Slot, start: date, end: date): Slot[] {
 
   while (i <= num) {
     const newSlot = Object.assign({}, slot)
-    newSlot.start = moment(slot.start).add(i, 'M').toDate()
-    newSlot.end = moment(slot.end).add(i, 'M').toDate()
+    newSlot.start = moment(slot.start)
+      .add(i, 'M')
+      .toDate()
+    newSlot.end = moment(slot.end)
+      .add(i, 'M')
+      .toDate()
 
     arr.push(newSlot)
     i++
   }
 
-  return arr.filter((item) => {
-    return (new Date(item.start).getTime() >= new Date(start).getTime())
+  return arr.filter(item => {
+    return new Date(item.start).getTime() >= new Date(start).getTime()
   })
 }
 
@@ -114,31 +126,41 @@ export function genMonthly(slot: Slot, start: date, end: date): Slot[] {
  * @param {Date} startDate minimum slot/event start time
  * @param {Date} limitDate maximum slot/event end time
  */
-export function automaticGenerate(slots: Slot[], startDate?: date | undefined, limitDate?: date): Slot[] {
+export function automaticGenerate(
+  slots: Slot[],
+  startDate?: date | undefined,
+  limitDate?: date
+): Slot[] {
   let arr: Slot[] = []
 
   if (!startDate) {
-    startDate = moment().utc().toDate()
+    startDate = moment()
+      .utc()
+      .toDate()
   }
 
-  if (!limitDate || (moment().unix() > moment(limitDate).unix()) ) {
-    limitDate = moment().utc().add('months', 1).startOf('month').toDate()
+  if (!limitDate || moment().unix() > moment(limitDate).unix()) {
+    limitDate = moment()
+      .utc()
+      .add('months', 1)
+      .startOf('month')
+      .toDate()
   }
 
   for (const slot of slots) {
     switch (slot.recurrency) {
-    case 'Daily':
-      arr = arr.concat(genDaily(slot, startDate, limitDate))
-      break
-    case 'Weekly':
-      arr = arr.concat(genWeekly(slot, startDate, limitDate))
-      break
-    case 'Monthly':
-      arr = arr.concat(genMonthly(slot, startDate, limitDate))
-      break
-    case 'Unique':
-      arr = arr.concat(slot)
-      break
+      case 'Daily':
+        arr = arr.concat(genDaily(slot, startDate, limitDate))
+        break
+      case 'Weekly':
+        arr = arr.concat(genWeekly(slot, startDate, limitDate))
+        break
+      case 'Monthly':
+        arr = arr.concat(genMonthly(slot, startDate, limitDate))
+        break
+      case 'Unique':
+        arr = arr.concat(slot)
+        break
     }
   }
 

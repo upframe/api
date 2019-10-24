@@ -12,21 +12,22 @@ export function createSQLqueryFromJSON(
   action: string,
   table: string,
   fjson: object,
-  sjson?: object): [string, string[]] {
+  sjson?: object
+): [string, string[]] {
   let query: string = ''
   let params: string[] = []
 
   switch (action) {
     case 'INSERT':
-      [query, params] = createInsertQuery(table, fjson)
+      ;[query, params] = createInsertQuery(table, fjson)
       break
     case 'UPDATE':
       if (sjson) {
-        [query, params] = createUpdateQuery(table, fjson, sjson)
+        ;[query, params] = createUpdateQuery(table, fjson, sjson)
       }
       break
     case 'SELECT':
-      [query, params] = createSelectQuery(table, fjson)
+      ;[query, params] = createSelectQuery(table, fjson)
       break
   }
 
@@ -66,7 +67,11 @@ function createInsertQuery(table: string, json: object): [string, string[]] {
  * @param {object} newJson - JSON object with the new information
  * @param {object} whereJson - JSON object with the information needed to indentify record
  */
-function createUpdateQuery(table: string, newJson: any, whereJson: object): [string, string[]] {
+function createUpdateQuery(
+  table: string,
+  newJson: any,
+  whereJson: object
+): [string, string[]] {
   let sqlQuery = `UPDATE ${table} SET `
   const params: string[] = []
 
@@ -98,7 +103,10 @@ function createUpdateQuery(table: string, newJson: any, whereJson: object): [str
  * @param {string} table
  * @param {object} whereJSON
  */
-function createSelectQuery(table: string, whereJSON: object): [string, string[]] {
+function createSelectQuery(
+  table: string,
+  whereJSON: object
+): [string, string[]] {
   const fields: string[] = models.get(table)
 
   let sqlQuery = 'SELECT '
@@ -107,7 +115,8 @@ function createSelectQuery(table: string, whereJSON: object): [string, string[]]
   for (const fieldName of fields) {
     sqlQuery += `${fieldName}, `
   }
-  if (table !== 'mentors') sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
+  if (table !== 'mentors')
+    sqlQuery = sqlQuery.slice(0, -2) + ` FROM ${table} WHERE `
   else sqlQuery = sqlQuery.slice(0, -2) + ' FROM users WHERE '
 
   for (const prop of Object.keys(whereJSON)) {

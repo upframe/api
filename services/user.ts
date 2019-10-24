@@ -8,8 +8,10 @@ import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
 
 export class UserService extends Service {
-
-  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+  constructor(
+    app: express.Application,
+    standaloneServices: StandaloneServices
+  ) {
     super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('User service loaded')
@@ -17,22 +19,26 @@ export class UserService extends Service {
 
   public async get(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
-        code: 200,
-        ok: 1,
-      }
+      code: 200,
+      ok: 1,
+    }
     let error: APIerror
 
     try {
       if (!req.jwt) throw 403
 
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
+      const [sqlQuery, params] = sql.createSQLqueryFromJSON(
+        'SELECT',
+        'users',
+        req.jwt
+      )
       const user: User = await this.database.query(sqlQuery, params)
       if (!Object.keys(user).length) {
         error = {
           api: true,
           code: 404,
           message: 'User not found',
-          friendlyMessage: 'There was an error fetching the user\'s info',
+          friendlyMessage: "There was an error fetching the user's info",
         }
 
         throw error
@@ -53,7 +59,7 @@ export class UserService extends Service {
               api: true,
               code: 500,
               message: 'Could not get updated access token',
-              friendlyMessage: 'There was an error fetching the user\'s info',
+              friendlyMessage: "There was an error fetching the user's info",
             }
             throw error
           }
@@ -88,9 +94,9 @@ export class UserService extends Service {
    */
   public async update(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
-        code: 200,
-        ok: 1,
-      }
+      code: 200,
+      ok: 1,
+    }
 
     const json = Object.assign({}, req.body)
 
@@ -99,10 +105,16 @@ export class UserService extends Service {
       if (!req.jwt || !req.jwt.uid) throw 403
       else uid = req.jwt.uid
 
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
+      const [sqlQuery, params] = sql.createSQLqueryFromJSON(
+        'UPDATE',
+        'users',
+        json,
+        { uid }
+      )
       await this.database.query(sqlQuery, params)
 
-      if (req.body.upframeCalendarId) { // Adicionar um Webhook caso estejamos a atualizar o calendar id
+      if (req.body.upframeCalendarId) {
+        // Adicionar um Webhook caso estejamos a atualizar o calendar id
         response.code = 777
         this.oauth.setCredentials({
           access_token: req.body.googleAccessToken,
@@ -121,30 +133,32 @@ export class UserService extends Service {
         today.setHours(today.getHours() + 3)
         const ttl = Math.round(today.getTime()).toString()
 
-        googleCalendar.events.watch({
-          auth: this.oauth.OAuthClient,
-          calendarId: req.body.upframeCalendarId,
-          requestBody: {
-            kind: 'api#channel',
-            id: 'connect-upframe-' + req.jwt.uid + this.randomLetters(10),
-            resourceId: req.jwt.uid,
-            resourceUri: req.jwt.uid,
-            token: 'hello',
-            expiration: ttl,
-            type: 'web_hook',
-            address: 'https://api-staging.upframe.io/webhooks/calendar',
-            payload: false,
-            params: {
-              key: 'yoooo',
+        googleCalendar.events.watch(
+          {
+            auth: this.oauth.OAuthClient,
+            calendarId: req.body.upframeCalendarId,
+            requestBody: {
+              kind: 'api#channel',
+              id: 'connect-upframe-' + req.jwt.uid + this.randomLetters(10),
+              resourceId: req.jwt.uid,
+              resourceUri: req.jwt.uid,
+              token: 'hello',
+              expiration: ttl,
+              type: 'web_hook',
+              address: 'https://api-staging.upframe.io/webhooks/calendar',
+              payload: false,
+              params: {
+                key: 'yoooo',
+              },
             },
           },
-        }, (error) => {
-          this.logger.error('Error at Google Calendar events watch')
-          this.logger.error(error)
-          if (error) throw error
-        })
+          error => {
+            this.logger.error('Error at Google Calendar events watch')
+            this.logger.error(error)
+            if (error) throw error
+          }
+        )
       }
-
     } catch (err) {
       response = {
         ok: 0,
@@ -161,17 +175,26 @@ export class UserService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async image(url: string, userEmail: string, res: express.Response, req: APIrequest) {
+  public async image(
+    url: string,
+    userEmail: string,
+    res: express.Response,
+    req: APIrequest
+  ) {
     let response: APIresponse = {
-        ok: 1,
-        code: 200,
-        url,
-      }
+      ok: 1,
+      code: 200,
+      url,
+    }
     let error: APIerror
     try {
       if (!req.jwt) throw 403
       const newExtension = path.parse(url.slice(-7)).ext
-      const [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', req.jwt)
+      const [sqlQuery, params] = sql.createSQLqueryFromJSON(
+        'SELECT',
+        'users',
+        req.jwt
+      )
       const user = await this.database.query(sqlQuery, params)
       const oldExtension = path.parse(user.profilePic.slice(-7)).ext
       const sqlQuery2 = 'UPDATE users SET profilePic = ? WHERE email = ?'
@@ -182,7 +205,8 @@ export class UserService extends Service {
           api: true,
           code: 409,
           message: 'User profile picture could not be updated',
-          friendlyMessage: 'It was not possible to update the user\'s profile picture',
+          friendlyMessage:
+            "It was not possible to update the user's profile picture",
         }
         throw error
       }
@@ -190,7 +214,10 @@ export class UserService extends Service {
         Bucket: process.env.BUCKET_NAME || 'connect-api-profile-pictures',
         Key: req.jwt.uid + oldExtension,
       }
-      if (newExtension !== oldExtension && !user.profilePic.includes('default.png')) {
+      if (
+        newExtension !== oldExtension &&
+        !user.profilePic.includes('default.png')
+      ) {
         const s3 = new AWS.S3({
           accessKeyId: process.env.IAM_USER_KEY,
           secretAccessKey: process.env.IAM_USER_SECRET,
@@ -217,11 +244,12 @@ export class UserService extends Service {
 
   public randomLetters(length) {
     let text = ''
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    const possible =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 
-    for (let i = 0; i < length; i++) text += possible.charAt(Math.floor(Math.random() * possible.length))
+    for (let i = 0; i < length; i++)
+      text += possible.charAt(Math.floor(Math.random() * possible.length))
 
     return text
   }
-
 }

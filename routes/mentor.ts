@@ -12,28 +12,37 @@ function setRouters(app: express.Application): void {
     services.mentor.getAll(req, res)
   })
 
-  router.get('/random', (req: APIrequest , res: express.Response) => {
+  router.get('/random', (req: APIrequest, res: express.Response) => {
     services.mentor.getRandom(req, res)
   })
 
-  router.get('/slots', services.auth.verifyToken, services.auth.isMentor, (req: APIrequest , res: express.Response) => {
-    services.mentor.getTimeSlots(req, res)
-  })
+  router.get(
+    '/slots',
+    services.auth.verifyToken,
+    services.auth.isMentor,
+    (req: APIrequest, res: express.Response) => {
+      services.mentor.getTimeSlots(req, res)
+    }
+  )
 
-  router.post('/slots', services.auth.verifyToken, services.auth.isMentor, (req: APIrequest , res: express.Response) => {
+  router.post(
+    '/slots',
+    services.auth.verifyToken,
+    services.auth.isMentor,
+    (req: APIrequest, res: express.Response) => {
       services.mentor.updateTimeSlots(req, res)
-    },
+    }
   )
 
   router.post('/request', (req: APIrequest, res: express.Response) => {
     services.mentor.request(req, res)
   })
 
-  router.get('/verify', (req: APIrequest , res: express.Response) => {
+  router.get('/verify', (req: APIrequest, res: express.Response) => {
     services.mentor.verify(req, res)
   })
 
-  router.get('/:keycode', (req: APIrequest , res: express.Response) => {
+  router.get('/:keycode', (req: APIrequest, res: express.Response) => {
     services.mentor.get(req, res)
   })
 }

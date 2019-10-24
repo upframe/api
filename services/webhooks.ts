@@ -6,8 +6,10 @@ import { APIrequest, APIresponse } from '../types'
 import { google } from 'googleapis'
 
 export class WebhooksService extends Service {
-
-  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+  constructor(
+    app: express.Application,
+    standaloneServices: StandaloneServices
+  ) {
     super(app, standaloneServices)
     if (this.logger) this.logger.verbose('Webhook service loaded')
   }
@@ -24,7 +26,8 @@ export class WebhooksService extends Service {
     const mentorUid = req.headers['x-goog-resource-id']
 
     try {
-      const userInfoQuery = 'SELECT googleAccessToken, googleRefreshToken, upframeCalendarId FROM users WHERE uid = ?'
+      const userInfoQuery =
+        'SELECT googleAccessToken, googleRefreshToken, upframeCalendarId FROM users WHERE uid = ?'
       const mentor = await this.database.query(userInfoQuery, mentorUid)
 
       this.oauth.setCredentials({
@@ -42,29 +45,33 @@ export class WebhooksService extends Service {
 
       const googleResponse = await googleCalendar.events.list({
         calendarId: mentor.upframeCalendarId,
-        timeMin: (new Date()).toISOString(),
+        timeMin: new Date().toISOString(),
         maxResults: 2400, // I believe the max is 2500
         singleEvents: true,
         orderBy: 'startTime',
       })
 
-      const googleEvents = googleResponse.data.items ? googleResponse.data.items : []
+      const googleEvents = googleResponse.data.items
+        ? googleResponse.data.items
+        : []
 
       if (googleEvents.length > 0) {
-        const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
+        const getAllTimeSlotsQuery =
+          'SELECT * FROM timeSlots WHERE mentorUID = ?'
         let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
         if (!dbSlots.length) {
           dbSlots = [dbSlots]
         }
-        const finalDbSlotsToRemove = dbSlots.filter((slot) => {
-          return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
+        const finalDbSlotsToRemove = dbSlots.filter(slot => {
+          return !googleEvents.some(googleEvent => googleEvent.id === slot.sid)
         })
         const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
         for (const slot of finalDbSlotsToRemove) {
           this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
         }
       } else {
-        const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
+        const deleteAllTimeSlotsQuery =
+          'DELETE FROM timeSlots WHERE mentorUID = ?'
         this.database.query(deleteAllTimeSlotsQuery, mentorUid)
       }
     } catch (error) {
@@ -78,6 +85,6 @@ export class WebhooksService extends Service {
 
   public doesGoogleHaveSlot(googleEvents, slot): boolean {
     // We want to check for every google event if slots is there
-    return googleEvents.some((googleEvent) => googleEvent.id === slot.id)
+    return googleEvents.some(googleEvent => googleEvent.id === slot.id)
   }
 }

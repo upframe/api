@@ -11,10 +11,10 @@ export class Database {
       this.logger = app.get('logger')
 
       const pool: mysql.Pool = mysql.createPool({
-        host : process.env.DB_HOST,
-        user : process.env.DB_USER,
-        password : process.env.DB_PASSWORD,
-        database : process.env.DB_NAME,
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
       })
       if (pool) this.logger.verbose('Database OK')
 
@@ -29,7 +29,10 @@ export class Database {
    * @param {string} sqlQuery - SQL query string
    * @param {Array<any>} parameters - String with the only parameter or an array
    */
-  public async query(sqlQuery: string, parameters?: string | any[]): Promise<any> {
+  public async query(
+    sqlQuery: string,
+    parameters?: string | any[]
+  ): Promise<any> {
     try {
       const result: any[] = await this.pool.query(sqlQuery, parameters)
 

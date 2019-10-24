@@ -4,7 +4,10 @@ import { Service, StandaloneServices } from '../service'
 import { APIerror, APIresponse } from '../types'
 
 export class SearchService extends Service {
-  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+  constructor(
+    app: express.Application,
+    standaloneServices: StandaloneServices
+  ) {
     super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('Search service loaded')
@@ -28,25 +31,40 @@ export class SearchService extends Service {
 
       // expertise search
       sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
-      const expertiseResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (Object.keys(expertiseResult).length) response.search.expertise = expertiseResult
+      const expertiseResult = await this.database.query(sqlQuery, [
+        `%${req.query.term}%`,
+      ])
+      if (Object.keys(expertiseResult).length)
+        response.search.expertise = expertiseResult
 
       // people search
-      sqlQuery = 'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
-      const peopleResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (Object.keys(peopleResult).length) response.search.people = peopleResult
+      sqlQuery =
+        'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
+      const peopleResult = await this.database.query(sqlQuery, [
+        `%${req.query.term}%`,
+      ])
+      if (Object.keys(peopleResult).length)
+        response.search.people = peopleResult
 
       // company search
       sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
-      const companyResult = await this.database.query(sqlQuery, [`%${req.query.term}%`])
-      if (Object.keys(companyResult).length) response.search.companies = companyResult
+      const companyResult = await this.database.query(sqlQuery, [
+        `%${req.query.term}%`,
+      ])
+      if (Object.keys(companyResult).length)
+        response.search.companies = companyResult
 
-      if (!response.search.expertise || !response.search.people || !response.search.companies) {
+      if (
+        !response.search.expertise ||
+        !response.search.people ||
+        !response.search.companies
+      ) {
         error = {
           api: true,
           code: 404,
           message: 'No matches were found.',
-          friendlyMessage: 'There is no expertise, person or company with the given name.',
+          friendlyMessage:
+            'There is no expertise, person or company with the given name.',
         }
 
         throw error
@@ -81,11 +99,19 @@ export class SearchService extends Service {
     const search = req.query.term
 
     try {
-
-      if (search === 'Business' || search === 'business' || search === 'Design' || search === 'design' || search === 'Technology' || search === 'technology') {
-
-        const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE category LIKE ? AND type = \'mentor\' AND newsfeed = \'Y\''
-        let user = await this.database.query(sqlQuery, [`%${search.toLowerCase()}%`])
+      if (
+        search === 'Business' ||
+        search === 'business' ||
+        search === 'Design' ||
+        search === 'design' ||
+        search === 'Technology' ||
+        search === 'technology'
+      ) {
+        const sqlQuery =
+          "SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE category LIKE ? AND type = 'mentor' AND newsfeed = 'Y'"
+        let user = await this.database.query(sqlQuery, [
+          `%${search.toLowerCase()}%`,
+        ])
         if (!Object.keys(user).length) {
           error = {
             api: true,
@@ -101,11 +127,13 @@ export class SearchService extends Service {
           }
           response.search = user
         }
-
       } else {
-
-        const sqlQuery = 'SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = \'mentor\' AND newsfeed = \'Y\''
-        let user = await this.database.query(sqlQuery, [`${search}%`, `%${search.toLowerCase()}%`])
+        const sqlQuery =
+          "SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = 'mentor' AND newsfeed = 'Y'"
+        let user = await this.database.query(sqlQuery, [
+          `${search}%`,
+          `%${search.toLowerCase()}%`,
+        ])
         if (!Object.keys(user).length) {
           error = {
             api: true,
@@ -121,9 +149,7 @@ export class SearchService extends Service {
           }
           response.search = user
         }
-
       }
-
     } catch (err) {
       response = {
         ok: 0,
@@ -140,8 +166,15 @@ export class SearchService extends Service {
   }
 
   public async tags(req: express.Request, res: express.Response) {
-    const tags = ['User Research', 'Event Marketing', 'Communities', 'Business Models', 'Ideation', 'B2B', 'B2C']
+    const tags = [
+      'User Research',
+      'Event Marketing',
+      'Communities',
+      'Business Models',
+      'Ideation',
+      'B2B',
+      'B2C',
+    ]
     res.status(200).send(tags)
   }
-
 }

@@ -1,4 +1,1 @@
-export const fields: string[] = [
-  'email',
-  'token',
-]
+export const fields: string[] = ['email', 'token']
