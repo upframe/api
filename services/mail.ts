@@ -33,20 +33,13 @@ export class Mail {
 
   public getTemplate(name: string, args: any) {
     let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
-    try {
-      if (!args) throw new Error('Undefined props')
-
-      for (const prop of Object.keys(args)) {
-        // undefined prop
-        if (!args[prop]) throw new Error(`Undefined prop ${prop}`)
-
-        file = file.replace(new RegExp(prop, 'g'), args[prop])
-      }
-
-      return file
-    } catch (err) {
-      throw err
+    if (!args) throw new Error('Undefined props')
+    for (const prop of Object.keys(args)) {
+      // undefined prop
+      if (!args[prop]) throw new Error(`Undefined prop ${prop}`)
+      file = file.replace(new RegExp(prop, 'g'), args[prop])
     }
+    return file
   }
 
   /**

@@ -1,7 +1,5 @@
 import * as express from 'express'
 
-import { Services } from '../service'
-
 const router: express.Router = express.Router()
 
 function setRouters(app: express.Application): void {

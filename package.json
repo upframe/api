@@ -10,10 +10,12 @@
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpileOnly ./app.ts",
     "prod": "tsc && node ./build/app.js",
-    "start": "node ./build/app.js"
+    "start": "node ./build/app.js",
+    "lint": "eslint . --ext .js,.ts"
   },
   "husky": {
     "hooks": {
+      "pre-commit": "yarn run lint"
     }
   },
   "dependencies": {

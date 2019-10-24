@@ -4,7 +4,7 @@ import {google} from 'googleapis'
 
 import moment from 'moment'
 
-import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot, User } from '../types'
+import { AccountTypes, APIerror, APIrequest, APIresponse, Meetup, Mentor, Slot, User } from '../types'
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'

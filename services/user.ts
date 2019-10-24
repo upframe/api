@@ -100,7 +100,7 @@ export class UserService extends Service {
       else uid = req.jwt.uid
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users', json, {uid})
-      const result = await this.database.query(sqlQuery, params)
+      await this.database.query(sqlQuery, params)
 
       if (req.body.upframeCalendarId) { // Adicionar um Webhook caso estejamos a atualizar o calendar id
         response.code = 777
@@ -195,7 +195,7 @@ export class UserService extends Service {
           accessKeyId: process.env.IAM_USER_KEY,
           secretAccessKey: process.env.IAM_USER_SECRET,
         })
-        s3.deleteObject(deleteParams, (err, data) => {
+        s3.deleteObject(deleteParams, () => {
           res.status(response.code).json(response)
         })
       } else {

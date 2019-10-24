@@ -1,6 +1,5 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
-import { GaxiosResponse } from 'gaxios'
 import {google} from 'googleapis'
 import moment from 'moment'
 
@@ -415,7 +414,6 @@ export class MentorService extends Service {
 
       const deletedSlots: string[] = req.body.deleted
       const updatedSlots: Slot[] = req.body.updated
-      const splitSlots: Slot[] = []
       let sqlQuery: string
       let params: string | string[]
 

@@ -1,8 +1,7 @@
 import * as express from 'express'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, User } from '../types'
-import { sql } from '../utils'
+import { APIerror, APIrequest, APIresponse } from '../types'
 
 export class UrlService extends Service {
 

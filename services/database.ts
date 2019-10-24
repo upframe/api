@@ -2,8 +2,6 @@ import * as express from 'express'
 import * as mysql from 'mysql2/promise'
 import { Logger } from 'winston'
 
-import { date } from '../types'
-
 export class Database {
   private pool: any
   private logger!: Logger

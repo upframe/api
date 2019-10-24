@@ -6,7 +6,7 @@ import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, Mentor, User } from '../types'
+import { APIerror, APIrequest, APIresponse, JWTpayload } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
@@ -279,7 +279,6 @@ export class AuthService extends Service {
 
           throw error
         }
-        const result2 = await this.database.query('DELETE FROM passwordReset WHERE token = ?', [req.body.token])
       } else {
         if (!req.body.email) {
           error = {
@@ -503,7 +502,7 @@ export class AuthService extends Service {
 
       // fetch mentor info
       [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
-      const mentor: Mentor = await this.database.query(sqlQuery, params)
+      await this.database.query(sqlQuery, params)
     } catch (err) {
       response = {
         ok: 0,

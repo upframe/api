@@ -1,7 +1,7 @@
 import * as express from 'express'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, User } from '../types'
+import { APIrequest, APIresponse } from '../types'
 
 import { google } from 'googleapis'
 
