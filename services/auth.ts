@@ -6,17 +6,24 @@ import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
 import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIRequestBody, APIresponse, JWTpayload, Mentor, User } from '../types'
+import { APIerror, APIrequest, APIresponse, JWTpayload } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
-  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+  constructor(
+    app: express.Application,
+    standaloneServices: StandaloneServices
+  ) {
     super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('Auth service loaded')
   }
 
-  public verifyToken(req: APIrequest, res: express.Response, next: express.NextFunction) {
+  public verifyToken(
+    req: APIrequest,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const token = req.cookies.access_token
 
     try {
@@ -46,30 +53,37 @@ export class AuthService extends Service {
     }
   }
 
-  public isMentor(req: APIrequest, res: express.Response, next: express.NextFunction) {
+  public isMentor(
+    req: APIrequest,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     if (req.jwt && req.jwt.aud === 'mentor') next()
     else {
       const response: APIresponse = {
         code: 403,
         ok: 0,
-        message: 'You\'re not a mentor',
+        message: "You're not a mentor",
       }
 
       res.status(response.code).json(response)
     }
   }
 
-  public createToken(user: JWTpayload , accountType): string {
+  public createToken(user: JWTpayload, accountType): string {
     if (process.env.CONNECT_PK) {
-      return jwt.sign(user, process.env.CONNECT_PK, {expiresIn: (86400 * 15) , audience: accountType})
+      return jwt.sign(user, process.env.CONNECT_PK, {
+        expiresIn: 86400 * 15,
+        audience: accountType,
+      })
     } else return ''
   }
 
   public async login(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
-        ok: 1,
-        code: 200,
-      }
+      ok: 1,
+      code: 200,
+    }
     let error: APIerror
 
     try {
@@ -89,12 +103,18 @@ export class AuthService extends Service {
 
       if (Object.keys(user).length) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
-          response.token = this.createToken({
-            email: user.email,
-            uid: user.uid,
-          }, user.type)
+          response.token = this.createToken(
+            {
+              email: user.email,
+              uid: user.uid,
+            },
+            user.type
+          )
 
-          res.cookie('access_token', response.token, { expires: new Date(Date.now() + 86400 * 15e3), httpOnly: true })
+          res.cookie('access_token', response.token, {
+            expires: new Date(Date.now() + 86400 * 15e3),
+            httpOnly: true,
+          })
 
           this.analytics.userLogin(user)
         } else {
@@ -102,7 +122,7 @@ export class AuthService extends Service {
             api: true,
             code: 401,
             message: 'Wrong credentials',
-            friendlyMessage: 'The password and password didn\'t match',
+            friendlyMessage: "The password and password didn't match",
           }
 
           throw error
@@ -143,11 +163,9 @@ export class AuthService extends Service {
   }
 
   public async register(req: APIrequest, res: express.Response) {
-
     // We wait 2 seconds for each register as a way to protect ourselves against
     // bruteforce attacks. Using extra time makes them virtually impossible.
     setTimeout(() => {
-
       const json = Object.assign({}, req.body)
       let response: APIresponse = {
         code: 200,
@@ -170,7 +188,13 @@ export class AuthService extends Service {
         //   throw error
         // }
 
-        if (!json.email || !json.password || !json.name || !json.developerPass || !json.type) {
+        if (
+          !json.email ||
+          !json.password ||
+          !json.name ||
+          !json.developerPass ||
+          !json.type
+        ) {
           error = {
             api: true,
             code: 400,
@@ -199,16 +223,20 @@ export class AuthService extends Service {
         const salt = bcrypt.genSaltSync(10)
         json.password = bcrypt.hashSync(json.password, salt)
         // generate keycode
-        json.keycode = json.name.normalize('NFD')
+        json.keycode = json.name
+          .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
           .replace(new RegExp(' ', 'g'), '.')
           .toLowerCase()
         // generate unique account id
         json.uid = crypto.randomBytes(20).toString('hex')
 
-        const [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'users', json)
+        const [sqlQuery, params] = sql.createSQLqueryFromJSON(
+          'INSERT',
+          'users',
+          json
+        )
         this.database.query(sqlQuery, params)
-
       } catch (err) {
         response = {
           ok: 0,
@@ -223,15 +251,13 @@ export class AuthService extends Service {
         // check API errors
         if (err.api) {
           response.code = err.code
-          response.message = err.message,
-            response.friendlyMessage = err.friendlyMessage
+          ;(response.message = err.message),
+            (response.friendlyMessage = err.friendlyMessage)
         }
       }
 
       res.status(response.code).json(response)
-
     }, 2000)
-
   }
 
   public async resetPassword(req: APIrequest, res: express.Response) {
@@ -246,40 +272,48 @@ export class AuthService extends Service {
         let sqlQuery: string
         let params: string[]
 
-        // verify if token is valid
-        [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'passwordReset', { token: req.body.token })
+          // verify if token is valid
+        ;[sqlQuery, params] = sql.createSQLqueryFromJSON(
+          'SELECT',
+          'passwordReset',
+          { token: req.body.token }
+        )
         const passwordResetToken = await this.database.query(sqlQuery, params)
         if (!Object.keys(passwordResetToken).length) {
           error = {
             api: true,
             code: 404,
             message: 'Token not found',
-            friendlyMessage: 'The given token is invalid or has already been used.',
+            friendlyMessage:
+              'The given token is invalid or has already been used.',
           }
 
           throw error
         }
 
         // create SQL query to set a new password
-        [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'users',
+        ;[sqlQuery, params] = sql.createSQLqueryFromJSON(
+          'UPDATE',
+          'users',
           {
             password: req.body.password,
-          }, {
+          },
+          {
             email: passwordResetToken.email,
-          })
+          }
+        )
 
         const result = await this.database.query(sqlQuery, params)
         if (!result.affectedRows) {
           error = {
             api: true,
             code: 500,
-            message: 'Could not update user\'s password',
-            friendlyMessage: 'Could not update user\'s password',
+            message: "Could not update user's password",
+            friendlyMessage: "Could not update user's password",
           }
 
           throw error
         }
-        const result2 = await this.database.query('DELETE FROM passwordReset WHERE token = ?', [req.body.token])
       } else {
         if (!req.body.email) {
           error = {
@@ -298,7 +332,8 @@ export class AuthService extends Service {
               api: true,
               code: 500,
               message: 'It was not possible to send the password reset email',
-              friendlyMessage: 'It was not possible to send the password reset email',
+              friendlyMessage:
+                'It was not possible to send the password reset email',
             }
 
             throw error
@@ -334,8 +369,10 @@ export class AuthService extends Service {
     if (req.body.token && req.body.email && process.env.CONNECT_PK) {
       try {
         // verify if token is valid by fetching it from the database
-        const emailChangeRequest = await this.database.query('SELECT * FROM emailChange WHERE token = ?',
-          [req.body.token])
+        const emailChangeRequest = await this.database.query(
+          'SELECT * FROM emailChange WHERE token = ?',
+          [req.body.token]
+        )
         if (!emailChangeRequest) {
           error = {
             api: true,
@@ -353,19 +390,29 @@ export class AuthService extends Service {
 
         // if user is logged in refresh access token
         // clear access token otherwise
-        jwt.verify(req.cookies.access_token, process.env.CONNECT_PK, (err, decoded) => {
-          if (decoded) {
-            response.token = this.createToken({
-              email: req.body.email,
-              uid: decoded.uid,
-            }, decoded.aud)
+        jwt.verify(
+          req.cookies.access_token,
+          process.env.CONNECT_PK,
+          (err, decoded) => {
+            if (decoded) {
+              response.token = this.createToken(
+                {
+                  email: req.body.email,
+                  uid: decoded.uid,
+                },
+                decoded.aud
+              )
 
-            res.cookie('access_token', response.token, {maxAge: 86400 * 15, httpOnly: true})
-          } else {
-            // avoid cookie problems by deleting access_token cookie when it is not valid
-            res.clearCookie('access_token')
+              res.cookie('access_token', response.token, {
+                maxAge: 86400 * 15,
+                httpOnly: true,
+              })
+            } else {
+              // avoid cookie problems by deleting access_token cookie when it is not valid
+              res.clearCookie('access_token')
+            }
           }
-        })
+        )
 
         sqlQuery = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token]
@@ -411,7 +458,6 @@ export class AuthService extends Service {
     let error: APIerror
 
     try {
-
       const authorizeUrl = this.oauth.generateAuthUrl({
         access_type: 'offline',
         scope: 'profile email https://www.googleapis.com/auth/calendar',
@@ -423,7 +469,8 @@ export class AuthService extends Service {
           api: true,
           code: 500,
           message: 'Error creating google sync URL',
-          friendlyMessage: 'There was a problem accesssing the Google OAuth URl',
+          friendlyMessage:
+            'There was a problem accesssing the Google OAuth URl',
         }
         throw error
       }
@@ -451,7 +498,7 @@ export class AuthService extends Service {
           api: true,
           code: 500,
           message: 'Needed parameter was missing from the request',
-          friendlyMessage: 'The parameter \'code\' was missing in the query',
+          friendlyMessage: "The parameter 'code' was missing in the query",
         }
         throw error
       }
@@ -461,8 +508,10 @@ export class AuthService extends Service {
         error = {
           api: true,
           code: 500,
-          message: 'Error parsing synchronization code from Google - access token and refresh token not generated',
-          friendlyMessage: 'We could not transform the Google code into an access token and refresh token',
+          message:
+            'Error parsing synchronization code from Google - access token and refresh token not generated',
+          friendlyMessage:
+            'We could not transform the Google code into an access token and refresh token',
         }
         throw error
       }
@@ -501,9 +550,11 @@ export class AuthService extends Service {
       let sqlQuery: string
       let params: string | string[]
 
-      // fetch mentor info
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
-      const mentor: Mentor = await this.database.query(sqlQuery, params)
+        // fetch mentor info
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
+        uid: req.jwt.uid,
+      })
+      await this.database.query(sqlQuery, params)
     } catch (err) {
       response = {
         ok: 0,

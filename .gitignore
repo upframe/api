@@ -3,7 +3,7 @@ node_modules/
 
 .vs/
 
-app.log
+*.log
 
 # TypeScript
 build

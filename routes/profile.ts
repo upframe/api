@@ -10,62 +10,79 @@ const router: express.Router = express.Router()
 function setRouters(app: express.Application): void {
   const services: Services = app.get('services')
 
-  router.get('/me', services.auth.verifyToken, (req: APIrequest , res: express.Response) => {
-    services.user.get(req, res)
-  })
-
-  router.patch('/me', services.auth.verifyToken, (req: APIrequest, res: express.Response) => {
-    services.user.update(req, res)
-  })
-
-  router.post('/image', services.auth.verifyToken, (req: APIrequest, res: express.Response) => {
-    let response: APIresponse = {
-      ok: 1,
-      code: 200,
+  router.get(
+    '/me',
+    services.auth.verifyToken,
+    (req: APIrequest, res: express.Response) => {
+      services.user.get(req, res)
     }
-    let error: APIerror
-    try {
-      if (!req.jwt || !req.jwt.uid) {
-        error = {
-          api: true,
-          code: 403,
-          message: 'Forbidden',
-          friendlyMessage: 'There was a problem updating your timeslots',
+  )
+
+  router.patch(
+    '/me',
+    services.auth.verifyToken,
+    (req: APIrequest, res: express.Response) => {
+      services.user.update(req, res)
+    }
+  )
+
+  router.post(
+    '/image',
+    services.auth.verifyToken,
+    (req: APIrequest, res: express.Response) => {
+      let response: APIresponse = {
+        ok: 1,
+        code: 200,
+      }
+      let error: APIerror
+      try {
+        if (!req.jwt || !req.jwt.uid) {
+          error = {
+            api: true,
+            code: 403,
+            message: 'Forbidden',
+            friendlyMessage: 'There was a problem updating your timeslots',
+          }
+
+          throw error
         }
 
-        throw error
-      }
+        const uid = req.jwt.uid
+        req.pipe(req.busboy)
+        req.busboy.on('file', (fieldname, file, filename) => {
+          const extension = path.parse(filename).ext
+          uploadToS3UsingStream(services, uid + extension, file, req, res)
+        })
+      } catch (err) {
+        response = {
+          ok: 0,
+          code: 500,
+        }
 
-      const uid = req.jwt.uid
-      req.pipe(req.busboy)
-      req.busboy.on('file', (fieldname, file, filename) => {
-        const extension = path.parse(filename).ext
-        uploadToS3UsingStream(
-          services,
-          uid + extension,
-          file,
-          req,
-          res,
-        )
-      })
-    } catch (err) {
-      response = {
-        ok: 0,
-        code: 500,
-      }
-
-      if (err.api) {
-        response.code = err.code
-        response.message = err.messange
-        response.friendlyMessage = err.friendlyMessage
+        if (err.api) {
+          response.code = err.code
+          response.message = err.messange
+          response.friendlyMessage = err.friendlyMessage
+        }
       }
     }
-  })
+  )
 }
 
-function uploadToS3UsingStream(services: any, filename: any, stream: any, req: APIrequest, res: express.Response) {
+function uploadToS3UsingStream(
+  services: any,
+  filename: any,
+  stream: any,
+  req: APIrequest,
+  res: express.Response
+) {
   try {
-    if (!process.env.IAM_USER_KEY || !process.env.IAM_USER_SECRET || !process.env.BUCKET_NAME) throw 500
+    if (
+      !process.env.IAM_USER_KEY ||
+      !process.env.IAM_USER_SECRET ||
+      !process.env.BUCKET_NAME
+    )
+      throw 500
     const s3 = new AWS.S3({
       accessKeyId: process.env.IAM_USER_KEY,
       secretAccessKey: process.env.IAM_USER_SECRET,

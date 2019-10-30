@@ -1,6 +1,1 @@
-export const fields: string[] = [
-  'sid',
-  'mentorUID',
-  'start',
-  'end',
-]
+export const fields: string[] = ['sid', 'mentorUID', 'start', 'end']

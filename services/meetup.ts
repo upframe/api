@@ -1,16 +1,28 @@
 import * as crypto from 'crypto'
 import * as express from 'express'
-import {google} from 'googleapis'
+import { google } from 'googleapis'
 
 import moment from 'moment'
 
-import { AccountTypes, APIerror, APIrequest, APIRequestBody, APIresponse, Meetup, Mentor, Slot, User } from '../types'
+import {
+  AccountTypes,
+  APIerror,
+  APIrequest,
+  APIresponse,
+  Meetup,
+  Mentor,
+  Slot,
+  User,
+} from '../types'
 import { calendar, sql } from '../utils'
 
 import { Service, StandaloneServices } from '../service'
 
 export class MeetupService extends Service {
-  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+  constructor(
+    app: express.Application,
+    standaloneServices: StandaloneServices
+  ) {
     super(app, standaloneServices)
 
     if (this.logger) this.logger.verbose('Meetup service loaded')
@@ -23,9 +35,9 @@ export class MeetupService extends Service {
    */
   public async get(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
-        ok: 1,
-        code: 200,
-      }
+      ok: 1,
+      code: 200,
+    }
     let error: APIerror
 
     try {
@@ -33,7 +45,7 @@ export class MeetupService extends Service {
       let userMeetups: Meetup[] = []
 
       if (req.jwt && req.jwt.uid) {
-        userMeetups = (await this.database.query(sqlQuery, [req.jwt.uid]))
+        userMeetups = await this.database.query(sqlQuery, [req.jwt.uid])
         if (!Object.keys(userMeetups).length || !userMeetups.length) {
           error = {
             api: true,
@@ -70,9 +82,9 @@ export class MeetupService extends Service {
    */
   public async create(req: APIrequest, res: express.Response) {
     let response: APIresponse = {
-        ok: 1,
-        code: 200,
-      }
+      ok: 1,
+      code: 200,
+    }
     let error: APIerror
 
     try {
@@ -99,7 +111,8 @@ export class MeetupService extends Service {
           api: true,
           code: 400,
           message: 'Insufficient fields to create meetup request',
-          friendlyMessage: 'There are no sufficient fields to create meetup request',
+          friendlyMessage:
+            'There are no sufficient fields to create meetup request',
         }
 
         throw error
@@ -111,7 +124,7 @@ export class MeetupService extends Service {
         email: json.email,
         name: json.name,
         password: 'nologin',
-        timeoffset: (json.timeoffset ? -json.timeoffset : 0),
+        timeoffset: json.timeoffset ? -json.timeoffset : 0,
       }
       // MVP ONLY SECTION END
 
@@ -126,7 +139,14 @@ export class MeetupService extends Service {
       if (!Object.keys(result).length) {
         // create new user
         sqlQuery = `INSERT INTO users (uid, email, name, password, type, timeoffset) VALUES(?, ?, ?, ?, ?, ?)`
-        params = [newUser.uid, newUser.email, newUser.name, newUser.password, 'user', (newUser.timeoffset ? newUser.timeoffset : 0)]
+        params = [
+          newUser.uid,
+          newUser.email,
+          newUser.name,
+          newUser.password,
+          'user',
+          newUser.timeoffset ? newUser.timeoffset : 0,
+        ]
         result = await this.database.query(sqlQuery, params)
 
         if (!result.affectedRows) {
@@ -205,33 +225,51 @@ export class MeetupService extends Service {
 
       // verify if the requested meetup location is valid (if the mentor has this location as a favorite place)
       sqlQuery = 'SELECT * FROM users WHERE uid = ?'
-      const mentor: Mentor = (await this.database.query(sqlQuery, [meetup.mentorUID]))
-      if ( mentor.favoritePlaces && !(JSON.parse(mentor.favoritePlaces).includes(meetup.location)) ) {
+      const mentor: Mentor = await this.database.query(sqlQuery, [
+        meetup.mentorUID,
+      ])
+      if (
+        mentor.favoritePlaces &&
+        !JSON.parse(mentor.favoritePlaces).includes(meetup.location)
+      ) {
         error = {
           api: true,
           code: 400,
           message: 'Location is invalid',
-          friendlyMessage: 'The location for the meetup you\'re requesting is invalid',
+          friendlyMessage:
+            "The location for the meetup you're requesting is invalid",
         }
 
         throw error
       }
 
       // verify if slot is already occupied
-      const genSlots = calendar.automaticGenerate([slot], moment(meetup.start).add(1, 'd').toDate())
+      const genSlots = calendar.automaticGenerate(
+        [slot],
+        moment(meetup.start)
+          .add(1, 'd')
+          .toDate()
+      )
       for (const eachSlot of genSlots) {
         // find slot whose date matches the requested meetup date
-        if (new Date(eachSlot.start).getTime() === new Date(meetup.start).getTime()) {
-
+        if (
+          new Date(eachSlot.start).getTime() ===
+          new Date(meetup.start).getTime()
+        ) {
           // verify if slot is free (there is no meetup with status confirmed)
-          sqlQuery = 'SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?) AND status = "confirmed"'
-          const confirmedSlots = await this.database.query(sqlQuery, [meetup.sid, meetup.start])
+          sqlQuery =
+            'SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?) AND status = "confirmed"'
+          const confirmedSlots = await this.database.query(sqlQuery, [
+            meetup.sid,
+            meetup.start,
+          ])
           if (confirmedSlots['COUNT(*)']) {
             error = {
               api: true,
               code: 409,
               message: 'This slot is not available.',
-              friendlyMessage: 'This slot is not available or has already been booked.',
+              friendlyMessage:
+                'This slot is not available or has already been booked.',
             }
 
             throw error
@@ -239,27 +277,37 @@ export class MeetupService extends Service {
             // verify if user has already made a meetup request to that space in time
             sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?)
              AND status = "pending" AND menteeUID = ?`
-            const userRequests = await this.database.query(sqlQuery, [meetup.sid, meetup.start, meetup.menteeUID])
+            const userRequests = await this.database.query(sqlQuery, [
+              meetup.sid,
+              meetup.start,
+              meetup.menteeUID,
+            ])
             if (userRequests['COUNT(*)']) {
               error = {
                 api: true,
                 code: 400,
                 message: 'Cannot set more than one meetup request',
-                friendlyMessage: 'One user can only make one meetup request per slot.',
+                friendlyMessage:
+                  'One user can only make one meetup request per slot.',
               }
 
               throw error
             }
 
             // finally, let's insert a new meetup request
-            [sqlQuery, params] = sql.createSQLqueryFromJSON('INSERT', 'meetups', meetup)
+            ;[sqlQuery, params] = sql.createSQLqueryFromJSON(
+              'INSERT',
+              'meetups',
+              meetup
+            )
             result = await this.database.query(sqlQuery, params)
             if (!result.affectedRows) {
               error = {
                 api: true,
                 code: 500,
                 message: 'Could not create meetup request',
-                friendlyMessage: 'It was not possible to create a meetup request',
+                friendlyMessage:
+                  'It was not possible to create a meetup request',
               }
 
               throw error
@@ -269,14 +317,18 @@ export class MeetupService extends Service {
             this.analytics.meetupRequest(meetup, mentor, newUser)
 
             // send email
-            result = await this.mail.sendMeetupInvitation(meetup.mid, json.message)
+            result = await this.mail.sendMeetupInvitation(
+              meetup.mid,
+              json.message
+            )
             if (result.api) throw result
             else if (result) {
               error = {
                 api: true,
                 code: 500,
                 message: 'Could not send meetup request email',
-                friendlyMessage: 'Could not send meetup request email to mentor',
+                friendlyMessage:
+                  'Could not send meetup request email to mentor',
               }
 
               throw error
@@ -446,11 +498,12 @@ export class MeetupService extends Service {
       let sqlQuery: string
       let params: string[]
 
-      // verify if meetup exists and its status
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
+        // verify if meetup exists and its status
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
         mid: req.query.meetup,
         mentorUID: req.jwt.uid,
-        status: 'pending' })
+        status: 'pending',
+      })
       const meetup: Meetup = await this.database.query(sqlQuery, params)
       if (!Object.keys(meetup).length) {
         error = {
@@ -463,11 +516,16 @@ export class MeetupService extends Service {
       }
 
       // change meetup status
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups', {
-        status: 'confirmed',
-      }, {
-        mid: req.query.meetup,
-      })
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON(
+        'UPDATE',
+        'meetups',
+        {
+          status: 'confirmed',
+        },
+        {
+          mid: req.query.meetup,
+        }
+      )
       let result = await this.database.query(sqlQuery, params)
       result = await this.mail.sendMeetupConfirmation(req.query.meetup)
       if (result) {
@@ -482,7 +540,9 @@ export class MeetupService extends Service {
       }
 
       // fetch slot info
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'timeSlots', {sid: meetup.sid})
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'timeSlots', {
+        sid: meetup.sid,
+      })
       const slot: Slot = await this.database.query(sqlQuery, params)
 
       // calculate slot duration
@@ -491,20 +551,30 @@ export class MeetupService extends Service {
       if (moment(slot.end).diff(slot.start, 'hours')) {
         duration = moment(slot.end).diff(slot.start, 'hours')
         unit = 'hours'
-      } else duration = moment(slot.end).diff(slot.start, 'minutes');
+      } else
+        duration = moment(slot.end).diff(slot.start, 'minutes')
 
-      // fetch mentor info
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
+        // fetch mentor info
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
+        uid: req.jwt.uid,
+      })
       const mentor: Mentor = await this.database.query(sqlQuery, params)
 
       // Record MeetupConfirm event
       this.analytics.meetupConfirm(meetup, mentor)
 
       // fetch mentee info
-      const [sqlQuery2, params2] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: meetup.menteeUID})
+      const [sqlQuery2, params2] = sql.createSQLqueryFromJSON(
+        'SELECT',
+        'users',
+        { uid: meetup.menteeUID }
+      )
       const mentee: User = await this.database.query(sqlQuery2, params2)
 
-      if ((mentor.googleAccessToken || mentor.googleRefreshToken) && mentor.upframeCalendarId ) {
+      if (
+        (mentor.googleAccessToken || mentor.googleRefreshToken) &&
+        mentor.upframeCalendarId
+      ) {
         // refresh access token
         this.oauth.setCredentials({
           access_token: mentor.googleAccessToken,
@@ -517,7 +587,7 @@ export class MeetupService extends Service {
             api: true,
             code: 500,
             message: 'Could not get updated access token',
-            friendlyMessage: 'There was an error fetching the user\'s info',
+            friendlyMessage: "There was an error fetching the user's info",
           }
           throw error
         }
@@ -551,17 +621,15 @@ export class MeetupService extends Service {
               timeZone: 'UTC',
             },
             end: {
-              dateTime: moment(meetup.start).add(duration, unit).toISOString(),
+              dateTime: moment(meetup.start)
+                .add(duration, unit)
+                .toISOString(),
               timeZone: 'UTC',
             },
-            attendees: [
-              {email: mentor.email},
-              {email: mentee.email},
-            ],
+            attendees: [{ email: mentor.email }, { email: mentee.email }],
           },
         })
       }
-
     } catch (err) {
       response = {
         ok: 0,
@@ -596,8 +664,7 @@ export class MeetupService extends Service {
       let sqlQuery: string
       let params: string | string[]
       let result: any
-
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'meetups', {
         mid: req.query.meetup,
         mentorUID: req.jwt.uid,
         status: 'pending',
@@ -614,13 +681,16 @@ export class MeetupService extends Service {
         throw error
       }
 
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('UPDATE', 'meetups',
-      {
-        status: 'refused',
-      },
-      {
-        mid: req.query.meetup,
-      })
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON(
+        'UPDATE',
+        'meetups',
+        {
+          status: 'refused',
+        },
+        {
+          mid: req.query.meetup,
+        }
+      )
       result = await this.database.query(sqlQuery, params)
       if (!result.affectedRows) {
         error = {
@@ -634,7 +704,9 @@ export class MeetupService extends Service {
       }
 
       // fetch mentor info
-      [sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {uid: req.jwt.uid})
+      ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
+        uid: req.jwt.uid,
+      })
       const mentor: Mentor = await this.database.query(sqlQuery, params)
 
       // Record MeetupRefuse event
