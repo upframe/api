@@ -203,7 +203,7 @@ export class MentorService extends Service {
     try {
       let sqlQuery = `SELECT users.uid, name, role, company, bio, tags, keycode, profilePic, profilePictures.*
         FROM users
-        INNER JOIN profilePictures ON users.uid = profilePictures.uid
+        LEFT JOIN profilePictures ON users.uid = profilePictures.uid
         WHERE type = 'mentor' AND newsfeed = 'Y'
         ORDER BY RAND()`
 
