@@ -54,12 +54,13 @@ export class MentorService extends Service {
       response.mentor = mentorInfo
 
       // query profile pictures
-      const pics = await this.database.query(
-        ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
-          uid: mentorInfo.uid,
-        })
+      response.mentor.pictures = this._formatPics(
+        await this.database.query(
+          ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
+            uid: mentorInfo.uid,
+          })
+        )
       )
-      response.mentor.pictures = this._formatPics(pics)
 
       // We are not using Google Calendar as a source of events right now
       /*
@@ -740,14 +741,20 @@ export class MentorService extends Service {
   }
 
   _formatPics(pics: { [type: string]: string }) {
-    return Object.entries(pics)
-      .filter(([k]) => k.startsWith('pic'))
-      .reduce((a, [k, v]) => {
-        let type = k.replace(/pic|Jpeg|Webp/g, '').toLowerCase()
-        if (!(type in a)) a[type] = {}
-        a[type][k.includes('Jpeg') ? 'jpeg' : 'webp'] = v
-        return a
-      }, {})
+    const ep = Object.entries(pics).filter(([k]) => k.startsWith('pic'))
+    if (ep.length === 0) return {}
+    return ep.reduce((a, [k, v]) => {
+      let size = k.replace(/pic|Jpeg|Webp/g, '').toLowerCase()
+      return !v
+        ? a
+        : {
+            ...a,
+            [size]: {
+              ...a[size],
+              [k.includes('Jpeg') ? 'jpeg' : 'webp']: v,
+            },
+          }
+    }, {})
   }
 }
 
