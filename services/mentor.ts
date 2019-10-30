@@ -53,6 +53,14 @@ export class MentorService extends Service {
       }
       response.mentor = mentorInfo
 
+      // query profile pictures
+      const pics = await this.database.query(
+        ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
+          uid: mentorInfo.uid,
+        })
+      )
+      response.mentor.pictures = this._formatPics(pics)
+
       // We are not using Google Calendar as a source of events right now
       /*
       if (mentorInfo.googleAccessToken) {
@@ -192,8 +200,11 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      let sqlQuery =
-        "SELECT uid, name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = 'mentor' AND newsfeed = 'Y' ORDER BY RAND()"
+      let sqlQuery = `SELECT users.uid, name, role, company, bio, tags, keycode, profilePic, profilePictures.*
+        FROM users
+        INNER JOIN profilePictures ON users.uid = profilePictures.uid
+        WHERE type = 'mentor' AND newsfeed = 'Y'
+        ORDER BY RAND()`
 
       const mentorList = await this.database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
@@ -232,7 +243,20 @@ export class MentorService extends Service {
         }
       }
 
-      response.mentors = mentorList
+      // format picture structure in response
+      response.mentors = mentorList.map(ment => {
+        const [mentor, pictures] = Object.entries(ment).reduce(
+          ([m, p], [k, v]) =>
+            !k.startsWith('pic')
+              ? [{ ...m, [k]: v }, p]
+              : [m, { ...p, [k]: v }],
+          [{}, {}]
+        )
+        return {
+          ...mentor,
+          pictures: this._formatPics(pictures),
+        }
+      })
     } catch (err) {
       response = {
         ok: 0,
@@ -713,6 +737,17 @@ export class MentorService extends Service {
     }
 
     res.status(response.code).json(response)
+  }
+
+  _formatPics(pics: { [type: string]: string }) {
+    return Object.entries(pics)
+      .filter(([k]) => k.startsWith('pic'))
+      .reduce((a, [k, v]) => {
+        let type = k.replace(/pic|Jpeg|Webp/g, '').toLowerCase()
+        if (!(type in a)) a[type] = {}
+        a[type][k.includes('Jpeg') ? 'jpeg' : 'webp'] = v
+        return a
+      }, {})
   }
 }
 
