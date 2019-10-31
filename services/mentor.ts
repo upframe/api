@@ -5,7 +5,7 @@ import moment from 'moment'
 
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
-import { calendar, sql } from '../utils'
+import { calendar, sql, format } from '../utils'
 
 export class MentorService extends Service {
   constructor(
@@ -54,7 +54,7 @@ export class MentorService extends Service {
       response.mentor = mentorInfo
 
       // query profile pictures
-      response.mentor.pictures = this._formatPics(
+      response.mentor.pictures = format.pictures(
         await this.database.query(
           ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
             uid: mentorInfo.uid,
@@ -245,19 +245,7 @@ export class MentorService extends Service {
       }
 
       // format picture structure in response
-      response.mentors = mentorList.map(ment => {
-        const [mentor, pictures] = Object.entries(ment).reduce(
-          ([m, p], [k, v]) =>
-            !k.startsWith('pic')
-              ? [{ ...m, [k]: v }, p]
-              : [m, { ...p, [k]: v }],
-          [{}, {}]
-        )
-        return {
-          ...mentor,
-          pictures: this._formatPics(pictures),
-        }
-      })
+      response.mentors = mentorList.map(format.mentor)
     } catch (err) {
       response = {
         ok: 0,
@@ -738,23 +726,6 @@ export class MentorService extends Service {
     }
 
     res.status(response.code).json(response)
-  }
-
-  _formatPics(pics: { [type: string]: string }) {
-    const ep = Object.entries(pics).filter(([k]) => k.startsWith('pic'))
-    if (ep.length === 0) return {}
-    return ep.reduce((a, [k, v]) => {
-      let size = k.replace(/pic|Jpeg|Webp/g, '').toLowerCase()
-      return !v
-        ? a
-        : {
-            ...a,
-            [size]: {
-              ...a[size],
-              [k.includes('Jpeg') ? 'jpeg' : 'webp']: v,
-            },
-          }
-    }, {})
   }
 }
 
