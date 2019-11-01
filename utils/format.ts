@@ -1,28 +1,26 @@
-export function pictures(pics: { [type: string]: string }) {
-  const ep = Object.entries(pics).filter(([k]) => k.startsWith('pic'))
-  if (ep.length === 0) return {}
-  return ep.reduce((a, [k, v]) => {
-    let size = k.replace(/pic|Jpeg|Webp/g, '').toLowerCase()
-    return !v
-      ? a
-      : {
-          ...a,
-          [size]: {
-            ...a[size],
-            [k.includes('Jpeg') ? 'jpeg' : 'webp']: v,
-          },
-        }
-  }, {})
+import { Custom as Obj, filterKeys } from './object'
+
+// sort pictures into size -> type -> url structure
+export function pictures(data: object) {
+  let pics = new Obj(data)
+    .filterKeys(k => k.startsWith('pic'))
+    .mapKeys(k => k.replace('pic', '').toLowerCase())
+    .filterValues(v => v !== null)
+
+  const [jpeg, webp] = ['jpeg', 'webp'].map(type =>
+    pics.filterKeys(k => k.endsWith(type)).mapKeys(k => k.replace(type, ''))
+  )
+
+  return Obj.fromKeys(jpeg.keys).mapValues((v, k) => ({
+    jpeg: jpeg[k],
+    webp: webp[k],
+  })).value
 }
 
-export function mentor(data: any) {
-  const [mentor, pics] = Object.entries(data).reduce(
-    ([m, p], [k, v]) =>
-      !k.startsWith('pic') ? [{ ...m, [k]: v }, p] : [m, { ...p, [k]: v }],
-    [{}, {}]
-  )
+// extract pictures from mentor into pictures property
+export function mentor(data: object) {
   return {
-    ...mentor,
-    pictures: pictures(pics),
+    ...filterKeys(data, k => !k.startsWith('pic')),
+    pictures: pictures(data),
   }
 }
