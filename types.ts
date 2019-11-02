@@ -124,6 +124,7 @@ export interface Mentor extends Account {
   keycode?: string
   slots?: Slot[]
   newsfeed?: string
+  pictures?: { [size: string]: { [type: string]: string } }
 }
 
 export interface User extends Account {

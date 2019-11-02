@@ -2,6 +2,7 @@ import * as express from 'express'
 
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIresponse } from '../types'
+import { format } from '../utils'
 
 export class SearchService extends Service {
   constructor(
@@ -99,16 +100,11 @@ export class SearchService extends Service {
     const search = req.query.term
 
     try {
-      if (
-        search === 'Business' ||
-        search === 'business' ||
-        search === 'Design' ||
-        search === 'design' ||
-        search === 'Technology' ||
-        search === 'technology'
-      ) {
-        const sqlQuery =
-          "SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE category LIKE ? AND type = 'mentor' AND newsfeed = 'Y'"
+      if (['business', 'design', 'technology'].includes(search.toLowerCase())) {
+        const sqlQuery = `SELECT name, profilePic, bio, keycode, tags, role, company, profilePictures.* 
+          FROM users 
+          LEFT JOIN profilePictures ON users.uid = profilePictures.uid 
+          WHERE category LIKE ? AND type = 'mentor' AND newsfeed = 'Y'`
         let user = await this.database.query(sqlQuery, [
           `%${search.toLowerCase()}%`,
         ])
@@ -125,7 +121,7 @@ export class SearchService extends Service {
           if (!Array.isArray(user)) {
             user = [user]
           }
-          response.search = user
+          response.search = user.map(format.mentor)
         }
       } else {
         const sqlQuery =

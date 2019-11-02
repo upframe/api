@@ -5,7 +5,7 @@ import moment from 'moment'
 
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
-import { calendar, sql } from '../utils'
+import { calendar, sql, format } from '../utils'
 
 export class MentorService extends Service {
   constructor(
@@ -52,6 +52,15 @@ export class MentorService extends Service {
         throw error
       }
       response.mentor = mentorInfo
+
+      // query profile pictures
+      response.mentor.pictures = format.pictures(
+        await this.database.query(
+          ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
+            uid: mentorInfo.uid,
+          })
+        )
+      )
 
       // We are not using Google Calendar as a source of events right now
       /*
@@ -192,8 +201,11 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      let sqlQuery =
-        "SELECT uid, name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = 'mentor' AND newsfeed = 'Y' ORDER BY RAND()"
+      let sqlQuery = `SELECT users.uid, name, role, company, bio, tags, keycode, profilePic, profilePictures.*
+        FROM users
+        LEFT JOIN profilePictures ON users.uid = profilePictures.uid
+        WHERE type = 'mentor' AND newsfeed = 'Y'
+        ORDER BY RAND()`
 
       const mentorList = await this.database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
@@ -232,7 +244,8 @@ export class MentorService extends Service {
         }
       }
 
-      response.mentors = mentorList
+      // format picture structure in response
+      response.mentors = mentorList.map(format.mentor)
     } catch (err) {
       response = {
         ok: 0,
