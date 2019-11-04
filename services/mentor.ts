@@ -540,8 +540,9 @@ export class MentorService extends Service {
 
             const it = moment(slot.start)
             const itStart = moment(slot.start)
-            let mode: number = 2
-            while (true) {
+            let mode: number = 2, running: Boolean = true
+
+            while (running) {
               if (twoHourSlots) {
                 it.add('2', 'hours')
                 twoHourSlots--
@@ -553,7 +554,10 @@ export class MentorService extends Service {
                 it.add('30', 'minutes')
                 mode = 0
                 halfHourSlots--
-              } else break
+              } else {
+                running = false
+                break
+              }
 
               const newSlot: Slot = {
                 sid: crypto.randomBytes(20).toString('hex'),

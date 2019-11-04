@@ -161,6 +161,9 @@ export interface AnalyticsResponseRecord {
   // Weekly Active Users
   wau?: number | null
 
+  // Weekly Active Mentors (Mentors who added slots)
+  wam?: number | null
+
   // Array of users UIDs
   users?: string[]
 }
