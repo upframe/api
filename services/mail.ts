@@ -109,9 +109,7 @@ export class Mail {
           [toAddress, token]
         )
         if (result.affectedRows) {
-          return this.mailgun
-            .messages()
-            .send(data)
+          return this.mailgun.messages().send(data)
             .then(res => {
               if (res.message !== '' && res.id !== '') return 0
               else throw 1
@@ -190,9 +188,7 @@ export class Mail {
         subject: `${mentee.name} invited you for a meetup`,
       }
 
-      const UTCdate = moment
-        .utc(meetup.start)
-        .utcOffset(mentor.timeoffset ? mentor.timeoffset : 0)
+      const UTCdate = moment.utc(meetup.start).utcOffset(mentor.timeoffset ? mentor.timeoffset : 0)
       const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format(
         'MMMM(dddd)'
       )}`
@@ -291,9 +287,7 @@ export class Mail {
         subject: `${mentor.name} accepted to meetup with you`,
       }
 
-      const UTCdate = moment
-        .utc(meetup.start)
-        .utcOffset(mentee.timeoffset ? mentee.timeoffset : 0)
+      const UTCdate = moment.utc(meetup.start).utcOffset(mentee.timeoffset ? mentee.timeoffset : 0)
 
       const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format(
         'MMMM(dddd)'
@@ -311,9 +305,7 @@ export class Mail {
       }
       data.html = this.getTemplate('meetupConfirmation', placeholders)
 
-      return this.mailgun
-        .messages()
-        .send(data)
+      return this.mailgun.messages().send(data)
         .then(res => {
           if (res.message !== '' && res.id !== '') return 0
           else throw 1
@@ -356,9 +348,7 @@ export class Mail {
 
       data.html = this.getTemplate('timeSlotRequest', placeholders)
 
-      return this.mailgun
-        .messages()
-        .send(data)
+      return this.mailgun.messages().send(data)
         .then(res => {
           if (res.message !== '' && res.id !== '') return 0
           else throw 1

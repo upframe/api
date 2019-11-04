@@ -37,35 +37,27 @@ export class Analytics {
   }
 
   // Fetch Records
-
   public async getWeeklyActiveUsers() {
-    const UTCstartOfMonth = moment()
-      .utc()
-      .startOf('month')
-      .utc()
-      .format('YYYY-MM-DD HH:mm:ss')
-    const UTCnow = moment()
-      .utc()
-      .format('YYYY-MM-DD HH:mm:ss')
+    const UTCstartOfMonth = moment().utc().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+    const UTCnow = moment().utc().format('YYYY-MM-DD HH:mm:ss')
+
     const result = await this.pool.query(
       `SELECT uid, time FROM events WHERE time BETWEEN '${UTCstartOfMonth}' AND '${UTCnow}'`
     )
     // create an array with every single day of data
     const wau: AnalyticsResponseRecord[] = []
-    let pointerDay = moment()
-      .startOf('month')
-      .utc()
+    let pointerDay = moment().startOf('month').utc()
     let pointerDayEvents: AnalyticsEvent[] = []
-    while (true) {
+    let running: Boolean = true
+
+    while (running) {
       // if the number of days from the current day pointer is negative,
       // it means the current day pointer has passed today
-      if (
-        moment(UTCstartOfMonth)
-          .add(1, 'months')
-          .diff(pointerDay, 'days') < 0
-      ) {
-        break
+      if (moment(UTCstartOfMonth).add(1, 'months').diff(pointerDay, 'days') <= 0) {
+        running = false
+        continue
       }
+
       // new day
       const dayStr = pointerDay.format('YYYY-MM-DD')
       const dayObject: AnalyticsResponseRecord = {
@@ -73,16 +65,18 @@ export class Analytics {
         wau: 0,
         users: [],
       }
+
       if (
         dayObject.users !== undefined &&
         dayObject.wau !== undefined &&
         dayObject.wau !== null
       ) {
-        if (
-          moment()
-            .utc()
-            .diff(pointerDay, 'days') >= 0
-        ) {
+        if (moment().utc().diff(pointerDay, 'days') >= 0) {
+          // the next day is never really 24h from now, but less, which means that the diff from
+          // 5th October 12:00AM to 4th October 5PM is less than 1 day, but 7 hours instead
+          if (moment().utc().date() == moment(pointerDay).date() - 1)
+            dayObject.wau = null
+
           // get all events on this day
           pointerDayEvents = result[0].filter(event => {
             if (
@@ -107,15 +101,122 @@ export class Analytics {
       // go one day further
       pointerDay = pointerDay.add(1, 'days')
     }
-    // In the first hour(s) of the month, the UTC date will still be of the last month
-    // so we should concatenate those events into the first day of the month events~
-    if (wau[0].users && wau[1].users) {
-      wau[1].users = wau[1].users.concat(wau[0].users)
-      wau[1].wau = wau[1].users.length
-      // remove first day data as it was merged with first day
-      wau.shift()
-    }
+
     return wau
+  }
+
+  public async getWeeklyEventsScheduled() {
+    const UTCstartOfMonth = moment().utc().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+    const UTCnow = moment().utc().format('YYYY-MM-DD HH:mm:ss')
+    let pointerDay = moment().startOf('month').utc()
+
+    const result = await this.pool.query(
+      `SELECT * FROM analytics.events WHERE events.name = "MeetupConfirm"
+      AND events.time BETWEEN '${UTCstartOfMonth}' AND '${UTCnow}'`
+    )
+
+    const events = result[0]
+    const wes: any = []
+    let running: Boolean = true
+
+    while (running) {
+      // if the number of days from the current day pointer is negative,
+      // it means the current day pointer has passed today
+      if (
+        moment(UTCstartOfMonth).add(1, 'months').diff(pointerDay, 'days') <= 0
+      ) {
+        running = false
+        continue
+      }
+
+      const eventsConfirmedToday = events.filter(
+        ev => moment(ev.time).diff(pointerDay, 'days') == 0
+      )
+
+      let day = {
+        day: pointerDay.format('YYYY-MM-DD'),
+        wes: eventsConfirmedToday.length,
+      }
+
+      if (
+        moment().utc().diff(pointerDay, 'days') < 0 ||
+        moment().utc().date() == moment(pointerDay).date() - 1
+      ) day.wes = null
+
+      wes.push(day)
+
+      pointerDay = pointerDay.add(1, 'day')
+    }
+
+    return wes
+  }
+
+  public async getWeeklyActiveMentors() {
+    const UTCstartOfMonth = moment().utc().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss')
+    const UTCnow = moment().utc().format('YYYY-MM-DD HH:mm:ss')
+
+    const result = await this.pool.query(
+      `SELECT uid, time FROM events WHERE name = 'AddSlots' AND time BETWEEN '${UTCstartOfMonth}' AND '${UTCnow}'`
+    )
+    // create an array with every single day of data
+    const wam: AnalyticsResponseRecord[] = []
+    let pointerDay = moment().startOf('month').utc()
+    let pointerDayEvents: AnalyticsEvent[] = []
+    let running: Boolean = true
+
+    while (running) {
+      // if the number of days from the current day pointer is negative,
+      // it means the current day pointer has passed today
+      if (moment(UTCstartOfMonth).add(1, 'months').diff(pointerDay, 'days') <= 0) {
+        running = false
+        continue
+      }
+
+      // new day
+      const dayStr = pointerDay.format('YYYY-MM-DD')
+      const dayObject: AnalyticsResponseRecord = {
+        day: dayStr,
+        wam: 0,
+        users: [],
+      }
+
+      if (
+        dayObject.users !== undefined &&
+        dayObject.wam !== undefined &&
+        dayObject.wam !== null
+      ) {
+        if (moment().utc().diff(pointerDay, 'days') >= 0) {
+          // the next day is never really 24h from now, but less, which means that the diff from
+          // 5th October 12:00AM to 4th October 5PM is less than 1 day, but 7 hours instead
+          if (moment().utc().date() == moment(pointerDay).date() - 1)
+            dayObject.wam = null
+
+          // get all events on this day
+          pointerDayEvents = result[0].filter(event => {
+            if (
+              moment(event.time).format('YYYY-MM-DD') ===
+              pointerDay.format('YYYY-MM-DD')
+            )
+              return true
+          })
+          for (const event of pointerDayEvents) {
+            if (event.uid) {
+              if (!dayObject.users.includes(event.uid)) {
+                dayObject.users.push(event.uid)
+                dayObject.wam += 1
+              }
+            }
+          }
+        } else {
+          dayObject.wau = null
+        }
+      } else throw 500
+      wam.push(dayObject)
+      // go one day further
+      pointerDay = pointerDay.add(1, 'days')
+    }
+
+    return wam
   }
 
   // Add Records
@@ -132,9 +233,7 @@ export class Analytics {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
         user.uid,
         'MeetupRequest',
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
 
       await this.pool.query(
@@ -146,9 +245,7 @@ export class Analytics {
           user.uid,
           moment.utc(meetup.start).toISOString(),
           0,
-          moment()
-            .utc()
-            .toISOString(),
+          moment().utc().toISOString(),
         ]
       )
     } catch (err) {
@@ -162,17 +259,13 @@ export class Analytics {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
         mentor.uid,
         'MeetupConfirm',
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
 
       await this.pool.query(
         'UPDATE analytics.meetups SET statusChangeTime = ?, status = "confirmed" WHERE meetupID = ?',
         [
-          moment()
-            .utc()
-            .toISOString(),
+          moment().utc().toISOString(),
           meetup.mid,
         ]
       )
@@ -187,17 +280,13 @@ export class Analytics {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
         mentor.uid,
         'MeetupRefuse',
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
 
       await this.pool.query(
         'UPDATE analytics.meetups SET statusChangeTime = ?, status = "refused" WHERE meetupID = ?',
         [
-          moment()
-            .utc()
-            .toISOString(),
+          moment().utc().toISOString(),
           meetup.mid,
         ]
       )
@@ -213,18 +302,14 @@ export class Analytics {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
         mentor.uid,
         'AddSlots',
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
 
       await this.pool.query('INSERT INTO slotsAdded VALUES(?, ?, ?)', [
         slot.sid,
         mentor.uid,
         moment(slot.end).diff(slot.start, 'minutes'),
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
     } catch (err) {
       this.logger.warn(`Couldn't log mentor's AddSlots event`)
@@ -237,9 +322,7 @@ export class Analytics {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
         mentor.uid,
         'RemoveSlots',
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
     } catch (err) {
       this.logger.warn(`Couldn't log mentor's RemoveSlots event`)
@@ -256,9 +339,7 @@ export class Analytics {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
         user.uid,
         eventName,
-        moment()
-          .utc()
-          .toISOString(),
+        moment().utc().toISOString(),
       ])
     } catch (err) {
       this.logger.warn(`Couldn't log user's ${eventName} event`)

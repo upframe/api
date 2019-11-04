@@ -3,7 +3,7 @@ const path = require('path')
 module.exports = {
   extends: ['eslint:recommended'],
   parser: '@typescript-eslint/parser',
-  plugins: ['prettier', '@typescript-eslint'],
+  plugins: ['@typescript-eslint'],
   env: {
     node: true,
     es6: true,

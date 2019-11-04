@@ -1,19 +1,36 @@
 import * as express from 'express'
 
+import { AnalyticsService } from '../service'
+
 const router: express.Router = express.Router()
 
 function setRouters(app: express.Application): void {
-  const analytics: any = app.get('analytics')
+  const analytics: AnalyticsService = app.get('analytics')
 
   router.get('/wau', async (req, res) => {
-    const startTime = req.query.startTime
-    const endTime = req.query.endTime
-
-    const wau = await analytics.getWeeklyActiveUsers(startTime, endTime)
+    const wau = await analytics.getWeeklyActiveUsers()
 
     res.status(200).json({
-      ok: true,
+      ok: 1,
       wau,
+    })
+  })
+
+  router.get('/wes', async (req, res) => {
+    const wes = await analytics.getWeeklyEventsScheduled()
+
+    res.status(200).json({
+      ok: 1,
+      wes
+    })
+  })
+
+  router.get('/wam', async (req, res) => {
+    const wam = await analytics.getWeeklyActiveMentors()
+
+    res.status(200).json({
+      ok: 1,
+      wam
     })
   })
 }

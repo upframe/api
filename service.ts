@@ -6,6 +6,7 @@ import {
   AccountTypes,
   APIerror,
   APIrequest,
+  AnalyticsResponseRecord,
   date,
   JWTpayload,
   Meetup,
@@ -115,6 +116,11 @@ export interface StandaloneServices {
 }
 
 export interface AnalyticsService {
+  // fetch records
+  getWeeklyActiveUsers(): AnalyticsResponseRecord[]
+  getWeeklyEventsScheduled(): AnalyticsResponseRecord[]
+  getWeeklyActiveMentors(): AnalyticsResponseRecord[]
+  // add records
   meetupRequest(meetup: Meetup, mentor: Mentor, user: User): void
   meetupConfirm(meetup: Meetup, mentor: Mentor): void
   meetupRefuse(meetup: Meetup, mentor: Mentor): void
