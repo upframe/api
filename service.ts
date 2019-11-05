@@ -117,9 +117,9 @@ export interface StandaloneServices {
 
 export interface AnalyticsService {
   // fetch records
-  getWeeklyActiveUsers(): AnalyticsResponseRecord[]
-  getWeeklyEventsScheduled(): AnalyticsResponseRecord[]
-  getWeeklyActiveMentors(): AnalyticsResponseRecord[]
+  getWeeklyActiveUsers(): Promise<AnalyticsResponseRecord[]>
+  getWeeklyEventsScheduled(): Promise<AnalyticsResponseRecord[]>
+  getWeeklyActiveMentors(): Promise<AnalyticsResponseRecord[]>
   // add records
   meetupRequest(meetup: Meetup, mentor: Mentor, user: User): void
   meetupConfirm(meetup: Meetup, mentor: Mentor): void

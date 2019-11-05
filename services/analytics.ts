@@ -87,7 +87,7 @@ export class Analytics {
           })
           for (const event of pointerDayEvents) {
             if (event.uid) {
-              if (!dayObject.users.includes(event.uid)) {
+              if (!dayObject.users.includes(event.uid) && dayObject.wau !== null) {
                 dayObject.users.push(event.uid)
                 dayObject.wau += 1
               }
@@ -199,9 +199,10 @@ export class Analytics {
             )
               return true
           })
+
           for (const event of pointerDayEvents) {
             if (event.uid) {
-              if (!dayObject.users.includes(event.uid)) {
+              if (!dayObject.users.includes(event.uid) && dayObject.wam !== null) {
                 dayObject.users.push(event.uid)
                 dayObject.wam += 1
               }
