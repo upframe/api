@@ -209,7 +209,7 @@ export class Analytics {
             }
           }
         } else {
-          dayObject.wau = null
+          dayObject.wam = null
         }
       } else throw 500
       wam.push(dayObject)
