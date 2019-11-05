@@ -540,7 +540,8 @@ export class MentorService extends Service {
 
             const it = moment(slot.start)
             const itStart = moment(slot.start)
-            let mode: number = 2, running: Boolean = true
+            let mode: number = 2,
+              running: Boolean = true
 
             while (running) {
               if (twoHourSlots) {

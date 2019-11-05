@@ -21,7 +21,7 @@ function setRouters(app: express.Application): void {
 
     res.status(200).json({
       ok: 1,
-      wes
+      wes,
     })
   })
 
@@ -30,7 +30,7 @@ function setRouters(app: express.Application): void {
 
     res.status(200).json({
       ok: 1,
-      wam
+      wam,
     })
   })
 }
