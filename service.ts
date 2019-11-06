@@ -92,6 +92,7 @@ export interface SearchService {
   quick(req: express.Request, res: express.Response): void
   full(req: express.Request, res: express.Response): void
   tags(req: express.Request, res: express.Response): void
+  query(req: express.Request, res: express.Response): void
 }
 
 export interface UserService {

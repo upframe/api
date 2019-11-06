@@ -161,6 +161,78 @@ export class SearchService extends Service {
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Performes a quick search for expertise, people and companies
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  public async query(req: express.Request, res: express.Response) {
+    console.log('working from services')
+    let response: APIresponse = {
+      ok: 1,
+      code: 200,
+    }
+    let error: APIerror
+
+    try {
+      let sqlQuery: string = ''
+      response.search = {}
+
+      // expertise search
+      sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
+      const expertiseResult = await this.database.query(sqlQuery, [
+        `%${req.query.term}%`,
+      ])
+      if (Object.keys(expertiseResult).length)
+        response.search.expertise = expertiseResult
+
+      // people search
+      sqlQuery =
+        'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
+      const peopleResult = await this.database.query(sqlQuery, [
+        `%${req.query.term}%`,
+      ])
+      if (Object.keys(peopleResult).length)
+        response.search.people = peopleResult
+
+      // company search
+      sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
+      const companyResult = await this.database.query(sqlQuery, [
+        `%${req.query.term}%`,
+      ])
+      if (Object.keys(companyResult).length)
+        response.search.companies = companyResult
+
+      if (
+        !response.search.expertise ||
+        !response.search.people ||
+        !response.search.companies
+      ) {
+        error = {
+          api: true,
+          code: 404,
+          message: 'No matches were found.',
+          friendlyMessage:
+            'There is no expertise, person or company with the given name.',
+        }
+
+        throw error
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
   public async tags(req: express.Request, res: express.Response) {
     const tags = [
       'User Research',
