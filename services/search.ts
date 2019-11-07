@@ -167,56 +167,25 @@ export class SearchService extends Service {
    * @param {express.Response} res
    */
   public async query(req: express.Request, res: express.Response) {
-    console.log('working from services')
     let response: APIresponse = {
       ok: 1,
       code: 200,
     }
-    let error: APIerror
+    const rawQuery = req.body.search
+    const query = rawQuery.replace(/\s/g, '').toLowerCase() // removing whitespaces and lowercase the query
 
     try {
-      let sqlQuery: string = ''
       response.search = {}
 
-      // expertise search
-      sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
-      const expertiseResult = await this.database.query(sqlQuery, [
-        `%${req.query.term}%`,
-      ])
-      if (Object.keys(expertiseResult).length)
-        response.search.expertise = expertiseResult
+      const checkExistingQuery = `SELECT query FROM searchQuery WHERE query='${query}'`
+      let user = await this.database.query(checkExistingQuery)
 
-      // people search
-      sqlQuery =
-        'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
-      const peopleResult = await this.database.query(sqlQuery, [
-        `%${req.query.term}%`,
-      ])
-      if (Object.keys(peopleResult).length)
-        response.search.people = peopleResult
-
-      // company search
-      sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
-      const companyResult = await this.database.query(sqlQuery, [
-        `%${req.query.term}%`,
-      ])
-      if (Object.keys(companyResult).length)
-        response.search.companies = companyResult
-
-      if (
-        !response.search.expertise ||
-        !response.search.people ||
-        !response.search.companies
-      ) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'No matches were found.',
-          friendlyMessage:
-            'There is no expertise, person or company with the given name.',
-        }
-
-        throw error
+      if (Object.keys(user).length) {
+        const updateAmount = `UPDATE searchQuery SET amount = amount + 1 WHERE query='${query}'`
+        await this.database.query(updateAmount)
+      } else {
+        const insertQuery = `INSERT INTO searchQuery(query,amount) VALUES('${query}','1')`
+        await this.database.query(insertQuery)
       }
     } catch (err) {
       response = {

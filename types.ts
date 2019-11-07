@@ -132,6 +132,11 @@ export interface User extends Account {
   upframeCalendarId?: string
 }
 
+export interface SearchQuery {
+  searchQuert?: string
+  amount?: number
+}
+
 export interface Slot {
   sid: string
   mentorUID: string
