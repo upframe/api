@@ -162,7 +162,7 @@ export class SearchService extends Service {
   }
 
   /**
-   * @description Performes a quick search for expertise, people and companies
+   * @description Add search query to the database
    * @param {express.Request} req
    * @param {express.Response} res
    */
