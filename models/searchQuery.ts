@@ -1,1 +1,1 @@
-export const fields: string[] = ['query', 'amount']
+export const fields = ['query', 'amount']
