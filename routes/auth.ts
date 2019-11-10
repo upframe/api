@@ -32,12 +32,6 @@ function setRouters(): void {
   router.get('/oservices.authcode', (req, res) => {
     auth.receiveOauthCode(req, res)
   })
-
-  /*
-  router.get('/unlink', (req, res) => {
-    services.auth.unlinkGoogle(req, res)
-  })
-  */
 }
 
 export function init(): express.Router {

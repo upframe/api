@@ -70,23 +70,6 @@ export class MeetupService {
     let error: APIerror
 
     try {
-      /*
-      if (!req.jwt || !req.jwt.uid) throw 403
-
-      const json: APIRequestBody = Object.assign({}, req.body)
-      if (!json.sid || !json.location || !json.start) {
-        error = {
-          api: true,
-          code: 400,
-          message: 'There are fields missing to create a new meetup',
-          friendlyMessage: 'There are 1 or more fields missing in the request',
-        }
-
-        throw error
-      }
-      */
-
-      // MVP ONLY SECTION START
       const json = Object.assign({}, req.body)
       if (!json.email || !json.location || !json.name || !json.sid) {
         error = {
@@ -108,13 +91,11 @@ export class MeetupService {
         password: 'nologin',
         timeoffset: json.timeoffset ? -json.timeoffset : 0,
       }
-      // MVP ONLY SECTION END
 
       let sqlQuery: string = ''
       let params: any[] | string = []
       let result
 
-      // MVP ONLY SECTION START
       sqlQuery = 'SELECT * FROM users WHERE email = ?'
       params = [newUser.email]
       result = await database.query(sqlQuery, params)
@@ -142,14 +123,10 @@ export class MeetupService {
           throw error
         }
       } else {
-        // assign existing account UID
         newUser.uid = result.uid
       }
 
-      // Record userLogin event
       analytics.userLogin(newUser)
-
-      // MVP ONLY SECTION END
 
       // get slot info using Slot ID
       sqlQuery = 'SELECT * FROM timeSlots WHERE sid = ?'
@@ -313,134 +290,6 @@ export class MeetupService {
           }
         }
       }
-
-      /*
-      // get slot info using Slot ID
-      sqlQuery = 'SELECT * FROM timeSlots WHERE sid = ?'
-      const slot: Slot = await database.query(sqlQuery, [json.sid])
-      // verify if stot exists
-      if (!slot) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Slot not found',
-          friendlyMessage: 'The slot was not found',
-        }
-
-        throw error
-      }
-      // verify who is creating meetup
-      if (slot.mentorUID === json.menteeUID) {
-        error = {
-          api: true,
-          code: 400,
-          message: 'Mentors cannot set a meetup with themselves',
-          friendlyMessage: 'Mentors cannot set a meetup with themselves',
-        }
-
-        throw error
-      }
-
-      // create meetup object
-      const meetup: Meetup = {
-        sid: json.sid,
-        mid: crypto.randomBytes(20).toString('hex'),
-        mentorUID: slot.mentorUID,
-        menteeUID: req.jwt.uid,
-        location: json.location,
-        start: json.start,
-        status: 'pending',
-      }
-      if (!meetup.mid) {
-        error = {
-          api: true,
-          code: 500,
-          message: 'Could not generate meetup ID',
-          friendlyMessage: 'It was not possible to complete your request.',
-        }
-
-        throw error
-      }
-
-      // verify if the requested meetup location is valid (if the mentor has this location as a favorite place)
-      sqlQuery = 'SELECT * FROM users WHERE uid = ?'
-      const mentor: Mentor = (await database.query(sqlQuery, [meetup.mentorUID]))
-      if ( mentor.favoritePlaces !== meetup.location ) {
-        error = {
-          api: true,
-          code: 400,
-          message: 'Location is invalid',
-          friendlyMessage: 'The location for the meetup you\'re requesting is invalid',
-        }
-
-        throw error
-      }
-
-      // verify if slot is already occupied
-      const genSlots = calendar.automaticGenerate([slot], moment(meetup.start).add(1, 'd').toDate())
-      for (const eachSlot of genSlots) {
-        // find slot whose date matches the requested meetup date
-        if (new Date(eachSlot.start).getTime() === new Date(meetup.start).getTime()) {
-
-          // verify if slot is free (there is no meetup with status confirmed)
-          sqlQuery = 'SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?) AND status = "confirmed"'
-          const confirmedSlots = await database.query(sqlQuery, [meetup.sid, meetup.start])
-          if (confirmedSlots['COUNT(*)']) {
-            error = {
-              api: true,
-              code: 409,
-              message: 'This slot is not available.',
-              friendlyMessage: 'This slot is not available or has already been booked.',
-            }
-
-            throw error
-          } else {
-            // verify if user has already made a meetup request to that space in time
-            sqlQuery = `SELECT COUNT(*) FROM meetups WHERE sid = ? AND start = TIMESTAMP(?)
-             AND status = "pending" AND menteeUID = ?`
-            const userRequests = await database.query(sqlQuery, [meetup.sid, meetup.start, meetup.menteeUID])
-            if (userRequests['COUNT(*)']) {
-              error = {
-                api: true,
-                code: 400,
-                message: 'Cannot set more than one meetup request',
-                friendlyMessage: 'One user can only make one meetup request per slot.',
-              }
-
-              throw error
-            }
-
-            // finally, let's insert a new meetup request
-            [sqlQuery, params] = await sql.createSQLqueryFromJSON('INSERT', 'meetups', meetup)
-            result = await database.query(sqlQuery, params)
-            if (!result.affectedRows) {
-              error = {
-                api: true,
-                code: 500,
-                message: 'Could not create meetup request',
-                friendlyMessage: 'It was not possible to create a meetup request',
-              }
-
-              throw error
-            }
-
-            // send email
-            result = await mail.sendMeetupInvitation(meetup.mid)
-            if (result.api) throw result
-            else if (result) {
-              error = {
-                api: true,
-                code: 500,
-                message: 'Could not send meetup request email',
-                friendlyMessage: 'Could not send meetup request email to mentor',
-              }
-
-              throw error
-            }
-          }
-        }
-      }
-      */
     } catch (err) {
       response = {
         ok: 0,

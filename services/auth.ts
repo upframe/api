@@ -169,20 +169,6 @@ export class AuthService {
       let error: APIerror
 
       try {
-        /* - MVP-ONLY -
-         * Disable register
-         */
-        // if (!Number(process.env.REGISTER)) {
-        //   error = {
-        //     api: true,
-        //     code: 501,
-        //     message: 'Register is not allowed',
-        //     friendlyMessage: 'Register is not available at the moment. Please, try again later',
-        //   }
-
-        //   throw error
-        // }
-
         if (
           !json.email ||
           !json.password ||
