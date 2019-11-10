@@ -177,15 +177,17 @@ export class SearchService extends Service {
     try {
       response.search = {}
 
-      const checkExistingQuery = `SELECT query FROM searchQuery WHERE query='${query}'`
-      let user = await this.database.query(checkExistingQuery)
+      const checkQuery = `SELECT query FROM searchQuery WHERE query LIKE ?`
+      let checkExistingQuery = await this.database.query(checkQuery, [
+        `${query}`,
+      ])
 
-      if (Object.keys(user).length) {
-        const updateAmount = `UPDATE searchQuery SET amount = amount + 1 WHERE query='${query}'`
-        await this.database.query(updateAmount)
+      if (Object.keys(checkExistingQuery).length) {
+        const updateAmount = `UPDATE searchQuery SET amount = amount + 1 WHERE query LIKE ?`
+        await this.database.query(updateAmount, [`${query}`])
       } else {
-        const insertQuery = `INSERT INTO searchQuery(query,amount) VALUES('${query}','1')`
-        await this.database.query(insertQuery)
+        const insertQuery = `INSERT INTO searchQuery(query,amount) VALUES(?,'1')`
+        await this.database.query(insertQuery, [`${query}`])
       }
     } catch (err) {
       response = {
