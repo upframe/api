@@ -1,5 +1,5 @@
 import * as mysql from 'mysql2/promise'
-import { Service } from '../service'
+import { logger } from '.'
 import moment = require('moment')
 
 import {
@@ -23,11 +23,10 @@ export class Analytics {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_ANALYTICS,
       })
-      if (pool) Service.logger.verbose('Analytics OK')
+      if (pool) logger.verbose('Analytics OK')
       this.pool = pool
     } catch (err) {
-      console.log('error in analytics constructor')
-      Service.logger.error('Analytics NOT OK')
+      logger.error('Analytics NOT OK')
     }
   }
 
@@ -313,7 +312,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      Service.logger.warn(`Couldn't log meetups' MeetupRequest event`)
+      logger.warn(`Couldn't log meetups' MeetupRequest event`)
     }
   }
 
@@ -337,7 +336,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      Service.logger.warn(`Couldn't log meetups' MeetupConfirm event`)
+      logger.warn(`Couldn't log meetups' MeetupConfirm event`)
     }
   }
 
@@ -361,7 +360,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      Service.logger.warn(`Couldn't log meetups' MeetupRefuse event`)
+      logger.warn(`Couldn't log meetups' MeetupRefuse event`)
     }
   }
 
@@ -385,7 +384,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      Service.logger.warn(`Couldn't log mentor's AddSlots event`)
+      logger.warn(`Couldn't log mentor's AddSlots event`)
     }
   }
 
@@ -399,7 +398,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      Service.logger.warn(`Couldn't log mentor's RemoveSlots event`)
+      logger.warn(`Couldn't log mentor's RemoveSlots event`)
     }
   }
 
@@ -417,7 +416,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      Service.logger.warn(`Couldn't log user's ${eventName} event`)
+      logger.warn(`Couldn't log user's ${eventName} event`)
     }
   }
 }

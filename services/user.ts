@@ -3,13 +3,13 @@ import * as express from 'express'
 import { google } from 'googleapis'
 import * as path from 'path'
 
-import { Service } from '../service'
+import { logger, database, oauth } from '.'
 import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
 
-export class UserService extends Service {
+export class UserService {
   constructor() {
-    super('User')
+    logger.verbose('User service loaded')
   }
 
   public async get(req: APIrequest, res: express.Response) {
@@ -27,7 +27,7 @@ export class UserService extends Service {
         'users',
         req.jwt
       )
-      const user: User = await Service.database.query(sqlQuery, params)
+      const user: User = await database.query(sqlQuery, params)
       if (!Object.keys(user).length) {
         error = {
           api: true,
@@ -43,12 +43,12 @@ export class UserService extends Service {
       if (user.googleAccessToken || user.googleRefreshToken) {
         // try to refresh google oauth credentials
         try {
-          Service.oauth.setCredentials({
+          oauth.setCredentials({
             access_token: user.googleAccessToken,
             refresh_token: user.googleRefreshToken,
           })
 
-          const tokens = await Service.oauth.refreshAccessToken()
+          const tokens = await oauth.refreshAccessToken()
           if (!tokens.credentials.access_token) {
             error = {
               api: true,
@@ -106,12 +106,12 @@ export class UserService extends Service {
         json,
         { uid }
       )
-      await Service.database.query(sqlQuery, params)
+      await database.query(sqlQuery, params)
 
       if (req.body.upframeCalendarId) {
         // Adicionar um Webhook caso estejamos a atualizar o calendar id
         response.code = 777
-        Service.oauth.setCredentials({
+        oauth.setCredentials({
           access_token: req.body.googleAccessToken,
           refresh_token: req.body.googleRefreshToken,
         })
@@ -121,7 +121,7 @@ export class UserService extends Service {
         })
         // set google options
         google.options({
-          auth: Service.oauth.OAuthClient,
+          auth: oauth.OAuthClient,
         })
 
         const today = new Date() // We need to use the UNIX timestamp. Google likes to complicate
@@ -130,7 +130,7 @@ export class UserService extends Service {
 
         googleCalendar.events.watch(
           {
-            auth: Service.oauth.OAuthClient,
+            auth: oauth.OAuthClient,
             calendarId: req.body.upframeCalendarId,
             requestBody: {
               kind: 'api#channel',
@@ -148,8 +148,8 @@ export class UserService extends Service {
             },
           },
           error => {
-            Service.logger.error('Error at Google Calendar events watch')
-            Service.logger.error(error)
+            logger.error('Error at Google Calendar events watch')
+            logger.error(error)
             if (error) throw error
           }
         )
@@ -190,10 +190,10 @@ export class UserService extends Service {
         'users',
         req.jwt
       )
-      const user = await Service.database.query(sqlQuery, params)
+      const user = await database.query(sqlQuery, params)
       const oldExtension = path.parse(user.profilePic.slice(-7)).ext
       const sqlQuery2 = 'UPDATE users SET profilePic = ? WHERE email = ?'
-      const result = await Service.database.query(sqlQuery2, [url, userEmail])
+      const result = await database.query(sqlQuery2, [url, userEmail])
       if (result.changedRows) response.code = 202
       else {
         error = {

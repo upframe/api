@@ -1,11 +1,11 @@
 import * as express from 'express'
 
-import { Service } from '../service'
+import { database, logger } from '.'
 import { APIerror, APIrequest, APIresponse } from '../types'
 
-export class UrlService extends Service {
+export class UrlService {
   constructor() {
-    super('URL shortener')
+    logger.verbose('URL shortener service loaded')
   }
 
   public async getRealUrl(req: APIrequest, res: express.Response) {
@@ -16,7 +16,7 @@ export class UrlService extends Service {
     let err: APIerror
     try {
       const sqlQuery = 'SELECT * FROM users WHERE keycode = ?'
-      const user = await Service.database.query(sqlQuery, req.query.short)
+      const user = await database.query(sqlQuery, req.query.short)
       if (Object.keys(user).length === 0) {
         err = {
           code: 404,

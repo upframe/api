@@ -1,58 +1,56 @@
 import * as express from 'express'
 
-import { Services } from '../service'
+import { mentor, auth, logger } from '../services'
 import { APIrequest } from '../types'
 
 const router: express.Router = express.Router()
 
-function setRouters(app: express.Application): void {
-  const services: Services = app.get('services')
-
+function setRouters(): void {
   router.get('/all', (req: APIrequest, res: express.Response) => {
-    services.mentor.getAll(req, res)
+    mentor.getAll(req, res)
   })
 
   router.get('/random', (req: APIrequest, res: express.Response) => {
-    services.mentor.getRandom(req, res)
+    mentor.getRandom(req, res)
   })
 
   router.get(
     '/slots',
-    services.auth.verifyToken,
-    services.auth.isMentor,
+    auth.verifyToken,
+    auth.isMentor,
     (req: APIrequest, res: express.Response) => {
-      services.mentor.getTimeSlots(req, res)
+      mentor.getTimeSlots(req, res)
     }
   )
 
   router.post(
     '/slots',
-    services.auth.verifyToken,
-    services.auth.isMentor,
+    auth.verifyToken,
+    auth.isMentor,
     (req: APIrequest, res: express.Response) => {
-      services.mentor.updateTimeSlots(req, res)
+      mentor.updateTimeSlots(req, res)
     }
   )
 
   router.post('/request', (req: APIrequest, res: express.Response) => {
-    services.mentor.request(req, res)
+    mentor.request(req, res)
   })
 
   router.get('/verify', (req: APIrequest, res: express.Response) => {
-    services.mentor.verify(req, res)
+    mentor.verify(req, res)
   })
 
   router.get('/:keycode', (req: APIrequest, res: express.Response) => {
-    services.mentor.get(req, res)
+    mentor.get(req, res)
   })
 }
 
-export function init(app: express.Application): express.Router {
+export function init(): express.Router {
   try {
-    setRouters(app)
-    app.get('logger').verbose('Mentor router loaded')
+    setRouters()
+    logger.verbose('Mentor router loaded')
   } catch (err) {
-    app.get('logger').error('Could not load mentor router')
+    logger.error('Could not load mentor router')
   }
 
   return router

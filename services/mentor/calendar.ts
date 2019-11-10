@@ -2,14 +2,12 @@ import * as crypto from 'crypto'
 import { Slot, Mentor } from '../../types'
 import moment from 'moment'
 import { calendar_v3 } from 'googleapis'
-import { AnalyticsService } from '../../service'
-import { Service } from '../../service'
+import { database, analytics } from '../'
 
 export async function addSlots(
   slots: Slot[],
   mentor: Mentor,
-  googleCalendar: calendar_v3.Calendar,
-  analytics: AnalyticsService
+  googleCalendar: calendar_v3.Calendar
 ) {
   const sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
 
@@ -79,7 +77,7 @@ export async function addSlots(
       else if (mode === 0) itStart.add('30', 'minutes')
 
       // save slot to database
-      await Service.database.query(sqlQuery, [
+      await database.query(sqlQuery, [
         newSlot.sid,
         newSlot.mentorUID,
         newSlot.start,
@@ -95,8 +93,7 @@ export async function addSlots(
 export async function deleteSlots(
   slots: string[],
   mentor: Mentor,
-  googleCalendar: calendar_v3.Calendar,
-  analytics: AnalyticsService
+  googleCalendar: calendar_v3.Calendar
 ) {
   const sqlQuery = 'SELECT deleteSlot(?, ?)'
 
@@ -106,7 +103,7 @@ export async function deleteSlots(
       eventId: slotId,
     })
 
-    await Service.database.query(sqlQuery, [slotId, mentor.uid])
+    await database.query(sqlQuery, [slotId, mentor.uid])
   }
 
   analytics.mentorRemoveSlots(mentor)

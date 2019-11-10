@@ -1,5 +1,5 @@
 import * as mysql from 'mysql2/promise'
-import { Service } from '../service'
+import { logger } from '.'
 
 export class Database {
   private pool: any
@@ -12,11 +12,11 @@ export class Database {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
       })
-      if (pool) Service.logger.verbose('Database OK')
+      if (pool) logger.verbose('Database OK')
 
       this.pool = pool
     } catch (err) {
-      Service.logger.error('Database NOT OK')
+      logger.error('Database NOT OK')
     }
   }
 
@@ -43,14 +43,14 @@ export class Database {
       }
     } catch (err) {
       if (err.errno === 1251) {
-        Service.logger.error('Database NOT OK')
-        Service.logger.error(`MySQL error: ${err}`)
+        logger.error('Database NOT OK')
+        logger.error(`MySQL error: ${err}`)
 
         // Connection is bad because of drivers or authentication methods
         return 2
       } else if (err.errno === 1045) {
-        Service.logger.error('Database NOT OK')
-        Service.logger.error(`MySQL error: ${err}`)
+        logger.error('Database NOT OK')
+        logger.error(`MySQL error: ${err}`)
 
         // Access Denied to the DB
         return 3

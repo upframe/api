@@ -1,12 +1,12 @@
 import * as express from 'express'
 
-import { Service } from '../service'
+import { database, logger } from '.'
 import { APIerror, APIresponse } from '../types'
 import { format } from '../utils'
 
-export class SearchService extends Service {
+export class SearchService {
   constructor() {
-    super('Search')
+    logger.verbose('Search service loaded')
   }
 
   /**
@@ -27,7 +27,7 @@ export class SearchService extends Service {
 
       // expertise search
       sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
-      const expertiseResult = await Service.database.query(sqlQuery, [
+      const expertiseResult = await database.query(sqlQuery, [
         `%${req.query.term}%`,
       ])
       if (Object.keys(expertiseResult).length)
@@ -36,7 +36,7 @@ export class SearchService extends Service {
       // people search
       sqlQuery =
         'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
-      const peopleResult = await Service.database.query(sqlQuery, [
+      const peopleResult = await database.query(sqlQuery, [
         `%${req.query.term}%`,
       ])
       if (Object.keys(peopleResult).length)
@@ -44,7 +44,7 @@ export class SearchService extends Service {
 
       // company search
       sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
-      const companyResult = await Service.database.query(sqlQuery, [
+      const companyResult = await database.query(sqlQuery, [
         `%${req.query.term}%`,
       ])
       if (Object.keys(companyResult).length)
@@ -100,9 +100,7 @@ export class SearchService extends Service {
           FROM users 
           LEFT JOIN profilePictures ON users.uid = profilePictures.uid 
           WHERE category LIKE ? AND type = 'mentor' AND newsfeed = 'Y'`
-        let user = await Service.database.query(sqlQuery, [
-          `%${search.toLowerCase()}%`,
-        ])
+        let user = await database.query(sqlQuery, [`%${search.toLowerCase()}%`])
         if (!Object.keys(user).length) {
           error = {
             api: true,
@@ -121,7 +119,7 @@ export class SearchService extends Service {
       } else {
         const sqlQuery =
           "SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = 'mentor' AND newsfeed = 'Y'"
-        let user = await Service.database.query(sqlQuery, [
+        let user = await database.query(sqlQuery, [
           `${search}%`,
           `%${search.toLowerCase()}%`,
         ])

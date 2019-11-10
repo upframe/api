@@ -2,14 +2,14 @@ import * as express from 'express'
 import { google } from 'googleapis'
 import moment from 'moment'
 
-import { Service } from '../service'
+import { database, mail, oauth, logger } from '.'
 import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
 import { calendar, sql, format } from '../utils'
 import { addSlots, deleteSlots } from './mentor/calendar'
 
-export class MentorService extends Service {
+export class MentorService {
   constructor() {
-    super('Mentor')
+    logger.verbose('Mentor service loaded')
   }
 
   /**
@@ -35,7 +35,7 @@ export class MentorService extends Service {
         type: 'mentor',
       })
 
-      const mentorInfo: Mentor = await Service.database.query(sqlQuery, params)
+      const mentorInfo: Mentor = await database.query(sqlQuery, params)
       if (!Object.keys(mentorInfo).length) {
         error = {
           api: true,
@@ -50,7 +50,7 @@ export class MentorService extends Service {
 
       // query profile pictures
       response.mentor.pictures = format.pictures(
-        await Service.database.query(
+        await database.query(
           ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
             uid: mentorInfo.uid,
           })
@@ -61,7 +61,7 @@ export class MentorService extends Service {
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       params = [response.mentor.uid]
 
-      let mentorSlots = await Service.database.query(sqlQuery, params)
+      let mentorSlots = await database.query(sqlQuery, params)
 
       if (mentorSlots.sid) {
         response.mentor.slots = [mentorSlots]
@@ -97,7 +97,7 @@ export class MentorService extends Service {
               .add(1, 'h')
               .toISOString(),
           ]
-          result = await Service.database.query(sqlQuery, params)
+          result = await database.query(sqlQuery, params)
           if (result['COUNT(*)']) {
             // there is a confirmed meetup on that space in time
             // so let's filter all the slots and remove the slot starting
@@ -162,7 +162,7 @@ export class MentorService extends Service {
         WHERE type = 'mentor' AND newsfeed = 'Y'
         ORDER BY RAND()`
 
-      const mentorList = await Service.database.query(sqlQuery)
+      const mentorList = await database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
         error = {
           api: true,
@@ -181,7 +181,7 @@ export class MentorService extends Service {
             sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
             const params = [mentorList[index].uid]
 
-            let mentorSlots = await Service.database.query(sqlQuery, params)
+            let mentorSlots = await database.query(sqlQuery, params)
 
             if (mentorSlots.sid) {
               mentorList[index].slots = [mentorSlots]
@@ -233,7 +233,7 @@ export class MentorService extends Service {
       const sqlQuery =
         "SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = 'mentor' ORDER BY RAND() LIMIT 5"
 
-      const mentorList = await Service.database.query(sqlQuery)
+      const mentorList = await database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
         error = {
           api: true,
@@ -296,10 +296,7 @@ export class MentorService extends Service {
         type: 'mentor',
       })
 
-      const mentorInfo: Mentor = await Service.database.query(
-        firstSqlQuery,
-        params
-      )
+      const mentorInfo: Mentor = await database.query(firstSqlQuery, params)
       if (!Object.keys(mentorInfo).length) {
         error = {
           api: true,
@@ -316,7 +313,7 @@ export class MentorService extends Service {
       const startDate = req.query.start
       const endDate = req.query.end
 
-      const slots: Slot[] = await Service.database.query(sqlQuery, [
+      const slots: Slot[] = await database.query(sqlQuery, [
         response.mentor.uid,
       ])
       if (
@@ -401,16 +398,16 @@ export class MentorService extends Service {
       ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
         uid: req.jwt.uid,
       })
-      const mentor: Mentor = await Service.database.query(sqlQuery, params)
+      const mentor: Mentor = await database.query(sqlQuery, params)
 
       // let's refresh google access token if the mentor has synced
       if (mentor.googleAccessToken || mentor.googleRefreshToken) {
-        Service.oauth.setCredentials({
+        oauth.setCredentials({
           access_token: mentor.googleAccessToken,
           refresh_token: mentor.googleRefreshToken,
         })
 
-        const tokens = await Service.oauth.refreshAccessToken()
+        const tokens = await oauth.refreshAccessToken()
         if (!tokens.credentials.access_token) {
           error = {
             api: true,
@@ -428,14 +425,14 @@ export class MentorService extends Service {
       })
       // set google options
       google.options({
-        auth: Service.oauth.OAuthClient,
+        auth: oauth.OAuthClient,
       })
 
       // delete events
       if (deletedSlots.length) {
         response.deleteOK = 1
         try {
-          deleteSlots(deletedSlots, mentor, googleCalendar, Service.analytics)
+          deleteSlots(deletedSlots, mentor, googleCalendar)
         } catch (err) {
           response.ok = 0
           response.code = 500
@@ -448,12 +445,7 @@ export class MentorService extends Service {
       if (updatedSlots.length) {
         response.updateOK = 1
         try {
-          await addSlots(
-            updatedSlots,
-            mentor,
-            googleCalendar,
-            Service.analytics
-          )
+          await addSlots(updatedSlots, mentor, googleCalendar)
         } catch (err) {
           console.warn(err)
           response.ok = 0
@@ -499,7 +491,7 @@ export class MentorService extends Service {
         : req.query.uniqueid
       const sqlQuery = `SELECT * FROM onboarding WHERE ${check} = ${value}`
 
-      const onboardingInvite = await Service.database.query(sqlQuery)
+      const onboardingInvite = await database.query(sqlQuery)
       if (!Object.keys(onboardingInvite).length) {
         error = {
           api: true,
@@ -539,7 +531,7 @@ export class MentorService extends Service {
     let error: APIerror
 
     try {
-      const mentor = await Service.database.query(
+      const mentor = await database.query(
         'SELECT name, email FROM users WHERE keycode = ?',
         req.body.keycode
       )
@@ -554,7 +546,7 @@ export class MentorService extends Service {
         throw error
       }
 
-      const result = await Service.mail.sendTimeSlotRequest(
+      const result = await mail.sendTimeSlotRequest(
         mentor.email,
         mentor.name,
         req.body.name,

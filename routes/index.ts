@@ -9,20 +9,22 @@ import * as Search from './search'
 import * as Url from './url'
 import * as Webhooks from './webhooks'
 
+import { logger } from '../services'
+
 export function init(app: express.Application): void {
   try {
-    app.use('/analytics', Analytics.init(app))
-    app.use('/auth', Auth.init(app))
-    app.use('/meetup', Meetup.init(app))
-    app.use('/mentor', Mentor.init(app))
-    app.use('/search', Search.init(app))
-    app.use('/profile', Profile.init(app))
-    app.use('/url', Url.init(app))
-    app.use('/webhooks', Webhooks.init(app))
+    app.use('/analytics', Analytics.init())
+    app.use('/auth', Auth.init())
+    app.use('/meetup', Meetup.init())
+    app.use('/mentor', Mentor.init())
+    app.use('/search', Search.init())
+    app.use('/profile', Profile.init())
+    app.use('/url', Url.init())
+    app.use('/webhooks', Webhooks.init())
 
-    app.get('logger').verbose('Routers loaded')
+    logger.verbose('Routers loaded')
   } catch (err) {
-    app.get('logger').error('Could not load routers')
+    logger.error('Could not load routers')
     process.exit(0)
   }
 }

@@ -9,8 +9,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 
 import * as routers from './routes'
-import * as services from './services'
-import { logger } from './utils'
+import { logger } from './services'
 
 const app: express.Application = express()
 
@@ -69,9 +68,6 @@ app.use(
   )
 )
 app.set('logger', logger)
-
-/* Services */
-services.init(app)
 
 /* Routing */
 routers.init(app)

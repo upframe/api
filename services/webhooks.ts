@@ -1,13 +1,13 @@
 import * as express from 'express'
 
-import { Service } from '../service'
+import { database, logger, oauth } from '.'
 import { APIrequest, APIresponse } from '../types'
 
 import { google } from 'googleapis'
 
-export class WebhooksService extends Service {
+export class WebhooksService {
   constructor() {
-    super('Webhook')
+    logger.verbose('Webhooks service loaded')
   }
 
   /* Vamos receber em headers x-goog-resource-id o ID do mentor.
@@ -24,9 +24,9 @@ export class WebhooksService extends Service {
     try {
       const userInfoQuery =
         'SELECT googleAccessToken, googleRefreshToken, upframeCalendarId FROM users WHERE uid = ?'
-      const mentor = await Service.database.query(userInfoQuery, mentorUid)
+      const mentor = await database.query(userInfoQuery, mentorUid)
 
-      Service.oauth.setCredentials({
+      oauth.setCredentials({
         access_token: mentor.googleAccessToken,
         refresh_token: mentor.googleRefreshToken,
       })
@@ -36,7 +36,7 @@ export class WebhooksService extends Service {
       })
 
       google.options({
-        auth: Service.oauth.OAuthClient,
+        auth: oauth.OAuthClient,
       })
 
       const googleResponse = await googleCalendar.events.list({
@@ -54,10 +54,7 @@ export class WebhooksService extends Service {
       if (googleEvents.length > 0) {
         const getAllTimeSlotsQuery =
           'SELECT * FROM timeSlots WHERE mentorUID = ?'
-        let dbSlots = await Service.database.query(
-          getAllTimeSlotsQuery,
-          mentorUid
-        )
+        let dbSlots = await database.query(getAllTimeSlotsQuery, mentorUid)
         if (!dbSlots.length) {
           dbSlots = [dbSlots]
         }
@@ -66,12 +63,12 @@ export class WebhooksService extends Service {
         })
         const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
         for (const slot of finalDbSlotsToRemove) {
-          Service.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
+          database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
         }
       } else {
         const deleteAllTimeSlotsQuery =
           'DELETE FROM timeSlots WHERE mentorUID = ?'
-        Service.database.query(deleteAllTimeSlotsQuery, mentorUid)
+        database.query(deleteAllTimeSlotsQuery, mentorUid)
       }
     } catch (error) {
       response = {

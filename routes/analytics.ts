@@ -1,12 +1,9 @@
 import * as express from 'express'
 
-import { AnalyticsService } from '../service'
-
 const router: express.Router = express.Router()
+import { logger, analytics } from '../services'
 
-function setRouters(app: express.Application): void {
-  const analytics: AnalyticsService = app.get('analytics')
-
+function setRouters(): void {
   router.get('/wau', async (req, res) => {
     const wau = await analytics.getWeeklyActiveUsers()
 
@@ -35,12 +32,12 @@ function setRouters(app: express.Application): void {
   })
 }
 
-export function init(app: express.Application): express.Router {
+export function init(): express.Router {
   try {
-    setRouters(app)
-    app.get('logger').verbose('Analytics router loaded')
+    setRouters()
+    logger.verbose('Analytics router loaded')
   } catch (err) {
-    app.get('logger').error('Could not load analytics router')
+    logger.error('Could not load analytics router')
   }
 
   return router
