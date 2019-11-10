@@ -19,6 +19,10 @@ function setRouters(app: express.Application): void {
   router.get('/tags', (req: APIrequest, res: express.Response) => {
     services.search.tags(req, res)
   })
+
+  router.post('/query', (req: APIrequest, res: express.Response) => {
+    services.search.query(req, res)
+  })
 }
 
 export function init(app: express.Application): express.Router {
