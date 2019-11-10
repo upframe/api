@@ -13,45 +13,32 @@ import { UrlService as Url } from './url'
 import { UserService as User } from './user'
 import { WebhooksService as Webhooks } from './webhooks'
 
-import {
-  AnalyticsService,
-  DatabaseService,
-  MailService,
-  OAuthService,
-  Services,
-  StandaloneServices,
-} from '../service'
+import { Services, Service } from '../service'
 
 export function init(app: express.Application): void {
   /*
    * Independent services that work alone
    */
-  const analytics: AnalyticsService = new Analytics(app)
-  const database: DatabaseService = new Database(app)
-  const mailer: MailService = new Mail(app, database)
-  const oauth: OAuthService = new OAuth()
-  const standaloneServices: StandaloneServices = {
-    analytics,
-    db: database,
-    mail: mailer,
-    oAuth: oauth,
-  }
+  Service.logger = app.get('logger')
+  Service.analytics = new Analytics()
+  Service.database = new Database()
+  Service.mail = new Mail()
+  Service.oauth = new OAuth()
 
   /*
    * Dependent services that need other
    * services to work
    **/
   const services: Services = {
-    auth: new Auth(app, standaloneServices),
-    meetup: new Meetup(app, standaloneServices),
-    mentor: new Mentor(app, standaloneServices),
-    search: new Search(app, standaloneServices),
-    user: new User(app, standaloneServices),
-    url: new Url(app, standaloneServices),
-    webhooks: new Webhooks(app, standaloneServices),
+    auth: new Auth(),
+    meetup: new Meetup(),
+    mentor: new Mentor(),
+    search: new Search(),
+    user: new User(),
+    url: new Url(),
+    webhooks: new Webhooks(),
   }
 
   app.set('services', services)
-  app.set('analytics', analytics)
   app.get('logger').verbose('Services loaded')
 }

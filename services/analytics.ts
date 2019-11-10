@@ -1,7 +1,5 @@
-import * as express from 'express'
 import * as mysql from 'mysql2/promise'
-import { Logger } from 'winston'
-
+import { Service } from '../service'
 import moment = require('moment')
 
 import {
@@ -15,12 +13,9 @@ import {
 } from '../types'
 
 export class Analytics {
-  private logger: Logger
   private pool: any
 
-  constructor(app: express.Application) {
-    this.logger = app.get('logger')
-
+  constructor() {
     try {
       const pool: mysql.Pool = mysql.createPool({
         host: process.env.DB_HOST,
@@ -28,11 +23,11 @@ export class Analytics {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_ANALYTICS,
       })
-
-      if (pool) this.logger.verbose('Analytics OK')
+      if (pool) Service.logger.verbose('Analytics OK')
       this.pool = pool
     } catch (err) {
-      this.logger.error('Analytics NOT OK')
+      console.log('error in analytics constructor')
+      Service.logger.error('Analytics NOT OK')
     }
   }
 
@@ -318,7 +313,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      this.logger.warn(`Couldn't log meetups' MeetupRequest event`)
+      Service.logger.warn(`Couldn't log meetups' MeetupRequest event`)
     }
   }
 
@@ -342,7 +337,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      this.logger.warn(`Couldn't log meetups' MeetupConfirm event`)
+      Service.logger.warn(`Couldn't log meetups' MeetupConfirm event`)
     }
   }
 
@@ -366,7 +361,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      this.logger.warn(`Couldn't log meetups' MeetupRefuse event`)
+      Service.logger.warn(`Couldn't log meetups' MeetupRefuse event`)
     }
   }
 
@@ -390,7 +385,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      this.logger.warn(`Couldn't log mentor's AddSlots event`)
+      Service.logger.warn(`Couldn't log mentor's AddSlots event`)
     }
   }
 
@@ -404,7 +399,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      this.logger.warn(`Couldn't log mentor's RemoveSlots event`)
+      Service.logger.warn(`Couldn't log mentor's RemoveSlots event`)
     }
   }
 
@@ -422,7 +417,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      this.logger.warn(`Couldn't log user's ${eventName} event`)
+      Service.logger.warn(`Couldn't log user's ${eventName} event`)
     }
   }
 }

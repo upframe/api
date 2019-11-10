@@ -5,18 +5,13 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
-import { Service, StandaloneServices } from '../service'
+import { Service } from '../service'
 import { APIerror, APIrequest, APIresponse, JWTpayload } from '../types'
 import { sql } from '../utils'
 
 export class AuthService extends Service {
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    super(app, standaloneServices)
-
-    if (this.logger) this.logger.verbose('Auth service loaded')
+  constructor() {
+    super('Auth')
   }
 
   public verifyToken(
@@ -99,7 +94,7 @@ export class AuthService extends Service {
       }
 
       const sqlQuery = 'SELECT * FROM users WHERE email = ?'
-      const user = await this.database.query(sqlQuery, [req.body.email])
+      const user = await Service.database.query(sqlQuery, [req.body.email])
 
       if (Object.keys(user).length) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
@@ -116,7 +111,7 @@ export class AuthService extends Service {
             httpOnly: true,
           })
 
-          this.analytics.userLogin(user)
+          Service.analytics.userLogin(user)
         } else {
           error = {
             api: true,
@@ -236,7 +231,7 @@ export class AuthService extends Service {
           'users',
           json
         )
-        this.database.query(sqlQuery, params)
+        Service.database.query(sqlQuery, params)
       } catch (err) {
         response = {
           ok: 0,
@@ -278,7 +273,10 @@ export class AuthService extends Service {
           'passwordReset',
           { token: req.body.token }
         )
-        const passwordResetToken = await this.database.query(sqlQuery, params)
+        const passwordResetToken = await Service.database.query(
+          sqlQuery,
+          params
+        )
         if (!Object.keys(passwordResetToken).length) {
           error = {
             api: true,
@@ -303,7 +301,7 @@ export class AuthService extends Service {
           }
         )
 
-        const result = await this.database.query(sqlQuery, params)
+        const result = await Service.database.query(sqlQuery, params)
         if (!result.affectedRows) {
           error = {
             api: true,
@@ -325,7 +323,7 @@ export class AuthService extends Service {
         } else {
           // result = 1 means email was sent
           // result = 0 means email was NOT sent
-          const result = await this.mail.sendPasswordReset(req.body.email)
+          const result = await Service.mail.sendPasswordReset(req.body.email)
 
           if (result !== 0) {
             error = {
@@ -369,7 +367,7 @@ export class AuthService extends Service {
     if (req.body.token && req.body.email && process.env.CONNECT_PK) {
       try {
         // verify if token is valid by fetching it from the database
-        const emailChangeRequest = await this.database.query(
+        const emailChangeRequest = await Service.database.query(
           'SELECT * FROM emailChange WHERE token = ?',
           [req.body.token]
         )
@@ -386,7 +384,7 @@ export class AuthService extends Service {
 
         let sqlQuery: string = 'UPDATE users SET email = ? WHERE email = ?'
         let params: string[] = [req.body.email, emailChangeRequest.email]
-        await this.database.query(sqlQuery, params)
+        await Service.database.query(sqlQuery, params)
 
         // if user is logged in refresh access token
         // clear access token otherwise
@@ -416,7 +414,7 @@ export class AuthService extends Service {
 
         sqlQuery = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token]
-        await this.database.query(sqlQuery, params)
+        await Service.database.query(sqlQuery, params)
       } catch (err) {
         response = {
           ok: 0,
@@ -433,7 +431,7 @@ export class AuthService extends Service {
         if (req.body.email) {
           // result = 1 means email was sent
           // result = 0 means email was NOT sent
-          const result = await this.mail.sendEmailChange(req.body.email)
+          const result = await Service.mail.sendEmailChange(req.body.email)
 
           if (result !== 0) throw result
         } else {
@@ -458,7 +456,7 @@ export class AuthService extends Service {
     let error: APIerror
 
     try {
-      const authorizeUrl = this.oauth.generateAuthUrl({
+      const authorizeUrl = Service.oauth.generateAuthUrl({
         access_type: 'offline',
         scope: 'profile email https://www.googleapis.com/auth/calendar',
         prompt: 'consent',
@@ -502,7 +500,7 @@ export class AuthService extends Service {
         }
         throw error
       }
-      const tokens = (await this.oauth.getToken(req.query.code)).tokens
+      const tokens = (await Service.oauth.getToken(req.query.code)).tokens
 
       if (!tokens || !tokens.access_token) {
         error = {
@@ -554,7 +552,7 @@ export class AuthService extends Service {
       ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
         uid: req.jwt.uid,
       })
-      await this.database.query(sqlQuery, params)
+      await Service.database.query(sqlQuery, params)
     } catch (err) {
       response = {
         ok: 0,

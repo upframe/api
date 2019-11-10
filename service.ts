@@ -16,26 +16,15 @@ import {
 } from './types'
 
 export class Service {
-  public analytics: AnalyticsService
-  public database: DatabaseService
-  public logger: winston.Logger
-  public mail: MailService
-  public oauth: OAuthService
+  public static analytics: AnalyticsService
+  public static database: DatabaseService
+  public static logger: winston.Logger
+  public static mail: MailService
+  public static oauth: OAuthService
 
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    // inject independent services
-    this.analytics = standaloneServices.analytics
-    this.database = standaloneServices.db
-    this.mail = standaloneServices.mail
-    this.oauth = standaloneServices.oAuth
-
-    // inject logger
-    this.logger = app.get('logger')
-
-    if (!process.env.CONNECT_PK) this.logger.warn('Env vars not set')
+  constructor(name: string) {
+    if (!process.env.CONNECT_PK) Service.logger.warn('Env vars not set')
+    Service.logger.verbose(`${name} service loaded`)
   }
 }
 
