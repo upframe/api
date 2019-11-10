@@ -319,7 +319,6 @@ export class Analytics {
       )
     } catch (err) {
       this.logger.warn(`Couldn't log meetups' MeetupRequest event`)
-      throw err
     }
   }
 
@@ -344,7 +343,6 @@ export class Analytics {
       )
     } catch (err) {
       this.logger.warn(`Couldn't log meetups' MeetupConfirm event`)
-      throw err
     }
   }
 
@@ -369,7 +367,6 @@ export class Analytics {
       )
     } catch (err) {
       this.logger.warn(`Couldn't log meetups' MeetupRefuse event`)
-      throw err
     }
   }
 
@@ -394,7 +391,6 @@ export class Analytics {
       ])
     } catch (err) {
       this.logger.warn(`Couldn't log mentor's AddSlots event`)
-      throw err
     }
   }
 
@@ -409,7 +405,6 @@ export class Analytics {
       ])
     } catch (err) {
       this.logger.warn(`Couldn't log mentor's RemoveSlots event`)
-      throw err
     }
   }
 
@@ -428,7 +423,6 @@ export class Analytics {
       ])
     } catch (err) {
       this.logger.warn(`Couldn't log user's ${eventName} event`)
-      throw err
     }
   }
 }
