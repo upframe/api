@@ -1,4 +1,3 @@
-import * as crypto from 'crypto'
 import * as express from 'express'
 import { google } from 'googleapis'
 import moment from 'moment'
@@ -6,6 +5,7 @@ import moment from 'moment'
 import { Service, StandaloneServices } from '../service'
 import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
 import { calendar, sql, format } from '../utils'
+import { addSlots, deleteSlots } from './mentor/calendar'
 
 export class MentorService extends Service {
   constructor(
@@ -61,46 +61,6 @@ export class MentorService extends Service {
           })
         )
       )
-
-      // We are not using Google Calendar as a source of events right now
-      /*
-      if (mentorInfo.googleAccessToken) {
-        const mentorUid = mentorInfo.uid
-        this.oauth.setCredentials({
-          access_token: mentorInfo.googleAccessToken,
-          refresh_token: mentorInfo.googleRefreshToken,
-        })
-
-        const googleCalendar = google.calendar({ version: 'v3' })
-
-        google.options({
-          auth: this.oauth.OAuthClient,
-        })
-
-        let googleEvents
-        if (mentorInfo.upframeCalendarId) {
-          googleEvents = await this.oauth.getEventsList(googleCalendar, mentorInfo.upframeCalendarId, (new Date()).toISOString(), 2500)
-        }
-
-        if (googleEvents.length) {
-          const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
-          let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
-          if (!dbSlots.length) {
-            dbSlots = [dbSlots]
-          }
-          const finalDbSlotsToRemove = dbSlots.filter((slot) => {
-            return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
-          })
-          const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
-          for (const slot of finalDbSlotsToRemove) {
-            await this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
-          }
-        } else {
-          const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
-          await this.database.query(deleteAllTimeSlotsQuery, mentorUid)
-        }
-      }
-      */
 
       // fetch mentor time slots
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
@@ -357,25 +317,6 @@ export class MentorService extends Service {
       }
       response.mentor = mentorInfo
 
-      // ATM we're not relying on Google Calendar for events
-      /*
-      if (mentorInfo.googleAccessToken) {
-        this.oauth.setCredentials({
-          access_token: mentorInfo.googleAccessToken,
-          refresh_token: mentorInfo.googleRefreshToken,
-        })
-
-        const googleCalendar = google.calendar({ version: 'v3' })
-        google.options({ auth: this.oauth.OAuthClient })
-
-        // fetch mentor google calendar's events
-        let googleEvents
-        if (mentorInfo.upframeCalendarId) {
-          googleEvents = await this.oauth.getEventsList(googleCalendar, mentorInfo.upframeCalendarId, (new Date()).toISOString(), 2400)
-        }
-      }
-      */
-
       const sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       const startDate = req.query.start
       const endDate = req.query.end
@@ -497,116 +438,40 @@ export class MentorService extends Service {
 
       // delete events
       if (deletedSlots.length) {
-        sqlQuery = 'SELECT deleteSlot(?, ?)'
         response.deleteOK = 1
-
-        this.analytics.mentorRemoveSlots(mentor)
-
-        for (const slotID of deletedSlots) {
-          try {
-            googleCalendar.events.delete({
-              calendarId: mentor.upframeCalendarId,
-              eventId: slotID,
-            })
-
-            await this.database.query(sqlQuery, [slotID, req.jwt.uid])
-          } catch (err) {
-            response.ok = 0
-            response.code = 500
-            response.message = "One or more time slots couldn't be deleted"
-            response.deleteOK = 0
-          }
+        try {
+          deleteSlots(
+            deletedSlots,
+            mentor,
+            googleCalendar,
+            this.database,
+            this.analytics
+          )
+        } catch (err) {
+          response.ok = 0
+          response.code = 500
+          response.message = "One or more time slots couldn't be deleted"
+          response.deleteOK = 0
         }
       }
 
       // try to update events
       if (updatedSlots.length) {
-        sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
         response.updateOK = 1
-
-        for (const slot of updatedSlots) {
-          try {
-            // calculate how many hours are between slot end and slot start
-            // and determine how many 2h slots and 1h slots fill this better
-            const hourDiff: number = moment(slot.end).diff(slot.start, 'hours')
-            let twoHourSlots: number = Math.floor(hourDiff / 2)
-            let oneHourSlots: number = Math.floor(hourDiff - twoHourSlots * 2)
-
-            // determine directly how many 30-min slots can fill
-            let halfHourSlots: number =
-              moment(slot.end)
-                .subtract(hourDiff, 'hours')
-                .diff(slot.start, 'minutes') / 30
-
-            const it = moment(slot.start)
-            const itStart = moment(slot.start)
-            let mode: number = 2,
-              running: Boolean = true
-
-            while (running) {
-              if (twoHourSlots) {
-                it.add('2', 'hours')
-                twoHourSlots--
-              } else if (oneHourSlots) {
-                it.add('1', 'hours')
-                mode = 1
-                oneHourSlots--
-              } else if (halfHourSlots) {
-                it.add('30', 'minutes')
-                mode = 0
-                halfHourSlots--
-              } else {
-                running = false
-                break
-              }
-
-              const newSlot: Slot = {
-                sid: crypto.randomBytes(20).toString('hex'),
-                start: itStart.toISOString(),
-                end: it.toISOString(),
-                mentorUID: req.jwt.uid,
-                recurrency: slot.recurrency,
-              }
-
-              // save event in mentor's Google Calendar
-              await googleCalendar.events.insert({
-                calendarId: mentor.upframeCalendarId,
-                requestBody: {
-                  summary: 'Upframe Free Time Slot',
-                  start: {
-                    dateTime: moment(newSlot.start).toISOString(),
-                  },
-                  end: {
-                    dateTime: moment(newSlot.end).toISOString(),
-                  },
-                  description: 'Nice slot',
-                  id: newSlot.sid,
-                },
-              })
-
-              // set next slot starting time
-              if (mode === 2) itStart.add('2', 'hours')
-              else if (mode === 1) itStart.add('1', 'hour')
-              else if (mode === 0) itStart.add('30', 'minutes')
-
-              // save slot to database
-              await this.database.query(sqlQuery, [
-                newSlot.sid,
-                newSlot.mentorUID,
-                newSlot.start,
-                newSlot.end,
-                newSlot.recurrency,
-              ])
-
-              this.analytics.mentorAddSlots(mentor, newSlot)
-            }
-          } catch (err) {
-            console.warn(err)
-            response.ok = 0
-            response.code = 500
-            response.message = "One or more time slots couldn't be updated"
-            response.updateOK = 0
-          }
+        try {
+          await addSlots(
+            updatedSlots,
+            mentor,
+            googleCalendar,
+            this.database,
+            this.analytics
+          )
+        } catch (err) {
+          console.warn(err)
+          response.ok = 0
+          response.code = 500
+          response.message = "One or more time slots couldn't be updated"
+          response.updateOK = 0
         }
       }
     } catch (err) {
