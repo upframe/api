@@ -6,7 +6,6 @@ import mailgun, { Mailgun } from 'mailgun-js'
 import moment from 'moment'
 import { database } from '.'
 import { logger } from '../utils'
-import { APIerror, Email, Meetup, Mentor, User } from '../types'
 
 export class Mail {
   private mailgun!: Mailgun

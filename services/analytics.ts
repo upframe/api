@@ -2,16 +2,6 @@ import * as mysql from 'mysql2/promise'
 import { logger } from '.'
 import moment = require('moment')
 
-import {
-  AccountTypes,
-  AnalyticsEvent,
-  AnalyticsResponseRecord,
-  Meetup,
-  Mentor,
-  Slot,
-  User,
-} from '../types'
-
 export class Analytics {
   private pool: any
 
@@ -404,8 +394,7 @@ export class Analytics {
 
   // User events
   public async userLogin(user: User) {
-    const eventName =
-      user.type === AccountTypes.mentor ? 'MentorLogin' : 'UserLogin'
+    const eventName = user.type === 'mentor' ? 'MentorLogin' : 'UserLogin'
 
     try {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [

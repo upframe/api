@@ -1,10 +1,5 @@
 import moment from 'moment'
 
-/******************
- * Types
- ******************/
-import { date, Slot } from '../types'
-
 /**
  * @description returns date difference given the first, the last and the frequency of events/slots
  * @param {any} maxDate

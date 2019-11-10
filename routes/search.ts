@@ -1,7 +1,6 @@
 import * as express from 'express'
 
 import { search, logger } from '../services'
-import { APIrequest } from '../types'
 
 const router: express.Router = express.Router()
 

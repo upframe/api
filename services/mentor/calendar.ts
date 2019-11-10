@@ -1,5 +1,4 @@
 import * as crypto from 'crypto'
-import { Slot, Mentor } from '../../types'
 import moment from 'moment'
 import { calendar_v3 } from 'googleapis'
 import { database, analytics } from '../'

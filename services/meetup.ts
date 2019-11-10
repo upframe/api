@@ -2,16 +2,6 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import { google } from 'googleapis'
 import moment from 'moment'
-import {
-  AccountTypes,
-  APIerror,
-  APIrequest,
-  APIresponse,
-  Meetup,
-  Mentor,
-  Slot,
-  User,
-} from '../types'
 import { calendar, sql } from '../utils'
 import { database, logger, analytics, mail, oauth } from '.'
 
@@ -112,7 +102,7 @@ export class MeetupService {
 
       const newUser: User = {
         uid: crypto.randomBytes(20).toString('hex'),
-        type: AccountTypes.user,
+        type: 'user',
         email: json.email,
         name: json.name,
         password: 'nologin',

@@ -5,7 +5,6 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
-import { APIerror, APIrequest, APIresponse, JWTpayload } from '../types'
 import { sql } from '../utils'
 import { logger } from '../utils'
 import { database, analytics, mail, oauth } from '.'

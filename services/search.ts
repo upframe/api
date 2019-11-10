@@ -1,7 +1,6 @@
 import * as express from 'express'
 
 import { database, logger } from '.'
-import { APIerror, APIresponse } from '../types'
 import { format } from '../utils'
 
 export class SearchService {

@@ -1,7 +1,6 @@
 import * as express from 'express'
 
 import { database, logger, oauth } from '.'
-import { APIrequest, APIresponse } from '../types'
 
 import { google } from 'googleapis'
 

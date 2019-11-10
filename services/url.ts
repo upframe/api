@@ -1,7 +1,6 @@
 import * as express from 'express'
 
 import { database, logger } from '.'
-import { APIerror, APIrequest, APIresponse } from '../types'
 
 export class UrlService {
   constructor() {

@@ -4,7 +4,6 @@ import { google } from 'googleapis'
 import * as path from 'path'
 
 import { logger, database, oauth } from '.'
-import { APIerror, APIrequest, APIresponse, User } from '../types'
 import { sql } from '../utils'
 
 export class UserService {

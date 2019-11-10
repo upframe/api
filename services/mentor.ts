@@ -3,7 +3,6 @@ import { google } from 'googleapis'
 import moment from 'moment'
 
 import { database, mail, oauth, logger } from '.'
-import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
 import { calendar, sql, format } from '../utils'
 import { addSlots, deleteSlots } from './mentor/calendar'
 
