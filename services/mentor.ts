@@ -568,22 +568,6 @@ export class MentorService extends Service {
                 recurrency: slot.recurrency,
               }
 
-              // set next slot starting time
-              if (mode === 2) itStart.add('2', 'hours')
-              else if (mode === 1) itStart.add('1', 'hour')
-              else if (mode === 0) itStart.add('30', 'minutes')
-
-              // save slot to database
-              await this.database.query(sqlQuery, [
-                newSlot.sid,
-                newSlot.mentorUID,
-                newSlot.start,
-                newSlot.end,
-                newSlot.recurrency,
-              ])
-
-              this.analytics.mentorAddSlots(mentor, newSlot)
-
               // save event in mentor's Google Calendar
               await googleCalendar.events.insert({
                 calendarId: mentor.upframeCalendarId,
@@ -599,8 +583,25 @@ export class MentorService extends Service {
                   id: newSlot.sid,
                 },
               })
+
+              // set next slot starting time
+              if (mode === 2) itStart.add('2', 'hours')
+              else if (mode === 1) itStart.add('1', 'hour')
+              else if (mode === 0) itStart.add('30', 'minutes')
+
+              // save slot to database
+              await this.database.query(sqlQuery, [
+                newSlot.sid,
+                newSlot.mentorUID,
+                newSlot.start,
+                newSlot.end,
+                newSlot.recurrency,
+              ])
+
+              this.analytics.mentorAddSlots(mentor, newSlot)
             }
           } catch (err) {
+            console.warn(err)
             response.ok = 0
             response.code = 500
             response.message = "One or more time slots couldn't be updated"
