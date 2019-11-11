@@ -13,9 +13,9 @@ import { WebhooksService as Webhooks } from './webhooks'
 
 const analytics = new Analytics()
 const database = new Database()
+const auth = new Auth()
 const mail = new Mail()
 const oauth = new OAuth()
-const auth = new Auth()
 const meetup = new Meetup()
 const mentor = new Mentor()
 const search = new Search()

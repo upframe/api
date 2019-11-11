@@ -1,12 +1,13 @@
 import * as express from 'express'
-import { google } from 'googleapis'
 import moment from 'moment'
 
 import { database, mail, oauth, logger } from '.'
-import { calendar, sql, format } from '../utils'
-import { addSlots, deleteSlots } from './mentor/calendar'
+import { sql, format } from '../utils'
+import initCalendar from './mentor/calendar'
 
 export class MentorService {
+  private readonly calendar = initCalendar()
+
   constructor() {
     logger.verbose('Mentor service loaded')
   }
@@ -70,7 +71,7 @@ export class MentorService {
         const verified: string[] = []
 
         // generate slots from today to 7 days from now
-        mentorSlots = calendar.automaticGenerate(
+        mentorSlots = this.calendar.automaticGenerate(
           mentorSlots,
           moment()
             .utc()
@@ -331,7 +332,7 @@ export class MentorService {
 
       let genSlots: Slot[] = []
       if (Array.isArray(slots)) {
-        genSlots = calendar.automaticGenerate(slots).filter(slot => {
+        genSlots = this.calendar.automaticGenerate(slots).filter(slot => {
           let ok = true
           // verify if slot start is after the defined minimum start Date
           if (new Date(startDate)) {
@@ -418,20 +419,11 @@ export class MentorService {
         }
       }
 
-      // create Calendar instance
-      const googleCalendar = google.calendar({
-        version: 'v3',
-      })
-      // set google options
-      google.options({
-        auth: oauth.OAuthClient,
-      })
-
       // delete events
       if (deletedSlots.length) {
         response.deleteOK = 1
         try {
-          deleteSlots(deletedSlots, mentor, googleCalendar)
+          this.calendar.deleteSlots(deletedSlots, mentor)
         } catch (err) {
           response.ok = 0
           response.code = 500
@@ -444,7 +436,7 @@ export class MentorService {
       if (updatedSlots.length) {
         response.updateOK = 1
         try {
-          await addSlots(updatedSlots, mentor, googleCalendar)
+          await this.calendar.addSlots(updatedSlots, mentor)
         } catch (err) {
           console.warn(err)
           response.ok = 0
