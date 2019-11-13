@@ -2,12 +2,9 @@ import * as express from 'express'
 import moment from 'moment'
 
 import { database, mail, oauth, logger } from '.'
-import { sql, format } from '../utils'
-import initCalendar from './mentor/calendar'
+import { sql, format, calendar } from '../utils'
 
 export class MentorService {
-  private readonly calendar = initCalendar()
-
   constructor() {
     logger.verbose('Mentor service loaded')
   }
@@ -71,7 +68,7 @@ export class MentorService {
         const verified: string[] = []
 
         // generate slots from today to 7 days from now
-        mentorSlots = this.calendar.automaticGenerate(
+        mentorSlots = calendar.automaticGenerate(
           mentorSlots,
           moment()
             .utc()
@@ -332,7 +329,7 @@ export class MentorService {
 
       let genSlots: Slot[] = []
       if (Array.isArray(slots)) {
-        genSlots = this.calendar.automaticGenerate(slots).filter(slot => {
+        genSlots = calendar.automaticGenerate(slots).filter(slot => {
           let ok = true
           // verify if slot start is after the defined minimum start Date
           if (new Date(startDate)) {
@@ -423,7 +420,7 @@ export class MentorService {
       if (deletedSlots.length) {
         response.deleteOK = 1
         try {
-          this.calendar.deleteSlots(deletedSlots, mentor)
+          calendar.deleteSlots(deletedSlots, mentor)
         } catch (err) {
           console.warn(err)
           response.ok = 0
@@ -437,7 +434,7 @@ export class MentorService {
       if (updatedSlots.length) {
         response.updateOK = 1
         try {
-          await this.calendar.addSlots(updatedSlots, mentor)
+          await calendar.addSlots(updatedSlots, mentor)
         } catch (err) {
           console.warn(err)
           response.ok = 0

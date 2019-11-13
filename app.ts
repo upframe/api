@@ -10,6 +10,7 @@ import morgan from 'morgan'
 
 import * as routers from './routes'
 import { logger } from './services'
+import { calendar } from './utils'
 
 const app: express.Application = express()
 
@@ -71,6 +72,8 @@ app.set('logger', logger)
 
 /* Routing */
 routers.init(app)
+
+calendar.init()
 
 const port = process.env.PORT || 80
 app.listen(port, () => {
