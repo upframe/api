@@ -13,8 +13,8 @@ export class WebhooksService {
    * Nos queremos ir buscar os eventos do mentor no Google Calendar
    * e comparar com os da nossa base de dados.
    */
-  public async parseGoogleWebhook(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async parseGoogleWebhook(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }

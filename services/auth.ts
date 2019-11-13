@@ -15,7 +15,7 @@ export class AuthService {
   }
 
   public verifyToken(
-    req: APIrequest,
+    req: ApiRequest,
     res: express.Response,
     next: express.NextFunction
   ) {
@@ -33,7 +33,7 @@ export class AuthService {
 
       next()
     } catch (err) {
-      const response: APIresponse = {
+      const response: ApiResponse = {
         code: 403,
         ok: 0,
         message: 'The JWT token is not valid',
@@ -49,13 +49,13 @@ export class AuthService {
   }
 
   public isMentor(
-    req: APIrequest,
+    req: ApiRequest,
     res: express.Response,
     next: express.NextFunction
   ) {
     if (req.jwt && req.jwt.aud === 'mentor') next()
     else {
-      const response: APIresponse = {
+      const response: ApiResponse = {
         code: 403,
         ok: 0,
         message: "You're not a mentor",
@@ -74,8 +74,8 @@ export class AuthService {
     } else return ''
   }
 
-  public async login(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async login(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -139,8 +139,8 @@ export class AuthService {
     res.status(response.code).json(response)
   }
 
-  public logout(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public logout(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -157,12 +157,12 @@ export class AuthService {
     res.status(response.code).json(response)
   }
 
-  public async register(req: APIrequest, res: express.Response) {
+  public async register(req: ApiRequest, res: express.Response) {
     // We wait 2 seconds for each register as a way to protect ourselves against
     // bruteforce attacks. Using extra time makes them virtually impossible.
     setTimeout(() => {
       const json = Object.assign({}, req.body)
-      let response: APIresponse = {
+      let response: ApiResponse = {
         code: 200,
         ok: 1,
       }
@@ -241,8 +241,8 @@ export class AuthService {
     }, 2000)
   }
 
-  public async resetPassword(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async resetPassword(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -340,8 +340,8 @@ export class AuthService {
   /**
    * @description changes account's email
    */
-  public async changeEmail(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async changeEmail(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -431,8 +431,8 @@ export class AuthService {
     res.status(response.code).json(response)
   }
 
-  public async getGoogleUrl(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async getGoogleUrl(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -467,8 +467,8 @@ export class AuthService {
     res.status(response.code).json(response)
   }
 
-  public async receiveOauthCode(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async receiveOauthCode(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -509,8 +509,8 @@ export class AuthService {
     res.status(response.code).json(response)
   }
 
-  public async unlinkGoogle(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async unlinkGoogle(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }

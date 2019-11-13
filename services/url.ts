@@ -7,8 +7,8 @@ export class UrlService {
     logger.verbose('URL shortener service loaded')
   }
 
-  public async getRealUrl(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async getRealUrl(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }

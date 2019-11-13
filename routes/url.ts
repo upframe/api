@@ -5,7 +5,7 @@ import { url, logger } from '../services'
 const router: express.Router = express.Router()
 
 function setRouters(): void {
-  router.get('/', (req: APIrequest, res: express.Response) => {
+  router.get('/', (req: ApiRequest, res: express.Response) => {
     url.getRealUrl(req, res)
   })
 }

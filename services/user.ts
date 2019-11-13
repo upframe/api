@@ -11,8 +11,8 @@ export class UserService {
     logger.verbose('User service loaded')
   }
 
-  public async get(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async get(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       code: 200,
       ok: 1,
     }
@@ -83,11 +83,11 @@ export class UserService {
 
   /**
    * @description Updates user info with the new info
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async update(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async update(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       code: 200,
       ok: 1,
     }
@@ -173,9 +173,9 @@ export class UserService {
     url: string,
     userEmail: string,
     res: express.Response,
-    req: APIrequest
+    req: ApiRequest
   ) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
       url,

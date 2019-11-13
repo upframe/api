@@ -18,7 +18,7 @@ export class MentorService {
    * @param {express.Response} res
    */
   public async get(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -149,7 +149,7 @@ export class MentorService {
    * @param {express.Response} res Express response
    */
   public async getAll(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -223,7 +223,7 @@ export class MentorService {
    * @param {express.Response} res Express response
    */
   public async getRandom(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -266,11 +266,11 @@ export class MentorService {
    * @description Returns mentor's time slots. There are two possibilities here,
    * either the user is Google Synced and we need to take that into consideration,
    * or we simply don't care about that.
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async getTimeSlots(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async getTimeSlots(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -367,11 +367,11 @@ export class MentorService {
 
   /**
    * @description Updates and creates mentor's time slots
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async updateTimeSlots(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async updateTimeSlots(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -425,6 +425,7 @@ export class MentorService {
         try {
           this.calendar.deleteSlots(deletedSlots, mentor)
         } catch (err) {
+          console.warn(err)
           response.ok = 0
           response.code = 500
           response.message = "One or more time slots couldn't be deleted"
@@ -469,7 +470,7 @@ export class MentorService {
    * @param {express.Response} res
    */
   public async verify(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -515,7 +516,7 @@ export class MentorService {
    * @param {express.Response} res
    */
   public async request(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }

@@ -1,13 +1,13 @@
 type request = import('express').Request
 
 /* API types */
-interface APIrequest extends request {
+interface ApiRequest extends request {
   busboy?: any
-  body: APIRequestBody
+  body: ApiRequestBody
   jwt?: JWTpayload
 }
 
-interface APIRequestBody {
+interface ApiRequestBody {
   /* IDs */
   mid?: string
   sid?: string
@@ -49,7 +49,7 @@ interface JWTpayload {
   uid?: string
 }
 
-interface APIresponse {
+interface ApiResponse {
   code: number
   ok: number
   message?: string

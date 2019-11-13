@@ -12,11 +12,11 @@ export class MeetupService {
 
   /**
    * @description Returns all user's events (confirmed + pending)
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async get(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async get(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -59,11 +59,11 @@ export class MeetupService {
 
   /**
    * @description Creates a pending meetup which the mentor has to confirm by email
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async create(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async create(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -308,11 +308,11 @@ export class MeetupService {
 
   /**
    * @description Confirms meetup
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async confirm(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async confirm(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -474,11 +474,11 @@ export class MeetupService {
 
   /**
    *
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async refuse(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async refuse(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }

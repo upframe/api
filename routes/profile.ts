@@ -10,7 +10,7 @@ function setRouters(): void {
   router.get(
     '/me',
     auth.verifyToken,
-    (req: APIrequest, res: express.Response) => {
+    (req: ApiRequest, res: express.Response) => {
       user.get(req, res)
     }
   )
@@ -18,7 +18,7 @@ function setRouters(): void {
   router.patch(
     '/me',
     auth.verifyToken,
-    (req: APIrequest, res: express.Response) => {
+    (req: ApiRequest, res: express.Response) => {
       user.update(req, res)
     }
   )
@@ -26,8 +26,8 @@ function setRouters(): void {
   router.post(
     '/image',
     auth.verifyToken,
-    (req: APIrequest, res: express.Response) => {
-      let response: APIresponse = {
+    (req: ApiRequest, res: express.Response) => {
+      let response: ApiResponse = {
         ok: 1,
         code: 200,
       }
@@ -69,7 +69,7 @@ function setRouters(): void {
 function uploadToS3UsingStream(
   filename: any,
   stream: any,
-  req: APIrequest,
+  req: ApiRequest,
   res: express.Response
 ) {
   try {

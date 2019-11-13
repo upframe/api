@@ -5,7 +5,7 @@ import { webhooks, logger } from '../services'
 const router: express.Router = express.Router()
 
 function setRouters(): void {
-  router.post('/calendar', (req: APIrequest, res: express.Response) => {
+  router.post('/calendar', (req: ApiRequest, res: express.Response) => {
     webhooks.parseGoogleWebhook(req, res)
   })
 }

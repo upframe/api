@@ -5,15 +5,15 @@ import { search, logger } from '../services'
 const router: express.Router = express.Router()
 
 function setRouters(): void {
-  router.get('/quick', (req: APIrequest, res: express.Response) => {
+  router.get('/quick', (req: ApiRequest, res: express.Response) => {
     search.quick(req, res)
   })
 
-  router.get('/full', (req: APIrequest, res: express.Response) => {
+  router.get('/full', (req: ApiRequest, res: express.Response) => {
     search.full(req, res)
   })
 
-  router.get('/tags', (req: APIrequest, res: express.Response) => {
+  router.get('/tags', (req: ApiRequest, res: express.Response) => {
     search.tags(req, res)
   })
 }

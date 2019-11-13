@@ -14,7 +14,7 @@ export class SearchService {
    * @param {express.Response} res
    */
   public async quick(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -85,7 +85,7 @@ export class SearchService {
    * @param {express.Response} res
    */
   public async full(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
