@@ -112,6 +112,18 @@ export async function deleteSlots(slots: string[], mentor: Mentor) {
   analytics.mentorRemoveSlots(mentor)
 }
 
+export async function getSlots(mentorUid: string, start: Date, end: Date) {
+  const slots = await database.query(
+    'SELECT * FROM timeSlots WHERE mentorUID = ?',
+    [mentorUid]
+  )
+  return slots.filter(
+    ({ start: sStart, end: sEnd }) =>
+      new Date(sStart).getTime() >= start.getTime() &&
+      new Date(sEnd).getTime() <= end.getTime()
+  )
+}
+
 /**
  * @description returns date difference given the first, the last and the frequency of events/slots
  * @param {any} maxDate

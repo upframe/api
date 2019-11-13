@@ -259,107 +259,26 @@ export class MentorService {
     res.status(response.code).json(response)
   }
 
-  /**
-   * @description Returns mentor's time slots. There are two possibilities here,
-   * either the user is Google Synced and we need to take that into consideration,
-   * or we simply don't care about that.
-   * @param {ApiRequest} req
-   * @param {express.Response} res
-   */
-  public async getTimeSlots(req: ApiRequest, res: express.Response) {
-    let response: ApiResponse = {
-      ok: 1,
-      code: 200,
-    }
-    let error: APIerror
+  public async getTimeSlots({ jwt, query }: ApiRequest, res: express.Response) {
+    if (!jwt || !jwt.uid)
+      return res.status(403).json({ message: 'UNAUTHORIZED' })
 
+    const makeDate = (date: string | number | Date, alternative: Date): Date =>
+      !date ? alternative : date instanceof Date ? date : new Date(date)
+
+    const now = new Date()
+    let slots = []
     try {
-      if (!req.jwt || !req.jwt.uid) {
-        error = {
-          api: true,
-          code: 403,
-          message: 'Insufficient permissions',
-          friendlyMessage: 'There was a problem fetching your timeslots',
-        }
-
-        throw error
-      }
-
-      ////////////////////////////////////
-      let firstSqlQuery: string
-      let params: string[] | string | date[]
-      ;[firstSqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
-        uid: req.jwt.uid,
-        type: 'mentor',
-      })
-
-      const mentorInfo: Mentor = await database.query(firstSqlQuery, params)
-      if (!Object.keys(mentorInfo).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Mentor not found',
-          friendlyMessage: 'There is no mentor with the provided keycode',
-        }
-
-        throw error
-      }
-      response.mentor = mentorInfo
-
-      const sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
-      const startDate = req.query.start
-      const endDate = req.query.end
-
-      const slots: Slot[] = await database.query(sqlQuery, [
-        response.mentor.uid,
-      ])
-      if (
-        !Object.keys(slots).length ||
-        (Array.isArray(slots) && !slots.length)
-      ) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Slots not found',
-          friendlyMessage: 'This mentor has no slots',
-        }
-
-        throw error
-      }
-
-      let genSlots: Slot[] = []
-      if (Array.isArray(slots)) {
-        genSlots = calendar.automaticGenerate(slots).filter(slot => {
-          let ok = true
-          // verify if slot start is after the defined minimum start Date
-          if (new Date(startDate)) {
-            if (new Date(startDate).getTime() > new Date(slot.start).getTime())
-              ok = false
-          }
-          // verify if slot end is before the defined maximum end Date
-          if (new Date(endDate)) {
-            if (new Date(endDate).getTime() < new Date(slot.end).getTime())
-              ok = false
-          }
-          return ok
-        })
-      } else genSlots.push(slots)
-
-      response.slots = genSlots
+      slots = await calendar.getSlots(
+        jwt.uid,
+        makeDate(query && query.start, now),
+        makeDate(query && query.end, new Date(now.setMonth(now.getMonth() + 1)))
+      )
+      return res.json({ slots })
     } catch (err) {
-      response = {
-        ok: 0,
-        code: 500,
-      }
-
-      if (err.api) {
-        response.code = err.code
-        response.message = err.message
-        response.friendlyMessage = err.friendlyMessage
-      }
+      console.warn(err)
+      return res.sendStatus(500)
     }
-
-    res.status(response.code).json(response)
   }
 
   /**
