@@ -2,7 +2,18 @@ import * as express from 'express'
 import { calendar_v3 } from 'googleapis'
 import * as winston from 'winston'
 
-import { AccountTypes, APIerror, APIrequest, date, JWTpayload, Meetup, Mentor, Slot, User } from './types'
+import {
+  AccountTypes,
+  APIerror,
+  APIrequest,
+  AnalyticsResponseRecord,
+  date,
+  JWTpayload,
+  Meetup,
+  Mentor,
+  Slot,
+  User,
+} from './types'
 
 export class Service {
   public analytics: AnalyticsService
@@ -11,7 +22,10 @@ export class Service {
   public mail: MailService
   public oauth: OAuthService
 
-  constructor(app: express.Application, standaloneServices: StandaloneServices) {
+  constructor(
+    app: express.Application,
+    standaloneServices: StandaloneServices
+  ) {
     // inject independent services
     this.analytics = standaloneServices.analytics
     this.database = standaloneServices.db
@@ -36,9 +50,17 @@ export interface Services {
 }
 
 export interface AuthService {
-  verifyToken(req: APIrequest, res: express.Response, next: express.NextFunction): void
-  isMentor(req: APIrequest, res: express.Response, next: express.NextFunction): void
-  createToken(user: JWTpayload , accountType: AccountTypes): string
+  verifyToken(
+    req: APIrequest,
+    res: express.Response,
+    next: express.NextFunction
+  ): void
+  isMentor(
+    req: APIrequest,
+    res: express.Response,
+    next: express.NextFunction
+  ): void
+  createToken(user: JWTpayload, accountType: AccountTypes): string
   login(req: express.Request, res: express.Response): void
   logout(req: APIrequest, res: express.Response): void
   register(req: express.Request, res: express.Response): void
@@ -57,19 +79,20 @@ export interface MeetupService {
 }
 
 export interface MentorService {
-  get(req: express.Request , res: express.Response): void
+  get(req: express.Request, res: express.Response): void
   getAll(req: express.Request, res: express.Response): void
-  getRandom(req: express.Request , res: express.Response): void
-  getTimeSlots(req: express.Request , res: express.Response): void
+  getRandom(req: express.Request, res: express.Response): void
+  getTimeSlots(req: express.Request, res: express.Response): void
   request(req: express.Request, res: express.Response): void
-  updateTimeSlots(req: express.Request , res: express.Response): void
-  verify(req: express.Request , res: express.Response): void
+  updateTimeSlots(req: express.Request, res: express.Response): void
+  verify(req: express.Request, res: express.Response): void
 }
 
 export interface SearchService {
   quick(req: express.Request, res: express.Response): void
   full(req: express.Request, res: express.Response): void
   tags(req: express.Request, res: express.Response): void
+  query(req: express.Request, res: express.Response): void
 }
 
 export interface UserService {
@@ -94,6 +117,11 @@ export interface StandaloneServices {
 }
 
 export interface AnalyticsService {
+  // fetch records
+  getWeeklyActiveUsers(): Promise<AnalyticsResponseRecord[]>
+  getWeeklyEventsScheduled(): Promise<AnalyticsResponseRecord[]>
+  getWeeklyActiveMentors(): Promise<AnalyticsResponseRecord[]>
+  // add records
   meetupRequest(meetup: Meetup, mentor: Mentor, user: User): void
   meetupConfirm(meetup: Meetup, mentor: Mentor): void
   meetupRefuse(meetup: Meetup, mentor: Mentor): void
@@ -112,10 +140,19 @@ export interface MailService {
   sendPasswordReset(toAddress: string): Promise<number>
   sendEmailChange(toAddress: string): Promise<number>
 
-  sendMeetupInvitation(meetupID: string, message: string | undefined): Promise<APIerror | number>
-  sendMeetupConfirmation(meetupID: string): Promise<(APIerror | number)>
+  sendMeetupInvitation(
+    meetupID: string,
+    message: string | undefined
+  ): Promise<APIerror | number>
+  sendMeetupConfirmation(meetupID: string): Promise<APIerror | number>
 
-  sendTimeSlotRequest(mentorEmail: string, mentorName: string, menteeName: string, menteeEmail: string, menteeMessage: string): Promise<(APIerror | number)>
+  sendTimeSlotRequest(
+    mentorEmail: string,
+    mentorName: string,
+    menteeName: string,
+    menteeEmail: string,
+    menteeMessage: string
+  ): Promise<APIerror | number>
 }
 
 export interface OAuthService {
@@ -126,5 +163,10 @@ export interface OAuthService {
   setCredentials(credentials: object)
   refreshAccessToken()
 
-  getEventsList(instance: calendar_v3.Calendar, calendarID: string, minTime: Date | string, maxResults: number): Promise<object[] | object>
+  getEventsList(
+    instance: calendar_v3.Calendar,
+    calendarID: string,
+    minTime: Date | string,
+    maxResults: number
+  ): Promise<object[] | object>
 }

@@ -68,9 +68,9 @@ export interface APIresponse {
   slots?: Slot[]
 
   search?: {
-    companies?: any[],
-    expertise?: any[],
-    people?: any[],
+    companies?: any[]
+    expertise?: any[]
+    people?: any[]
   }
 
   url?: string
@@ -124,6 +124,7 @@ export interface Mentor extends Account {
   keycode?: string
   slots?: Slot[]
   newsfeed?: string
+  pictures?: { [size: string]: { [type: string]: string } }
 }
 
 export interface User extends Account {
@@ -159,6 +160,9 @@ export interface AnalyticsResponseRecord {
 
   // Weekly Active Users
   wau?: number | null
+
+  // Weekly Active Mentors (Mentors who added slots)
+  wam?: number | null
 
   // Array of users UIDs
   users?: string[]

@@ -13,7 +13,14 @@ import { UrlService as Url } from './url'
 import { UserService as User } from './user'
 import { WebhooksService as Webhooks } from './webhooks'
 
-import { AnalyticsService, DatabaseService, MailService, OAuthService, Services, StandaloneServices } from '../service'
+import {
+  AnalyticsService,
+  DatabaseService,
+  MailService,
+  OAuthService,
+  Services,
+  StandaloneServices,
+} from '../service'
 
 export function init(app: express.Application): void {
   /*

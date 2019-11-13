@@ -11,17 +11,30 @@ function setRouters(app: express.Application): void {
     services.meetup.get(req, res)
   })
 
-  router.post('/', /*services.auth.verifyToken,*/ (req, res) => {
-    services.meetup.create(req, res)
-  })
+  router.post(
+    '/',
+    /*services.auth.verifyToken,*/ (req, res) => {
+      services.meetup.create(req, res)
+    }
+  )
 
-  router.get('/confirm', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
-    services.meetup.confirm(req, res)
-  })
+  router.get(
+    '/confirm',
+    services.auth.verifyToken,
+    services.auth.isMentor,
+    (req, res) => {
+      services.meetup.confirm(req, res)
+    }
+  )
 
-  router.get('/refuse', services.auth.verifyToken, services.auth.isMentor, (req, res) => {
-    services.meetup.refuse(req, res)
-  })
+  router.get(
+    '/refuse',
+    services.auth.verifyToken,
+    services.auth.isMentor,
+    (req, res) => {
+      services.meetup.refuse(req, res)
+    }
+  )
 }
 
 export function init(app: express.Application): express.Router {
