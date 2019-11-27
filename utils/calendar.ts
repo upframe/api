@@ -117,7 +117,7 @@ export async function getSlots(mentorUid: string, start: Date, end: Date) {
     'SELECT * FROM timeSlots WHERE mentorUID = ?',
     [mentorUid]
   )
-  return slots.filter(
+  return (slots || []).filter(
     ({ start: sStart, end: sEnd }) =>
       new Date(sStart).getTime() >= start.getTime() &&
       new Date(sEnd).getTime() <= end.getTime()

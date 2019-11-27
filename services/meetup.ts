@@ -397,6 +397,33 @@ export class MeetupService {
       )
       const mentee: User = await database.query(sqlQuery2, params2)
 
+      // create Calendar instance
+      const googleCalendar = google.calendar({
+        version: 'v3',
+      })
+      // set google options
+      google.options({
+        auth: oauth.OAuthClient,
+      })
+      const event = {
+        summary: `Upframe Meetup w/${mentee.name}`,
+        description: `Meetup with ${mentee.name} at ${meetup.location}`,
+        location: meetup.location,
+        status: 'confirmed',
+        id: meetup.mid,
+        start: {
+          dateTime: moment(meetup.start).toISOString(),
+          timeZone: 'UTC',
+        },
+        end: {
+          dateTime: moment(meetup.start)
+            .add(duration, unit)
+            .toISOString(),
+          timeZone: 'UTC',
+        },
+        attendees: [{ email: mentor.email }, { email: mentee.email }],
+      }
+
       if (
         (mentor.googleAccessToken || mentor.googleRefreshToken) &&
         mentor.upframeCalendarId
@@ -418,15 +445,6 @@ export class MeetupService {
           throw error
         }
 
-        // create Calendar instance
-        const googleCalendar = google.calendar({
-          version: 'v3',
-        })
-        // set google options
-        google.options({
-          auth: oauth.OAuthClient,
-        })
-
         // delete slot
         googleCalendar.events.delete({
           calendarId: mentor.upframeCalendarId,
@@ -434,29 +452,35 @@ export class MeetupService {
         })
 
         // create event
+        if (mentor.googleAccessToken) {
+          await googleCalendar.events.insert({
+            calendarId: mentor.upframeCalendarId,
+            requestBody: event,
+          })
+        }
+      } else {
+        // add event to upframe calendar
+        const {
+          upframeCalendarId,
+          googleAccessToken,
+          googleRefreshToken,
+        } = await database.query(
+          ...sql.createSQLqueryFromJSON('SELECT', 'users', {
+            uid: 'abcd547307dc86bd12dfe960542e922702188a12',
+          })
+        )
+        oauth.setCredentials({
+          access_token: googleAccessToken,
+          refresh_token: googleRefreshToken,
+        })
         await googleCalendar.events.insert({
-          calendarId: mentor.upframeCalendarId,
-          requestBody: {
-            summary: `Upframe Meetup w/${mentee.name}`,
-            description: `Meetup with ${mentee.name} at ${meetup.location}`,
-            location: meetup.location,
-            status: 'confirmed',
-            id: meetup.mid,
-            start: {
-              dateTime: moment(meetup.start).toISOString(),
-              timeZone: 'UTC',
-            },
-            end: {
-              dateTime: moment(meetup.start)
-                .add(duration, unit)
-                .toISOString(),
-              timeZone: 'UTC',
-            },
-            attendees: [{ email: mentor.email }, { email: mentee.email }],
-          },
+          calendarId: upframeCalendarId,
+          requestBody: event,
         })
       }
     } catch (err) {
+      console.warn(err)
+
       response = {
         ok: 0,
         code: 500,

@@ -1,7 +1,9 @@
 import { calendar_v3, google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { Credentials } from 'google-auth-library'
 
 export class OAuth {
-  public OAuthClient!: any
+  public OAuthClient!: OAuth2Client
 
   constructor() {
     this.OAuthClient = new google.auth.OAuth2(
@@ -19,7 +21,7 @@ export class OAuth {
     return await this.OAuthClient.getToken(code)
   }
 
-  public setCredentials(credentials: object) {
+  public setCredentials(credentials: Credentials) {
     this.OAuthClient.setCredentials(credentials)
   }
 

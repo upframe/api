@@ -267,9 +267,8 @@ export class MentorService {
       !date ? alternative : date instanceof Date ? date : new Date(date)
 
     const now = new Date()
-    let slots = []
     try {
-      slots = await calendar.getSlots(
+      const slots = await calendar.getSlots(
         jwt.uid,
         makeDate(query && query.start, now),
         makeDate(query && query.end, new Date(now.setMonth(now.getMonth() + 1)))
