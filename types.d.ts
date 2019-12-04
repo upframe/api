@@ -106,6 +106,7 @@ interface Account {
   name: string
   email: string
   password: string
+  pictures?: { [size: string]: { [type: string]: string } }
 
   googleAccessToken?: string
   googleRefreshToken?: string
@@ -119,7 +120,6 @@ interface Mentor extends Account {
   keycode?: string
   slots?: Slot[]
   newsfeed?: string
-  pictures?: { [size: string]: { [type: string]: string } }
 }
 
 interface User extends Account {

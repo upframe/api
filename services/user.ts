@@ -4,7 +4,7 @@ import { google } from 'googleapis'
 import * as path from 'path'
 
 import { logger, database, oauth } from '.'
-import { sql } from '../utils'
+import { sql, format } from '../utils'
 
 export class UserService {
   constructor() {
@@ -37,6 +37,14 @@ export class UserService {
 
         throw error
       }
+
+      user.pictures = format.pictures(
+        await database.query(
+          ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
+            uid: user.uid,
+          })
+        )
+      )
 
       // let's refresh google access token if the mentor has synced
       if (user.googleAccessToken || user.googleRefreshToken) {
