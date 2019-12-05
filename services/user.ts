@@ -155,9 +155,11 @@ export class UserService {
             },
           },
           error => {
-            logger.error('Error at Google Calendar events watch')
-            logger.error(error)
-            if (error) throw error
+            if (error) {
+              logger.error('Error at Google Calendar events watch')
+              logger.error(error)
+              throw error
+            }
           }
         )
       }

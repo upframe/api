@@ -498,7 +498,7 @@ export class AuthService {
       }
 
       response.token = tokens.access_token
-      response.refreshToken = tokens.refresh_token
+      response.refreshToken = tokens.refresh_token as string
     } catch (err) {
       response = {
         ok: 0,
