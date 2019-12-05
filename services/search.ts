@@ -153,6 +153,46 @@ export class SearchService {
     res.status(response.code).json(response)
   }
 
+  /**
+   * @description Add search query to the database
+   * @param {express.Request} req
+   * @param {express.Response} res
+   */
+  public async query(req: express.Request, res: express.Response) {
+    let response: ApiResponse = {
+      ok: 1,
+      code: 200,
+    }
+    const rawQuery = req.body.search
+    const query = rawQuery.replace(/\s/g, '').toLowerCase() // removing whitespaces and lowercase the query
+
+    try {
+      response.search = {}
+      const checkQuery = `SELECT query FROM searchQuery WHERE query LIKE ?`
+      let checkExistingQuery = await database.query(checkQuery, [query])
+
+      if (Object.keys(checkExistingQuery).length) {
+        const updateAmount = `UPDATE searchQuery SET amount = amount + 1 WHERE query LIKE ?`
+        await database.query(updateAmount, [query])
+      } else {
+        const insertQuery = `INSERT INTO searchQuery(query,amount) VALUES(?,'1')`
+        await database.query(insertQuery, [query])
+      }
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
   public async tags(req: express.Request, res: express.Response) {
     const tags = [
       'User Research',

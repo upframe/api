@@ -16,6 +16,10 @@ function setRouters(): void {
   router.get('/tags', (req: ApiRequest, res: express.Response) => {
     search.tags(req, res)
   })
+
+  router.post('/query', (req: ApiRequest, res: express.Response) => {
+    search.query(req, res)
+  })
 }
 
 export function init(): express.Router {
