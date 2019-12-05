@@ -11,8 +11,8 @@
     "dev": "ts-node-dev --respawn --transpileOnly ./app.ts",
     "prod": "tsc && node ./build/app.js",
     "start": "node ./build/app.js",
-    "lint": "eslint . --ext .ts && prettier --check \"./**/*.ts\"",
-    "format": "eslint . --ext .ts --fix && prettier --write \"./**/*.ts\""
+    "lint": "eslint . --ext .ts --cache && prettier --check \"./**/*.ts\"",
+    "format": "eslint . --ext .ts --fix --cache && prettier --write \"./**/*.ts\""
   },
   "husky": {
     "hooks": {

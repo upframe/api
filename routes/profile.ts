@@ -2,35 +2,32 @@ import * as AWS from 'aws-sdk'
 import * as express from 'express'
 import * as path from 'path'
 
-import { Services } from '../service'
-import { APIerror, APIrequest, APIresponse } from '../types'
+import { user, auth, logger } from '../services'
 
 const router: express.Router = express.Router()
 
-function setRouters(app: express.Application): void {
-  const services: Services = app.get('services')
-
+function setRouters(): void {
   router.get(
     '/me',
-    services.auth.verifyToken,
-    (req: APIrequest, res: express.Response) => {
-      services.user.get(req, res)
+    auth.verifyToken,
+    (req: ApiRequest, res: express.Response) => {
+      user.get(req, res)
     }
   )
 
   router.patch(
     '/me',
-    services.auth.verifyToken,
-    (req: APIrequest, res: express.Response) => {
-      services.user.update(req, res)
+    auth.verifyToken,
+    (req: ApiRequest, res: express.Response) => {
+      user.update(req, res)
     }
   )
 
   router.post(
     '/image',
-    services.auth.verifyToken,
-    (req: APIrequest, res: express.Response) => {
-      let response: APIresponse = {
+    auth.verifyToken,
+    (req: ApiRequest, res: express.Response) => {
+      let response: ApiResponse = {
         ok: 1,
         code: 200,
       }
@@ -51,7 +48,7 @@ function setRouters(app: express.Application): void {
         req.pipe(req.busboy)
         req.busboy.on('file', (fieldname, file, filename) => {
           const extension = path.parse(filename).ext
-          uploadToS3UsingStream(services, uid + extension, file, req, res)
+          uploadToS3UsingStream(uid + extension, file, req, res)
         })
       } catch (err) {
         response = {
@@ -70,10 +67,9 @@ function setRouters(app: express.Application): void {
 }
 
 function uploadToS3UsingStream(
-  services: any,
   filename: any,
   stream: any,
-  req: APIrequest,
+  req: ApiRequest,
   res: express.Response
 ) {
   try {
@@ -98,7 +94,7 @@ function uploadToS3UsingStream(
         res.status(404).send(err)
       } else {
         if (!req.jwt || !req.jwt.email) throw 403
-        services.user.image(data.Location, req.jwt.email, res, req)
+        user.image(data.Location, req.jwt.email, res, req)
       }
     })
     return 0
@@ -107,12 +103,12 @@ function uploadToS3UsingStream(
   }
 }
 
-export function init(app: express.Application): express.Router {
+export function init(): express.Router {
   try {
-    setRouters(app)
-    app.get('logger').verbose('Profile router loaded')
+    setRouters()
+    logger.verbose('Profile router loaded')
   } catch (err) {
-    app.get('logger').error('Could not load profile router')
+    logger.error('Could not load profile router')
   }
 
   return router

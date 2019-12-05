@@ -1,7 +1,7 @@
-import * as calendar from './calendar'
 import { logger } from './logs'
 import * as sql from './sql'
 import * as format from './format'
 import * as object from './object'
+import * as calendar from './calendar'
 
-export { calendar, logger, sql, format, object }
+export { logger, sql, format, object, calendar }

@@ -1,16 +1,135 @@
+import * as crypto from 'crypto'
 import moment from 'moment'
+import { google, calendar_v3 } from 'googleapis'
+import { database, analytics, oauth } from '../services'
 
-/******************
- * Types
- ******************/
-import { date, Slot } from '../types'
+export function init() {
+  googleCalendar = google.calendar({
+    version: 'v3',
+  })
+  google.options({
+    auth: oauth.OAuthClient,
+  })
+}
+
+let googleCalendar: calendar_v3.Calendar
+
+export async function addSlots(slots: Slot[], mentor: Mentor) {
+  const sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
+
+  for (const slot of slots) {
+    // calculate how many hours are between slot end and slot start
+    // and determine how many 2h slots and 1h slots fill this better
+    const hourDiff: number = moment(slot.end).diff(slot.start, 'hours')
+    let twoHourSlots: number = Math.floor(hourDiff / 2)
+    let oneHourSlots: number = Math.floor(hourDiff - twoHourSlots * 2)
+
+    // determine directly how many 30-min slots can fill
+    let halfHourSlots: number =
+      moment(slot.end)
+        .subtract(hourDiff, 'hours')
+        .diff(slot.start, 'minutes') / 30
+
+    const it = moment(slot.start)
+    const itStart = moment(slot.start)
+    let mode: number = 2,
+      running: Boolean = true
+
+    while (running) {
+      if (twoHourSlots) {
+        it.add('2', 'hours')
+        twoHourSlots--
+      } else if (oneHourSlots) {
+        it.add('1', 'hours')
+        mode = 1
+        oneHourSlots--
+      } else if (halfHourSlots) {
+        it.add('30', 'minutes')
+        mode = 0
+        halfHourSlots--
+      } else {
+        running = false
+        break
+      }
+
+      const newSlot: Slot = {
+        sid: crypto.randomBytes(20).toString('hex'),
+        start: itStart.toISOString(),
+        end: it.toISOString(),
+        mentorUID: mentor.uid,
+        recurrency: slot.recurrency,
+      }
+
+      // save event in mentor's Google Calendar
+      if (mentor.googleAccessToken) {
+        await googleCalendar.events.insert({
+          calendarId: mentor.upframeCalendarId,
+          requestBody: {
+            summary: 'Upframe Free Time Slot',
+            start: {
+              dateTime: moment(newSlot.start).toISOString(),
+            },
+            end: {
+              dateTime: moment(newSlot.end).toISOString(),
+            },
+            description: 'Nice slot',
+            id: newSlot.sid,
+          },
+        })
+      }
+
+      // set next slot starting time
+      if (mode === 2) itStart.add('2', 'hours')
+      else if (mode === 1) itStart.add('1', 'hour')
+      else if (mode === 0) itStart.add('30', 'minutes')
+
+      // save slot to database
+      await database.query(sqlQuery, [
+        newSlot.sid,
+        newSlot.mentorUID,
+        newSlot.start,
+        newSlot.end,
+        newSlot.recurrency,
+      ])
+
+      analytics.mentorAddSlots(mentor, newSlot)
+    }
+  }
+}
+
+export async function deleteSlots(slots: string[], mentor: Mentor) {
+  const sqlQuery = 'SELECT deleteSlot(?, ?)'
+
+  for (const slotId of slots) {
+    googleCalendar.events.delete({
+      calendarId: mentor.upframeCalendarId,
+      eventId: slotId,
+    })
+
+    await database.query(sqlQuery, [slotId, mentor.uid])
+  }
+
+  analytics.mentorRemoveSlots(mentor)
+}
+
+export async function getSlots(mentorUid: string, start: Date, end: Date) {
+  const slots = await database.query(
+    'SELECT * FROM timeSlots WHERE mentorUID = ?',
+    [mentorUid]
+  )
+  return (!slots ? [] : Array.isArray(slots) ? slots : [slots]).filter(
+    ({ start: sStart, end: sEnd }) =>
+      new Date(sStart).getTime() >= start.getTime() &&
+      new Date(sEnd).getTime() <= end.getTime()
+  )
+}
 
 /**
  * @description returns date difference given the first, the last and the frequency of events/slots
  * @param {any} maxDate
  * @param {String} diffUnit - days, weeks, months, years, etc
  */
-function dateDiff(eventStart: date, maxDate: date, diffUnit: any) {
+export function dateDiff(eventStart: date, maxDate: date, diffUnit: any) {
   let num = 0
 
   try {

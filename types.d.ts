@@ -1,13 +1,13 @@
-import { Request } from 'express'
+type request = import('express').Request
 
 /* API types */
-export interface APIrequest extends Request {
+interface ApiRequest extends request {
   busboy?: any
-  body: APIRequestBody
+  body: ApiRequestBody
   jwt?: JWTpayload
 }
 
-export interface APIRequestBody {
+interface ApiRequestBody {
   /* IDs */
   mid?: string
   sid?: string
@@ -43,13 +43,13 @@ export interface APIRequestBody {
   timeoffset?: number
 }
 
-export interface JWTpayload {
+interface JWTpayload {
   aud?: string
   email?: string
   uid?: string
 }
 
-export interface APIresponse {
+interface ApiResponse {
   code: number
   ok: number
   message?: string
@@ -80,17 +80,17 @@ export interface APIresponse {
   refreshToken?: string
 }
 
-export interface APIerror {
+interface APIerror {
   api: boolean
   code: number
   message: string
   friendlyMessage?: string
 }
 
-export type date = string | Date
+type date = string | Date
 
 /* Generic types */
-export interface Meetup {
+interface Meetup {
   mid: string
   sid: string
   menteeUID: string
@@ -101,11 +101,12 @@ export interface Meetup {
   start: string | Date
 }
 
-export interface Account {
+interface Account {
   uid: string
   name: string
   email: string
   password: string
+  pictures?: { [size: string]: { [type: string]: string } }
 
   googleAccessToken?: string
   googleRefreshToken?: string
@@ -113,26 +114,20 @@ export interface Account {
   timeoffset?: number
 }
 
-export enum AccountTypes {
-  user = 'user',
-  mentor = 'mentor',
-}
-
-export interface Mentor extends Account {
+interface Mentor extends Account {
   favoritePlaces?: string
   upframeCalendarId?: string
   keycode?: string
   slots?: Slot[]
   newsfeed?: string
-  pictures?: { [size: string]: { [type: string]: string } }
 }
 
-export interface User extends Account {
-  type: AccountTypes
+interface User extends Account {
+  type: 'user' | 'mentor'
   upframeCalendarId?: string
 }
 
-export interface Slot {
+interface Slot {
   sid: string
   mentorUID: string
   start: Date | string
@@ -141,7 +136,7 @@ export interface Slot {
 }
 
 /* Mailer */
-export interface Email {
+interface Email {
   from: string
   to: string
   subject: string
@@ -149,12 +144,12 @@ export interface Email {
 }
 
 /* Analytics */
-export interface AnalyticsEvent {
+interface AnalyticsEvent {
   uid: string
   time: Date | string
 }
 
-export interface AnalyticsResponseRecord {
+interface AnalyticsResponseRecord {
   // Day String
   day?: string
 
@@ -168,7 +163,7 @@ export interface AnalyticsResponseRecord {
   users?: string[]
 }
 
-export interface AnalyticsResponse {
+interface AnalyticsResponse {
   ok?: number
 
   // Weekly Active Users

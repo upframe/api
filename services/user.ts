@@ -3,22 +3,16 @@ import * as express from 'express'
 import { google } from 'googleapis'
 import * as path from 'path'
 
-import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, User } from '../types'
-import { sql } from '../utils'
+import { logger, database, oauth } from '.'
+import { sql, format } from '../utils'
 
-export class UserService extends Service {
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    super(app, standaloneServices)
-
-    if (this.logger) this.logger.verbose('User service loaded')
+export class UserService {
+  constructor() {
+    logger.verbose('User service loaded')
   }
 
-  public async get(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async get(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       code: 200,
       ok: 1,
     }
@@ -32,7 +26,7 @@ export class UserService extends Service {
         'users',
         req.jwt
       )
-      const user: User = await this.database.query(sqlQuery, params)
+      const user: User = await database.query(sqlQuery, params)
       if (!Object.keys(user).length) {
         error = {
           api: true,
@@ -44,16 +38,24 @@ export class UserService extends Service {
         throw error
       }
 
+      user.pictures = format.pictures(
+        await database.query(
+          ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
+            uid: user.uid,
+          })
+        )
+      )
+
       // let's refresh google access token if the mentor has synced
       if (user.googleAccessToken || user.googleRefreshToken) {
         // try to refresh google oauth credentials
         try {
-          this.oauth.setCredentials({
+          oauth.setCredentials({
             access_token: user.googleAccessToken,
             refresh_token: user.googleRefreshToken,
           })
 
-          const tokens = await this.oauth.refreshAccessToken()
+          const tokens = await oauth.refreshAccessToken()
           if (!tokens.credentials.access_token) {
             error = {
               api: true,
@@ -89,11 +91,11 @@ export class UserService extends Service {
 
   /**
    * @description Updates user info with the new info
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async update(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async update(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       code: 200,
       ok: 1,
     }
@@ -111,12 +113,12 @@ export class UserService extends Service {
         json,
         { uid }
       )
-      await this.database.query(sqlQuery, params)
+      await database.query(sqlQuery, params)
 
       if (req.body.upframeCalendarId) {
         // Adicionar um Webhook caso estejamos a atualizar o calendar id
         response.code = 777
-        this.oauth.setCredentials({
+        oauth.setCredentials({
           access_token: req.body.googleAccessToken,
           refresh_token: req.body.googleRefreshToken,
         })
@@ -126,7 +128,7 @@ export class UserService extends Service {
         })
         // set google options
         google.options({
-          auth: this.oauth.OAuthClient,
+          auth: oauth.OAuthClient,
         })
 
         const today = new Date() // We need to use the UNIX timestamp. Google likes to complicate
@@ -135,7 +137,7 @@ export class UserService extends Service {
 
         googleCalendar.events.watch(
           {
-            auth: this.oauth.OAuthClient,
+            auth: oauth.OAuthClient,
             calendarId: req.body.upframeCalendarId,
             requestBody: {
               kind: 'api#channel',
@@ -153,8 +155,8 @@ export class UserService extends Service {
             },
           },
           error => {
-            this.logger.error('Error at Google Calendar events watch')
-            this.logger.error(error)
+            logger.error('Error at Google Calendar events watch')
+            logger.error(error)
             if (error) throw error
           }
         )
@@ -179,9 +181,9 @@ export class UserService extends Service {
     url: string,
     userEmail: string,
     res: express.Response,
-    req: APIrequest
+    req: ApiRequest
   ) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
       url,
@@ -195,10 +197,10 @@ export class UserService extends Service {
         'users',
         req.jwt
       )
-      const user = await this.database.query(sqlQuery, params)
+      const user = await database.query(sqlQuery, params)
       const oldExtension = path.parse(user.profilePic.slice(-7)).ext
       const sqlQuery2 = 'UPDATE users SET profilePic = ? WHERE email = ?'
-      const result = await this.database.query(sqlQuery2, [url, userEmail])
+      const result = await database.query(sqlQuery2, [url, userEmail])
       if (result.changedRows) response.code = 202
       else {
         error = {

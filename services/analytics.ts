@@ -1,26 +1,11 @@
-import * as express from 'express'
 import * as mysql from 'mysql2/promise'
-import { Logger } from 'winston'
-
+import { logger } from '.'
 import moment = require('moment')
 
-import {
-  AccountTypes,
-  AnalyticsEvent,
-  AnalyticsResponseRecord,
-  Meetup,
-  Mentor,
-  Slot,
-  User,
-} from '../types'
-
 export class Analytics {
-  private logger: Logger
   private pool: any
 
-  constructor(app: express.Application) {
-    this.logger = app.get('logger')
-
+  constructor() {
     try {
       const pool: mysql.Pool = mysql.createPool({
         host: process.env.DB_HOST,
@@ -28,11 +13,10 @@ export class Analytics {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_ANALYTICS,
       })
-
-      if (pool) this.logger.verbose('Analytics OK')
+      if (pool) logger.verbose('Analytics OK')
       this.pool = pool
     } catch (err) {
-      this.logger.error('Analytics NOT OK')
+      logger.error('Analytics NOT OK')
     }
   }
 
@@ -318,8 +302,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      this.logger.warn(`Couldn't log meetups' MeetupRequest event`)
-      throw err
+      logger.warn(`Couldn't log meetups' MeetupRequest event`)
     }
   }
 
@@ -343,8 +326,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      this.logger.warn(`Couldn't log meetups' MeetupConfirm event`)
-      throw err
+      logger.warn(`Couldn't log meetups' MeetupConfirm event`)
     }
   }
 
@@ -368,8 +350,7 @@ export class Analytics {
         ]
       )
     } catch (err) {
-      this.logger.warn(`Couldn't log meetups' MeetupRefuse event`)
-      throw err
+      logger.warn(`Couldn't log meetups' MeetupRefuse event`)
     }
   }
 
@@ -393,8 +374,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      this.logger.warn(`Couldn't log mentor's AddSlots event`)
-      throw err
+      logger.warn(`Couldn't log mentor's AddSlots event`)
     }
   }
 
@@ -408,15 +388,13 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      this.logger.warn(`Couldn't log mentor's RemoveSlots event`)
-      throw err
+      logger.warn(`Couldn't log mentor's RemoveSlots event`)
     }
   }
 
   // User events
   public async userLogin(user: User) {
-    const eventName =
-      user.type === AccountTypes.mentor ? 'MentorLogin' : 'UserLogin'
+    const eventName = user.type === 'mentor' ? 'MentorLogin' : 'UserLogin'
 
     try {
       await this.pool.query('INSERT INTO events VALUES(?, ?, ?)', [
@@ -427,8 +405,7 @@ export class Analytics {
           .toISOString(),
       ])
     } catch (err) {
-      this.logger.warn(`Couldn't log user's ${eventName} event`)
-      throw err
+      logger.warn(`Couldn't log user's ${eventName} event`)
     }
   }
 }

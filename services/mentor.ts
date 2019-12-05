@@ -1,20 +1,12 @@
-import * as crypto from 'crypto'
 import * as express from 'express'
-import { google } from 'googleapis'
 import moment from 'moment'
 
-import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, date, Mentor, Slot } from '../types'
-import { calendar, sql, format } from '../utils'
+import { database, mail, oauth, logger } from '.'
+import { sql, format, calendar } from '../utils'
 
-export class MentorService extends Service {
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    super(app, standaloneServices)
-
-    if (this.logger) this.logger.verbose('Mentor service loaded')
+export class MentorService {
+  constructor() {
+    logger.verbose('Mentor service loaded')
   }
 
   /**
@@ -23,7 +15,7 @@ export class MentorService extends Service {
    * @param {express.Response} res
    */
   public async get(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -40,7 +32,7 @@ export class MentorService extends Service {
         type: 'mentor',
       })
 
-      const mentorInfo: Mentor = await this.database.query(sqlQuery, params)
+      const mentorInfo: Mentor = await database.query(sqlQuery, params)
       if (!Object.keys(mentorInfo).length) {
         error = {
           api: true,
@@ -55,58 +47,18 @@ export class MentorService extends Service {
 
       // query profile pictures
       response.mentor.pictures = format.pictures(
-        await this.database.query(
+        await database.query(
           ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
             uid: mentorInfo.uid,
           })
         )
       )
 
-      // We are not using Google Calendar as a source of events right now
-      /*
-      if (mentorInfo.googleAccessToken) {
-        const mentorUid = mentorInfo.uid
-        this.oauth.setCredentials({
-          access_token: mentorInfo.googleAccessToken,
-          refresh_token: mentorInfo.googleRefreshToken,
-        })
-
-        const googleCalendar = google.calendar({ version: 'v3' })
-
-        google.options({
-          auth: this.oauth.OAuthClient,
-        })
-
-        let googleEvents
-        if (mentorInfo.upframeCalendarId) {
-          googleEvents = await this.oauth.getEventsList(googleCalendar, mentorInfo.upframeCalendarId, (new Date()).toISOString(), 2500)
-        }
-
-        if (googleEvents.length) {
-          const getAllTimeSlotsQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
-          let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
-          if (!dbSlots.length) {
-            dbSlots = [dbSlots]
-          }
-          const finalDbSlotsToRemove = dbSlots.filter((slot) => {
-            return !googleEvents.some((googleEvent) => googleEvent.id === slot.sid)
-          })
-          const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
-          for (const slot of finalDbSlotsToRemove) {
-            await this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
-          }
-        } else {
-          const deleteAllTimeSlotsQuery = 'DELETE FROM timeSlots WHERE mentorUID = ?'
-          await this.database.query(deleteAllTimeSlotsQuery, mentorUid)
-        }
-      }
-      */
-
       // fetch mentor time slots
       sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
       params = [response.mentor.uid]
 
-      let mentorSlots = await this.database.query(sqlQuery, params)
+      let mentorSlots = await database.query(sqlQuery, params)
 
       if (mentorSlots.sid) {
         response.mentor.slots = [mentorSlots]
@@ -142,7 +94,7 @@ export class MentorService extends Service {
               .add(1, 'h')
               .toISOString(),
           ]
-          result = await this.database.query(sqlQuery, params)
+          result = await database.query(sqlQuery, params)
           if (result['COUNT(*)']) {
             // there is a confirmed meetup on that space in time
             // so let's filter all the slots and remove the slot starting
@@ -194,7 +146,7 @@ export class MentorService extends Service {
    * @param {express.Response} res Express response
    */
   public async getAll(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -207,7 +159,7 @@ export class MentorService extends Service {
         WHERE type = 'mentor' AND newsfeed = 'Y'
         ORDER BY RAND()`
 
-      const mentorList = await this.database.query(sqlQuery)
+      const mentorList = await database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
         error = {
           api: true,
@@ -226,7 +178,7 @@ export class MentorService extends Service {
             sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
             const params = [mentorList[index].uid]
 
-            let mentorSlots = await this.database.query(sqlQuery, params)
+            let mentorSlots = await database.query(sqlQuery, params)
 
             if (mentorSlots.sid) {
               mentorList[index].slots = [mentorSlots]
@@ -268,7 +220,7 @@ export class MentorService extends Service {
    * @param {express.Response} res Express response
    */
   public async getRandom(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -278,7 +230,7 @@ export class MentorService extends Service {
       const sqlQuery =
         "SELECT name, role, company, bio, tags, keycode, profilePic FROM users WHERE type = 'mentor' ORDER BY RAND() LIMIT 5"
 
-      const mentorList = await this.database.query(sqlQuery)
+      const mentorList = await database.query(sqlQuery)
       if (!Object.keys(mentorList).length) {
         error = {
           api: true,
@@ -307,138 +259,34 @@ export class MentorService extends Service {
     res.status(response.code).json(response)
   }
 
-  /**
-   * @description Returns mentor's time slots. There are two possibilities here,
-   * either the user is Google Synced and we need to take that into consideration,
-   * or we simply don't care about that.
-   * @param {APIrequest} req
-   * @param {express.Response} res
-   */
-  public async getTimeSlots(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
-      ok: 1,
-      code: 200,
-    }
-    let error: APIerror
+  public async getTimeSlots({ jwt, query }: ApiRequest, res: express.Response) {
+    if (!jwt || !jwt.uid)
+      return res.status(403).json({ message: 'UNAUTHORIZED' })
 
+    const makeDate = (date: string | number | Date, alternative: Date): Date =>
+      !date ? alternative : date instanceof Date ? date : new Date(date)
+
+    const now = new Date()
     try {
-      if (!req.jwt || !req.jwt.uid) {
-        error = {
-          api: true,
-          code: 403,
-          message: 'Insufficient permissions',
-          friendlyMessage: 'There was a problem fetching your timeslots',
-        }
-
-        throw error
-      }
-
-      ////////////////////////////////////
-      let firstSqlQuery: string
-      let params: string[] | string | date[]
-      ;[firstSqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
-        uid: req.jwt.uid,
-        type: 'mentor',
-      })
-
-      const mentorInfo: Mentor = await this.database.query(
-        firstSqlQuery,
-        params
+      const slots = await calendar.getSlots(
+        jwt.uid,
+        makeDate(query && query.start, now),
+        makeDate(query && query.end, new Date(now.setMonth(now.getMonth() + 1)))
       )
-      if (!Object.keys(mentorInfo).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Mentor not found',
-          friendlyMessage: 'There is no mentor with the provided keycode',
-        }
-
-        throw error
-      }
-      response.mentor = mentorInfo
-
-      // ATM we're not relying on Google Calendar for events
-      /*
-      if (mentorInfo.googleAccessToken) {
-        this.oauth.setCredentials({
-          access_token: mentorInfo.googleAccessToken,
-          refresh_token: mentorInfo.googleRefreshToken,
-        })
-
-        const googleCalendar = google.calendar({ version: 'v3' })
-        google.options({ auth: this.oauth.OAuthClient })
-
-        // fetch mentor google calendar's events
-        let googleEvents
-        if (mentorInfo.upframeCalendarId) {
-          googleEvents = await this.oauth.getEventsList(googleCalendar, mentorInfo.upframeCalendarId, (new Date()).toISOString(), 2400)
-        }
-      }
-      */
-
-      const sqlQuery = 'SELECT * FROM timeSlots WHERE mentorUID = ?'
-      const startDate = req.query.start
-      const endDate = req.query.end
-
-      const slots: Slot[] = await this.database.query(sqlQuery, [
-        response.mentor.uid,
-      ])
-      if (
-        !Object.keys(slots).length ||
-        (Array.isArray(slots) && !slots.length)
-      ) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Slots not found',
-          friendlyMessage: 'This mentor has no slots',
-        }
-
-        throw error
-      }
-
-      let genSlots: Slot[] = []
-      if (Array.isArray(slots)) {
-        genSlots = calendar.automaticGenerate(slots).filter(slot => {
-          let ok = true
-          // verify if slot start is after the defined minimum start Date
-          if (new Date(startDate)) {
-            if (new Date(startDate).getTime() > new Date(slot.start).getTime())
-              ok = false
-          }
-          // verify if slot end is before the defined maximum end Date
-          if (new Date(endDate)) {
-            if (new Date(endDate).getTime() < new Date(slot.end).getTime())
-              ok = false
-          }
-          return ok
-        })
-      } else genSlots.push(slots)
-
-      response.slots = genSlots
+      return res.json({ slots })
     } catch (err) {
-      response = {
-        ok: 0,
-        code: 500,
-      }
-
-      if (err.api) {
-        response.code = err.code
-        response.message = err.message
-        response.friendlyMessage = err.friendlyMessage
-      }
+      console.warn(err)
+      return res.sendStatus(500)
     }
-
-    res.status(response.code).json(response)
   }
 
   /**
    * @description Updates and creates mentor's time slots
-   * @param {APIrequest} req
+   * @param {ApiRequest} req
    * @param {express.Response} res
    */
-  public async updateTimeSlots(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async updateTimeSlots(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -465,16 +313,16 @@ export class MentorService extends Service {
       ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
         uid: req.jwt.uid,
       })
-      const mentor: Mentor = await this.database.query(sqlQuery, params)
+      const mentor: Mentor = await database.query(sqlQuery, params)
 
       // let's refresh google access token if the mentor has synced
       if (mentor.googleAccessToken || mentor.googleRefreshToken) {
-        this.oauth.setCredentials({
+        oauth.setCredentials({
           access_token: mentor.googleAccessToken,
           refresh_token: mentor.googleRefreshToken,
         })
 
-        const tokens = await this.oauth.refreshAccessToken()
+        const tokens = await oauth.refreshAccessToken()
         if (!tokens.credentials.access_token) {
           error = {
             api: true,
@@ -486,126 +334,31 @@ export class MentorService extends Service {
         }
       }
 
-      // create Calendar instance
-      const googleCalendar = google.calendar({
-        version: 'v3',
-      })
-      // set google options
-      google.options({
-        auth: this.oauth.OAuthClient,
-      })
-
       // delete events
       if (deletedSlots.length) {
-        sqlQuery = 'SELECT deleteSlot(?, ?)'
         response.deleteOK = 1
-
-        this.analytics.mentorRemoveSlots(mentor)
-
-        for (const slotID of deletedSlots) {
-          try {
-            googleCalendar.events.delete({
-              calendarId: mentor.upframeCalendarId,
-              eventId: slotID,
-            })
-
-            await this.database.query(sqlQuery, [slotID, req.jwt.uid])
-          } catch (err) {
-            response.ok = 0
-            response.code = 500
-            response.message = "One or more time slots couldn't be deleted"
-            response.deleteOK = 0
-          }
+        try {
+          calendar.deleteSlots(deletedSlots, mentor)
+        } catch (err) {
+          console.warn(err)
+          response.ok = 0
+          response.code = 500
+          response.message = "One or more time slots couldn't be deleted"
+          response.deleteOK = 0
         }
       }
 
       // try to update events
       if (updatedSlots.length) {
-        sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
         response.updateOK = 1
-
-        for (const slot of updatedSlots) {
-          try {
-            // calculate how many hours are between slot end and slot start
-            // and determine how many 2h slots and 1h slots fill this better
-            const hourDiff: number = moment(slot.end).diff(slot.start, 'hours')
-            let twoHourSlots: number = Math.floor(hourDiff / 2)
-            let oneHourSlots: number = Math.floor(hourDiff - twoHourSlots * 2)
-
-            // determine directly how many 30-min slots can fill
-            let halfHourSlots: number =
-              moment(slot.end)
-                .subtract(hourDiff, 'hours')
-                .diff(slot.start, 'minutes') / 30
-
-            const it = moment(slot.start)
-            const itStart = moment(slot.start)
-            let mode: number = 2,
-              running: Boolean = true
-
-            while (running) {
-              if (twoHourSlots) {
-                it.add('2', 'hours')
-                twoHourSlots--
-              } else if (oneHourSlots) {
-                it.add('1', 'hours')
-                mode = 1
-                oneHourSlots--
-              } else if (halfHourSlots) {
-                it.add('30', 'minutes')
-                mode = 0
-                halfHourSlots--
-              } else {
-                running = false
-                break
-              }
-
-              const newSlot: Slot = {
-                sid: crypto.randomBytes(20).toString('hex'),
-                start: itStart.toISOString(),
-                end: it.toISOString(),
-                mentorUID: req.jwt.uid,
-                recurrency: slot.recurrency,
-              }
-
-              // set next slot starting time
-              if (mode === 2) itStart.add('2', 'hours')
-              else if (mode === 1) itStart.add('1', 'hour')
-              else if (mode === 0) itStart.add('30', 'minutes')
-
-              // save slot to database
-              await this.database.query(sqlQuery, [
-                newSlot.sid,
-                newSlot.mentorUID,
-                newSlot.start,
-                newSlot.end,
-                newSlot.recurrency,
-              ])
-
-              this.analytics.mentorAddSlots(mentor, newSlot)
-
-              // save event in mentor's Google Calendar
-              await googleCalendar.events.insert({
-                calendarId: mentor.upframeCalendarId,
-                requestBody: {
-                  summary: 'Upframe Free Time Slot',
-                  start: {
-                    dateTime: moment(newSlot.start).toISOString(),
-                  },
-                  end: {
-                    dateTime: moment(newSlot.end).toISOString(),
-                  },
-                  description: 'Nice slot',
-                  id: newSlot.sid,
-                },
-              })
-            }
-          } catch (err) {
-            response.ok = 0
-            response.code = 500
-            response.message = "One or more time slots couldn't be updated"
-            response.updateOK = 0
-          }
+        try {
+          await calendar.addSlots(updatedSlots, mentor)
+        } catch (err) {
+          console.warn(err)
+          response.ok = 0
+          response.code = 500
+          response.message = "One or more time slots couldn't be updated"
+          response.updateOK = 0
         }
       }
     } catch (err) {
@@ -632,7 +385,7 @@ export class MentorService extends Service {
    * @param {express.Response} res
    */
   public async verify(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -645,7 +398,7 @@ export class MentorService extends Service {
         : req.query.uniqueid
       const sqlQuery = `SELECT * FROM onboarding WHERE ${check} = ${value}`
 
-      const onboardingInvite = await this.database.query(sqlQuery)
+      const onboardingInvite = await database.query(sqlQuery)
       if (!Object.keys(onboardingInvite).length) {
         error = {
           api: true,
@@ -678,14 +431,14 @@ export class MentorService extends Service {
    * @param {express.Response} res
    */
   public async request(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
     let error: APIerror
 
     try {
-      const mentor = await this.database.query(
+      const mentor = await database.query(
         'SELECT name, email FROM users WHERE keycode = ?',
         req.body.keycode
       )
@@ -700,7 +453,7 @@ export class MentorService extends Service {
         throw error
       }
 
-      const result = await this.mail.sendTimeSlotRequest(
+      const result = await mail.sendTimeSlotRequest(
         mentor.email,
         mentor.name,
         req.body.name,

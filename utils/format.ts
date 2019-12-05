@@ -1,5 +1,4 @@
 import { Custom as Obj, filterKeys } from './object'
-import { Mentor } from '../types'
 
 // sort pictures into size -> type -> url structure
 export function pictures(data: object): Mentor['pictures'] {

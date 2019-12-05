@@ -1,36 +1,33 @@
 import * as express from 'express'
 
-import { Services } from '../service'
-import { APIrequest } from '../types'
+import { search, logger } from '../services'
 
 const router: express.Router = express.Router()
 
-function setRouters(app: express.Application): void {
-  const services: Services = app.get('services')
-
-  router.get('/quick', (req: APIrequest, res: express.Response) => {
-    services.search.quick(req, res)
+function setRouters(): void {
+  router.get('/quick', (req: ApiRequest, res: express.Response) => {
+    search.quick(req, res)
   })
 
-  router.get('/full', (req: APIrequest, res: express.Response) => {
-    services.search.full(req, res)
+  router.get('/full', (req: ApiRequest, res: express.Response) => {
+    search.full(req, res)
   })
 
-  router.get('/tags', (req: APIrequest, res: express.Response) => {
-    services.search.tags(req, res)
+  router.get('/tags', (req: ApiRequest, res: express.Response) => {
+    search.tags(req, res)
   })
 
-  router.post('/query', (req: APIrequest, res: express.Response) => {
-    services.search.query(req, res)
+  router.post('/query', (req: ApiRequest, res: express.Response) => {
+    search.query(req, res)
   })
 }
 
-export function init(app: express.Application): express.Router {
+export function init(): express.Router {
   try {
-    setRouters(app)
-    app.get('logger').verbose('Search router loaded')
+    setRouters()
+    logger.verbose('Search router loaded')
   } catch (err) {
-    app.get('logger').error('Could not load search router')
+    logger.error('Could not load search router')
   }
 
   return router

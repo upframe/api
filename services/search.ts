@@ -1,17 +1,11 @@
 import * as express from 'express'
 
-import { Service, StandaloneServices } from '../service'
-import { APIerror, APIresponse } from '../types'
+import { database, logger } from '.'
 import { format } from '../utils'
 
-export class SearchService extends Service {
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    super(app, standaloneServices)
-
-    if (this.logger) this.logger.verbose('Search service loaded')
+export class SearchService {
+  constructor() {
+    logger.verbose('Search service loaded')
   }
 
   /**
@@ -20,7 +14,7 @@ export class SearchService extends Service {
    * @param {express.Response} res
    */
   public async quick(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -32,7 +26,7 @@ export class SearchService extends Service {
 
       // expertise search
       sqlQuery = 'SELECT * FROM expertise WHERE name LIKE ?'
-      const expertiseResult = await this.database.query(sqlQuery, [
+      const expertiseResult = await database.query(sqlQuery, [
         `%${req.query.term}%`,
       ])
       if (Object.keys(expertiseResult).length)
@@ -41,7 +35,7 @@ export class SearchService extends Service {
       // people search
       sqlQuery =
         'SELECT name, profilePic, bio, keycode FROM users WHERE name LIKE ?'
-      const peopleResult = await this.database.query(sqlQuery, [
+      const peopleResult = await database.query(sqlQuery, [
         `%${req.query.term}%`,
       ])
       if (Object.keys(peopleResult).length)
@@ -49,7 +43,7 @@ export class SearchService extends Service {
 
       // company search
       sqlQuery = 'SELECT * FROM companies WHERE name LIKE ?'
-      const companyResult = await this.database.query(sqlQuery, [
+      const companyResult = await database.query(sqlQuery, [
         `%${req.query.term}%`,
       ])
       if (Object.keys(companyResult).length)
@@ -91,7 +85,7 @@ export class SearchService extends Service {
    * @param {express.Response} res
    */
   public async full(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -105,9 +99,7 @@ export class SearchService extends Service {
           FROM users 
           LEFT JOIN profilePictures ON users.uid = profilePictures.uid 
           WHERE category LIKE ? AND type = 'mentor' AND newsfeed = 'Y'`
-        let user = await this.database.query(sqlQuery, [
-          `%${search.toLowerCase()}%`,
-        ])
+        let user = await database.query(sqlQuery, [`%${search.toLowerCase()}%`])
         if (!Object.keys(user).length) {
           error = {
             api: true,
@@ -126,7 +118,7 @@ export class SearchService extends Service {
       } else {
         const sqlQuery =
           "SELECT name, profilePic, bio, keycode, tags, role, company FROM users WHERE (name LIKE ? OR category LIKE ?) AND type = 'mentor' AND newsfeed = 'Y'"
-        let user = await this.database.query(sqlQuery, [
+        let user = await database.query(sqlQuery, [
           `${search}%`,
           `%${search.toLowerCase()}%`,
         ])
@@ -167,7 +159,7 @@ export class SearchService extends Service {
    * @param {express.Response} res
    */
   public async query(req: express.Request, res: express.Response) {
-    let response: APIresponse = {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -177,14 +169,14 @@ export class SearchService extends Service {
     try {
       response.search = {}
       const checkQuery = `SELECT query FROM searchQuery WHERE query LIKE ?`
-      let checkExistingQuery = await this.database.query(checkQuery, [query])
+      let checkExistingQuery = await database.query(checkQuery, [query])
 
       if (Object.keys(checkExistingQuery).length) {
         const updateAmount = `UPDATE searchQuery SET amount = amount + 1 WHERE query LIKE ?`
-        await this.database.query(updateAmount, [query])
+        await database.query(updateAmount, [query])
       } else {
         const insertQuery = `INSERT INTO searchQuery(query,amount) VALUES(?,'1')`
-        await this.database.query(insertQuery, [query])
+        await database.query(insertQuery, [query])
       }
     } catch (err) {
       response = {

@@ -1,25 +1,20 @@
 import * as express from 'express'
 
-import { Service, StandaloneServices } from '../service'
-import { APIrequest, APIresponse } from '../types'
+import { database, logger, oauth } from '.'
 
 import { google } from 'googleapis'
 
-export class WebhooksService extends Service {
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    super(app, standaloneServices)
-    if (this.logger) this.logger.verbose('Webhook service loaded')
+export class WebhooksService {
+  constructor() {
+    logger.verbose('Webhooks service loaded')
   }
 
   /* Vamos receber em headers x-goog-resource-id o ID do mentor.
    * Nos queremos ir buscar os eventos do mentor no Google Calendar
    * e comparar com os da nossa base de dados.
    */
-  public async parseGoogleWebhook(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async parseGoogleWebhook(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -28,9 +23,9 @@ export class WebhooksService extends Service {
     try {
       const userInfoQuery =
         'SELECT googleAccessToken, googleRefreshToken, upframeCalendarId FROM users WHERE uid = ?'
-      const mentor = await this.database.query(userInfoQuery, mentorUid)
+      const mentor = await database.query(userInfoQuery, mentorUid)
 
-      this.oauth.setCredentials({
+      oauth.setCredentials({
         access_token: mentor.googleAccessToken,
         refresh_token: mentor.googleRefreshToken,
       })
@@ -40,7 +35,7 @@ export class WebhooksService extends Service {
       })
 
       google.options({
-        auth: this.oauth.OAuthClient,
+        auth: oauth.OAuthClient,
       })
 
       const googleResponse = await googleCalendar.events.list({
@@ -58,7 +53,7 @@ export class WebhooksService extends Service {
       if (googleEvents.length > 0) {
         const getAllTimeSlotsQuery =
           'SELECT * FROM timeSlots WHERE mentorUID = ?'
-        let dbSlots = await this.database.query(getAllTimeSlotsQuery, mentorUid)
+        let dbSlots = await database.query(getAllTimeSlotsQuery, mentorUid)
         if (!dbSlots.length) {
           dbSlots = [dbSlots]
         }
@@ -67,12 +62,12 @@ export class WebhooksService extends Service {
         })
         const deleteTimeSlotQuery = 'SELECT deleteSlot(?, ?)'
         for (const slot of finalDbSlotsToRemove) {
-          this.database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
+          database.query(deleteTimeSlotQuery, [slot.sid, mentorUid])
         }
       } else {
         const deleteAllTimeSlotsQuery =
           'DELETE FROM timeSlots WHERE mentorUID = ?'
-        this.database.query(deleteAllTimeSlotsQuery, mentorUid)
+        database.query(deleteAllTimeSlotsQuery, mentorUid)
       }
     } catch (error) {
       response = {

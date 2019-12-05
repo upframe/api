@@ -5,22 +5,17 @@ import * as crypto from 'crypto'
 import * as express from 'express'
 import * as jwt from 'jsonwebtoken'
 
-import { Service, StandaloneServices } from '../service'
-import { APIerror, APIrequest, APIresponse, JWTpayload } from '../types'
 import { sql } from '../utils'
+import { logger } from '../utils'
+import { database, analytics, mail, oauth } from '.'
 
-export class AuthService extends Service {
-  constructor(
-    app: express.Application,
-    standaloneServices: StandaloneServices
-  ) {
-    super(app, standaloneServices)
-
-    if (this.logger) this.logger.verbose('Auth service loaded')
+export class AuthService {
+  constructor() {
+    logger.verbose('Auth service loaded')
   }
 
   public verifyToken(
-    req: APIrequest,
+    req: ApiRequest,
     res: express.Response,
     next: express.NextFunction
   ) {
@@ -38,7 +33,7 @@ export class AuthService extends Service {
 
       next()
     } catch (err) {
-      const response: APIresponse = {
+      const response: ApiResponse = {
         code: 403,
         ok: 0,
         message: 'The JWT token is not valid',
@@ -54,13 +49,13 @@ export class AuthService extends Service {
   }
 
   public isMentor(
-    req: APIrequest,
+    req: ApiRequest,
     res: express.Response,
     next: express.NextFunction
   ) {
     if (req.jwt && req.jwt.aud === 'mentor') next()
     else {
-      const response: APIresponse = {
+      const response: ApiResponse = {
         code: 403,
         ok: 0,
         message: "You're not a mentor",
@@ -79,8 +74,8 @@ export class AuthService extends Service {
     } else return ''
   }
 
-  public async login(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async login(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -99,7 +94,7 @@ export class AuthService extends Service {
       }
 
       const sqlQuery = 'SELECT * FROM users WHERE email = ?'
-      const user = await this.database.query(sqlQuery, [req.body.email])
+      const user = await database.query(sqlQuery, [req.body.email])
 
       if (Object.keys(user).length) {
         if (bcrypt.compareSync(req.body.password, user.password)) {
@@ -116,7 +111,7 @@ export class AuthService extends Service {
             httpOnly: true,
           })
 
-          this.analytics.userLogin(user)
+          analytics.userLogin(user)
         } else {
           error = {
             api: true,
@@ -144,8 +139,8 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
-  public logout(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public logout(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -162,32 +157,18 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async register(req: APIrequest, res: express.Response) {
+  public async register(req: ApiRequest, res: express.Response) {
     // We wait 2 seconds for each register as a way to protect ourselves against
     // bruteforce attacks. Using extra time makes them virtually impossible.
     setTimeout(() => {
       const json = Object.assign({}, req.body)
-      let response: APIresponse = {
+      let response: ApiResponse = {
         code: 200,
         ok: 1,
       }
       let error: APIerror
 
       try {
-        /* - MVP-ONLY -
-         * Disable register
-         */
-        // if (!Number(process.env.REGISTER)) {
-        //   error = {
-        //     api: true,
-        //     code: 501,
-        //     message: 'Register is not allowed',
-        //     friendlyMessage: 'Register is not available at the moment. Please, try again later',
-        //   }
-
-        //   throw error
-        // }
-
         if (
           !json.email ||
           !json.password ||
@@ -236,7 +217,7 @@ export class AuthService extends Service {
           'users',
           json
         )
-        this.database.query(sqlQuery, params)
+        database.query(sqlQuery, params)
       } catch (err) {
         response = {
           ok: 0,
@@ -260,8 +241,8 @@ export class AuthService extends Service {
     }, 2000)
   }
 
-  public async resetPassword(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async resetPassword(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -278,7 +259,7 @@ export class AuthService extends Service {
           'passwordReset',
           { token: req.body.token }
         )
-        const passwordResetToken = await this.database.query(sqlQuery, params)
+        const passwordResetToken = await database.query(sqlQuery, params)
         if (!Object.keys(passwordResetToken).length) {
           error = {
             api: true,
@@ -303,7 +284,7 @@ export class AuthService extends Service {
           }
         )
 
-        const result = await this.database.query(sqlQuery, params)
+        const result = await database.query(sqlQuery, params)
         if (!result.affectedRows) {
           error = {
             api: true,
@@ -325,7 +306,7 @@ export class AuthService extends Service {
         } else {
           // result = 1 means email was sent
           // result = 0 means email was NOT sent
-          const result = await this.mail.sendPasswordReset(req.body.email)
+          const result = await mail.sendPasswordReset(req.body.email)
 
           if (result !== 0) {
             error = {
@@ -359,8 +340,8 @@ export class AuthService extends Service {
   /**
    * @description changes account's email
    */
-  public async changeEmail(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async changeEmail(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -369,7 +350,7 @@ export class AuthService extends Service {
     if (req.body.token && req.body.email && process.env.CONNECT_PK) {
       try {
         // verify if token is valid by fetching it from the database
-        const emailChangeRequest = await this.database.query(
+        const emailChangeRequest = await database.query(
           'SELECT * FROM emailChange WHERE token = ?',
           [req.body.token]
         )
@@ -386,7 +367,7 @@ export class AuthService extends Service {
 
         let sqlQuery: string = 'UPDATE users SET email = ? WHERE email = ?'
         let params: string[] = [req.body.email, emailChangeRequest.email]
-        await this.database.query(sqlQuery, params)
+        await database.query(sqlQuery, params)
 
         // if user is logged in refresh access token
         // clear access token otherwise
@@ -416,7 +397,7 @@ export class AuthService extends Service {
 
         sqlQuery = 'DELETE FROM emailChange WHERE token = ?'
         params = [req.body.token]
-        await this.database.query(sqlQuery, params)
+        await database.query(sqlQuery, params)
       } catch (err) {
         response = {
           ok: 0,
@@ -433,7 +414,7 @@ export class AuthService extends Service {
         if (req.body.email) {
           // result = 1 means email was sent
           // result = 0 means email was NOT sent
-          const result = await this.mail.sendEmailChange(req.body.email)
+          const result = await mail.sendEmailChange(req.body.email)
 
           if (result !== 0) throw result
         } else {
@@ -450,15 +431,15 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async getGoogleUrl(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async getGoogleUrl(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
     let error: APIerror
 
     try {
-      const authorizeUrl = this.oauth.generateAuthUrl({
+      const authorizeUrl = oauth.generateAuthUrl({
         access_type: 'offline',
         scope: 'profile email https://www.googleapis.com/auth/calendar',
         prompt: 'consent',
@@ -486,8 +467,8 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async receiveOauthCode(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async receiveOauthCode(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -502,7 +483,7 @@ export class AuthService extends Service {
         }
         throw error
       }
-      const tokens = (await this.oauth.getToken(req.query.code)).tokens
+      const tokens = (await oauth.getToken(req.query.code)).tokens
 
       if (!tokens || !tokens.access_token) {
         error = {
@@ -528,8 +509,8 @@ export class AuthService extends Service {
     res.status(response.code).json(response)
   }
 
-  public async unlinkGoogle(req: APIrequest, res: express.Response) {
-    let response: APIresponse = {
+  public async unlinkGoogle(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
       ok: 1,
       code: 200,
     }
@@ -554,7 +535,7 @@ export class AuthService extends Service {
       ;[sqlQuery, params] = sql.createSQLqueryFromJSON('SELECT', 'users', {
         uid: req.jwt.uid,
       })
-      await this.database.query(sqlQuery, params)
+      await database.query(sqlQuery, params)
     } catch (err) {
       response = {
         ok: 0,
