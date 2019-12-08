@@ -39,6 +39,13 @@ export class Mail {
     return file
   }
 
+  public getTimeZone(date: date) {
+    let getDateObject = new Date(date)
+    let formatDate = Intl.DateTimeFormat(getDateObject)
+    const timeZone = formatDate.resolvedOptions().timeZone
+    return timeZone
+  }
+
   /**
    * @description Send password reset email
    * @param {string} toAddress
@@ -120,10 +127,12 @@ export class Mail {
   /**
    * @description Sends meetup invite notification to mentor by email
    * @param {string} meetupID
+   * @param {date} meetupTime
    * @param {string} message
    */
   public async sendMeetupInvitation(
     meetupID: string,
+    meetupTime: date,
     message: string | undefined
   ): Promise<APIerror | number> {
     let error: APIerror
@@ -187,10 +196,11 @@ export class Mail {
       const UTCdate = moment
         .utc(meetup.start)
         .utcOffset(mentor.timeoffset ? mentor.timeoffset : 0)
-      const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format(
-        'MMMM(dddd)'
-      )}`
-      const beautifulTime = `${UTCdate.format('h:mma')}`
+      const beautifulDate = ` ${UTCdate.format('dddd')}, ${UTCdate.format(
+        'MMMM'
+      )} ${UTCdate.format('D')}`
+      const beautifulTime = `${UTCdate.format('H')}h`
+      const timeZone = this.getTimeZone(meetupTime)
 
       const placeholders: any = {
         MENTOR: mentorFirstName,
@@ -199,14 +209,15 @@ export class Mail {
         LOCATION: meetup.location,
         DATE: beautifulDate,
         TIME: beautifulTime,
+        TZ: timeZone,
         MID: meetupID,
-        MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
+        MEETUPTYPE: 'video call',
       }
 
       if (message) {
         placeholders.MESSAGE = message
 
-        data.html = this.getTemplate('meetupInvitationMessage', placeholders)
+        data.html = this.getTemplate('mentorRequest', placeholders)
       } else {
         data.html = this.getTemplate('meetupInvitation', placeholders)
       }
@@ -289,10 +300,11 @@ export class Mail {
         .utc(meetup.start)
         .utcOffset(mentee.timeoffset ? mentee.timeoffset : 0)
 
-      const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format(
-        'MMMM(dddd)'
-      )}`
-      const beautifulTime = `${UTCdate.format('h:mma')}`
+      const beautifulDate = ` ${UTCdate.format('dddd')}, ${UTCdate.format(
+        'MMMM'
+      )} ${UTCdate.format('D')}`
+      const beautifulTime = `${UTCdate.format('H')}h`
+      const timeZone = this.getTimeZone(meetup.start)
 
       const placeholders = {
         USER: mentee.name,
@@ -300,8 +312,9 @@ export class Mail {
         LOCATION: meetup.location,
         DATE: beautifulDate,
         TIME: beautifulTime,
+        TZ: timeZone,
         MID: meetupID,
-        MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
+        MEETUPTYPE: 'video call',
       }
       data.html = this.getTemplate('meetupConfirmation', placeholders)
 
@@ -348,7 +361,7 @@ export class Mail {
         MESSAGE: menteeMessage,
       }
 
-      data.html = this.getTemplate('timeSlotRequest', placeholders)
+      data.html = this.getTemplate('message', placeholders)
 
       return this.mailgun
         .messages()

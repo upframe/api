@@ -274,7 +274,11 @@ export class MeetupService {
             analytics.meetupRequest(meetup, mentor, newUser)
 
             // send email
-            result = await mail.sendMeetupInvitation(meetup.mid, json.message)
+            result = await mail.sendMeetupInvitation(
+              meetup.mid,
+              meetup.start,
+              json.message
+            )
             if (result.api) throw result
             else if (result) {
               error = {
