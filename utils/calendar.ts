@@ -51,13 +51,13 @@ export async function addSlots(slots: Slot[], mentor: Mentor) {
         running = false
         break
       }
-
       const newSlot: Slot = {
         sid: crypto.randomBytes(20).toString('hex'),
         start: itStart.toISOString(),
         end: it.toISOString(),
         mentorUID: mentor.uid,
         recurrency: slot.recurrency,
+        timezone: slot.timezone,
       }
 
       // save event in mentor's Google Calendar
@@ -90,6 +90,7 @@ export async function addSlots(slots: Slot[], mentor: Mentor) {
         newSlot.start,
         newSlot.end,
         newSlot.recurrency,
+        newSlot.timezone,
       ])
 
       analytics.mentorAddSlots(mentor, newSlot)

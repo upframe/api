@@ -39,13 +39,6 @@ export class Mail {
     return file
   }
 
-  public getTimeZone(date: date) {
-    let getDateObject = new Date(date)
-    let formatDate = Intl.DateTimeFormat(getDateObject)
-    const timeZone = formatDate.resolvedOptions().timeZone
-    return timeZone
-  }
-
   /**
    * @description Send password reset email
    * @param {string} toAddress
@@ -175,6 +168,7 @@ export class Mail {
         'SELECT name, email, timeoffset FROM users WHERE uid = ?',
         meetup.mentorUID
       )
+
       if (!mentor || !Object.keys(mentor).length) {
         error = {
           api: true,
@@ -200,7 +194,18 @@ export class Mail {
         'MMMM'
       )} ${UTCdate.format('D')}`
       const beautifulTime = `${UTCdate.format('H')}h`
-      const timeZone = this.getTimeZone(meetupTime)
+
+      const slotTimeZone = await database.query(
+        'SELECT mentorTZ FROM timeSlots WHERE mentorUID = ?',
+        meetup.mentorUID
+      )
+      const getTimeZone = () => {
+        if (slotTimeZone.mentorTZ) {
+          return slotTimeZone.mentorTZ
+        }
+        return 'Europ/Berlin'
+      }
+      const timeZone = getTimeZone()
 
       const placeholders: any = {
         MENTOR: mentorFirstName,
@@ -277,7 +282,7 @@ export class Mail {
 
       // get mentor name
       const mentor = await database.query(
-        'SELECT name, timeoffset FROM users WHERE uid = ?',
+        'SELECT name, timeoffset,keycode FROM users WHERE uid = ?',
         meetup.mentorUID
       )
       if (!mentor || !Object.keys(mentor).length) {
@@ -304,7 +309,12 @@ export class Mail {
         'MMMM'
       )} ${UTCdate.format('D')}`
       const beautifulTime = `${UTCdate.format('H')}h`
-      const timeZone = this.getTimeZone(meetup.start)
+
+      const slotTimeZone = await database.query(
+        'SELECT mentorTZ FROM timeSlots WHERE mentorUID = ?',
+        meetup.mentorUID
+      )
+      const timeZone = slotTimeZone.mentorTZ
 
       const placeholders = {
         USER: mentee.name,
@@ -312,6 +322,7 @@ export class Mail {
         LOCATION: meetup.location,
         DATE: beautifulDate,
         TIME: beautifulTime,
+        KEYCODE: mentor.keycode,
         TZ: timeZone,
         MID: meetupID,
         MEETUPTYPE: 'video call',
