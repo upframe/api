@@ -38,6 +38,9 @@ export class UserService {
         throw error
       }
 
+      user.emailNotifications =
+        (user.emailNotifications as Buffer).lastIndexOf(1) !== -1
+
       user.pictures = format.pictures(
         await database.query(
           ...sql.createSQLqueryFromJSON('SELECT', 'profilePictures', {
@@ -100,12 +103,15 @@ export class UserService {
       ok: 1,
     }
 
-    const json = Object.assign({}, req.body)
+    const json: any = Object.assign({}, req.body)
 
     try {
       let uid: string
       if (!req.jwt || !req.jwt.uid) throw 403
       else uid = req.jwt.uid
+
+      if ('emailNotifications' in json)
+        json.emailNotifications = json.emailNotifications ? 1 : 0
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON(
         'UPDATE',
