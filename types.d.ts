@@ -112,6 +112,9 @@ interface Account {
   googleRefreshToken?: string
 
   timeoffset?: number
+
+  emailNotifications: boolean | Buffer
+  availabilityReminder: 'monthly' | 'weekly' | 'off'
 }
 
 interface Mentor extends Account {
