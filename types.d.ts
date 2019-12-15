@@ -133,6 +133,7 @@ interface Slot {
   start: Date | string
   end: Date | string
   recurrency: string
+  timezone?: string
 }
 
 /* Mailer */
