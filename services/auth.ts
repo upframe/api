@@ -241,6 +241,38 @@ export class AuthService {
     }, 2000)
   }
 
+  public async deleteAccount(req: ApiRequest, res: express.Response) {
+    let response: ApiResponse = {
+      ok: 1,
+      code: 200,
+    }
+
+    try {
+      if (!req.jwt || !req.jwt.uid || !req.body.password) throw { code: 403 }
+      const user = await database.query(
+        'SELECT password FROM users WHERE uid = ?',
+        [req.jwt.uid]
+      )
+      if (!bcrypt.compareSync(req.body.password, user.password))
+        throw { code: 403 }
+
+      await database.query('DELETE FROM users where uid = ?', [req.jwt.uid])
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: err.code || 500,
+      }
+
+      if (err.api) {
+        response.code = err.code
+        response.message = err.message
+        response.friendlyMessage = err.friendlyMessage
+      }
+    }
+
+    res.status(response.code).json(response)
+  }
+
   public async resetPassword(req: ApiRequest, res: express.Response) {
     let response: ApiResponse = {
       ok: 1,
