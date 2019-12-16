@@ -113,8 +113,8 @@ interface Account {
 
   timeoffset?: number
 
-  emailNotifications: boolean | Buffer
-  availabilityReminder: 'monthly' | 'weekly' | 'off'
+  emailNotifications?: boolean | Buffer
+  availabilityReminder?: 'monthly' | 'weekly' | 'off'
 }
 
 interface Mentor extends Account {
