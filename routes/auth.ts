@@ -32,6 +32,8 @@ function setRouters(): void {
   router.get('/oservices.authcode', (req, res) => {
     auth.receiveOauthCode(req, res)
   })
+
+  router.delete('/delete', auth.verifyToken, auth.deleteAccount)
 }
 
 export function init(): express.Router {
