@@ -222,7 +222,7 @@ export class Mail {
       if (message) {
         placeholders.MESSAGE = message
 
-        data.html = this.getTemplate('mentorRequest', placeholders)
+        data.html = this.getTemplate('mentorRequest/compiled', placeholders)
       } else {
         data.html = this.getTemplate('meetupInvitation', placeholders)
       }
@@ -327,7 +327,7 @@ export class Mail {
         MID: meetupID,
         MEETUPTYPE: 'video call',
       }
-      data.html = this.getTemplate('meetupConfirmation', placeholders)
+      data.html = this.getTemplate('meetupConfirmation/compiled', placeholders)
 
       return this.mailgun
         .messages()
@@ -372,7 +372,7 @@ export class Mail {
         MESSAGE: menteeMessage,
       }
 
-      data.html = this.getTemplate('message', placeholders)
+      data.html = this.getTemplate('message/compiled', placeholders)
 
       return this.mailgun
         .messages()

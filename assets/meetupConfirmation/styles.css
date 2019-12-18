@@ -1,0 +1,89 @@
+html,
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-display: swap;
+  font-weight: 400;
+  color: #202020;
+}
+
+p {
+  line-height: 2rem;
+  font-size: 16px;
+}
+
+.link {
+  color: #202020;
+  text-decoration: underline;
+}
+
+p.textarea {
+  background-color: #f0f1f5;
+  margin-top: 0rem;
+  margin-bottom: 2.5rem;
+  padding: 10px;
+  border-radius: 0.25rem;
+}
+
+.wrapper {
+  margin: 0 auto;
+  border: 1px solid #c9cfd4;
+  border-radius: 10px;
+  max-width: 500px;
+  padding: 50px 50px;
+}
+
+#main {
+  align-items: center;
+  display: flex;
+}
+
+div#main {
+  padding: 10px;
+}
+
+table #logo img {
+  display: block;
+  margin: 0 auto 20px auto;
+}
+
+table p:first-of-type {
+  margin: 0 0 1.5rem 0;
+}
+
+.btn-column {
+  display: flex;
+}
+
+.btn-wrapper {
+  margin: 0 auto;
+}
+
+.btn {
+  text-align: center;
+  width: 10rem;
+  font-weight: 600;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+  margin: 10px;
+}
+
+.btn-accept {
+  background-color: #ff004b;
+  color: #fff;
+}
+
+.btn-cancel {
+  background-color: #fff;
+  color: #ff004b;
+  border: 1px solid #ff004b;
+}
+
+@media screen and (max-width: 600px) {
+  table {
+    border: none;
+  }
+}
