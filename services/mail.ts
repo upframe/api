@@ -203,7 +203,7 @@ export class Mail {
         if (slotTimeZone.mentorTZ) {
           return slotTimeZone.mentorTZ
         }
-        return 'Europ/Berlin'
+        return 'Europe/Berlin'
       }
       const timeZone = getTimeZone()
 
