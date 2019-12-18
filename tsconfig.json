@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es2018",
     "module": "commonjs",
-    "lib": ["es2017"],
+    "lib": ["es2019"],
     "outDir": "./build",
     "strict": true,
     "noImplicitAny": false,
