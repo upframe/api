@@ -54,7 +54,7 @@ export class Database {
 
         // Access Denied to the DB
         return 3
-      }
+      } else logger.warn(err)
 
       return 1
     }
