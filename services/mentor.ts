@@ -338,7 +338,7 @@ export class MentorService {
       if (deletedSlots.length) {
         response.deleteOK = 1
         try {
-          calendar.deleteSlots(deletedSlots, mentor)
+          await calendar.deleteSlots(deletedSlots, mentor)
         } catch (err) {
           console.warn(err)
           response.ok = 0

@@ -53,20 +53,24 @@ export async function addSlots(slots: Slot[], mentor: Mentor) {
   ])
 }
 
-export async function deleteSlots(slots: string[], mentor: Mentor) {
-  const sqlQuery = 'SELECT deleteSlot(?, ?)'
-
-  for (const slotId of slots) {
-    googleCalendar.events.delete({
-      calendarId: mentor.upframeCalendarId,
-      eventId: slotId,
-    })
-
-    await database.query(sqlQuery, [slotId, mentor.uid])
-  }
-
-  analytics.mentorRemoveSlots(mentor)
-}
+export const deleteSlots = async (slots: string[], mentor: Mentor) =>
+  Promise.all([
+    database.query(
+      `DELETE FROM timeSlots WHERE sid IN (${Array(slots.length)
+        .fill('?')
+        .join()})`,
+      slots
+    ),
+    ...(mentor.googleAccessToken
+      ? slots.map(eventId =>
+          googleCalendar.events.delete({
+            calendarId: mentor.upframeCalendarId,
+            eventId,
+          })
+        )
+      : []),
+    analytics.mentorRemoveSlots(mentor),
+  ])
 
 export async function getSlots(mentorUid: string, start: Date, end: Date) {
   const slots = await database.query(
