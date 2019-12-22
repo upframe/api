@@ -170,6 +170,7 @@ export class MeetupService {
         location: json.location,
         start: slot.start,
         status: 'pending',
+        ...(json.message && { message: json.message }),
       }
       if (!meetup.mid) {
         error = {
@@ -274,7 +275,7 @@ export class MeetupService {
             analytics.meetupRequest(meetup, mentor, newUser)
 
             // send email
-            result = await mail.sendMeetupInvitation(meetup.mid, json.message)
+            result = await mail.sendMeetupInvitation(meetup.mid)
             if (result.api) throw result
             else if (result) {
               error = {

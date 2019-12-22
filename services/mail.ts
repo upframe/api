@@ -3,7 +3,6 @@ import '../env'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
-import moment from 'moment'
 import { database } from '.'
 import { logger } from '../utils'
 
@@ -28,14 +27,16 @@ export class Mail {
     }
   }
 
-  public getTemplate(name: string, args: any) {
+  public getTemplate(
+    name: string,
+    args: { [k: string]: string | undefined } = {}
+  ) {
     let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
-    if (!args) throw new Error('Undefined props')
-    for (const prop of Object.keys(args)) {
-      // undefined prop
-      if (!args[prop]) throw new Error(`Undefined prop ${prop}`)
-      file = file.replace(new RegExp(prop, 'g'), args[prop])
-    }
+    Object.entries(args)
+      .filter(([, v]) => v)
+      .forEach(([k, v]) => {
+        file = file.replace(new RegExp(k, 'g'), v as string)
+      })
     return file
   }
 
@@ -124,8 +125,7 @@ export class Mail {
    * @param {string} message
    */
   public async sendMeetupInvitation(
-    meetupID: string,
-    message: string | undefined
+    meetupID: string
   ): Promise<APIerror | number> {
     let error: APIerror
 
@@ -187,6 +187,7 @@ export class Mail {
       }
 
       const date = new Date(meetup.start).toLocaleString('en-US', {
+        weekday: 'long',
         month: 'long',
         day: 'numeric',
         timeZone: 'Europe/Berlin',
@@ -198,24 +199,20 @@ export class Mail {
         timeZone: 'Europe/Berlin',
       })
 
-      const placeholders: any = {
-        MENTOR: mentorFirstName,
-        USER: mentee.name,
-        EMAIL: mentee.email,
-        LOCATION: meetup.location,
-        DATE: date,
-        TIME: time,
-        MID: meetupID,
-        MEETUPTYPE: 'video call',
-      }
-
-      if (message) {
-        placeholders.MESSAGE = message
-
-        data.html = this.getTemplate('mentorRequest', placeholders)
-      } else {
-        data.html = this.getTemplate('meetupInvitation', placeholders)
-      }
+      data.html = this.getTemplate(
+        meetup.message ? 'mentorRequest' : 'meetupInvitation',
+        {
+          MENTOR: mentorFirstName,
+          USER: mentee.name,
+          EMAIL: mentee.email,
+          LOCATION: meetup.location,
+          DATE: date,
+          TIME: time,
+          MID: meetupID,
+          MEETUPTYPE: 'video call',
+          MESSAGE: meetup.message,
+        }
+      )
 
       return this.mailgun
         .messages()
@@ -292,33 +289,30 @@ export class Mail {
         subject: `${mentor.name} accepted to meetup with you`,
       }
 
-      const UTCdate = moment
-        .utc(meetup.start)
-        .utcOffset(mentee.timeoffset ? mentee.timeoffset : 0)
+      const date = new Date(meetup.start).toLocaleString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Europe/Berlin',
+      })
+      const time = new Date(meetup.start).toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Berlin',
+      })
 
-      const beautifulDate = ` ${UTCdate.format('dddd')}, ${UTCdate.format(
-        'MMMM'
-      )} ${UTCdate.format('D')}`
-      const beautifulTime = `${UTCdate.format('H')}h`
-
-      const slotTimeZone = await database.query(
-        'SELECT mentorTZ FROM timeSlots WHERE mentorUID = ?',
-        meetup.mentorUID
-      )
-      const timeZone = slotTimeZone.mentorTZ
-
-      const placeholders = {
+      data.html = this.getTemplate('meetupConfirmation', {
         USER: mentee.name,
         MENTOR: mentor.name,
-        LOCATION: meetup.location,
-        DATE: beautifulDate,
-        TIME: beautifulTime,
+        DATE: date,
+        TIME: time,
         KEYCODE: mentor.keycode,
-        TZ: timeZone,
         MID: meetupID,
-        MEETUPTYPE: 'video call',
-      }
-      data.html = this.getTemplate('meetupConfirmation/compiled', placeholders)
+        EMAIL: mentor.email,
+        MESSAGE: meetup.message,
+        LOCATION: meetup.location,
+      })
 
       return this.mailgun
         .messages()
@@ -328,6 +322,7 @@ export class Mail {
           else throw 1
         })
     } catch (err) {
+      console.warn(err)
       if (err.api) return err
       else return 1
     }
