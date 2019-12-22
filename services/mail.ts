@@ -377,7 +377,7 @@ export class Mail {
         MESSAGE: menteeMessage,
       }
 
-      data.html = this.getTemplate('message/compiled', placeholders)
+      data.html = this.getTemplate('message', placeholders)
 
       return this.mailgun
         .messages()
