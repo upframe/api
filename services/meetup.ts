@@ -274,11 +274,7 @@ export class MeetupService {
             analytics.meetupRequest(meetup, mentor, newUser)
 
             // send email
-            result = await mail.sendMeetupInvitation(
-              meetup.mid,
-              meetup.start,
-              json.message
-            )
+            result = await mail.sendMeetupInvitation(meetup.mid, json.message)
             if (result.api) throw result
             else if (result) {
               error = {
@@ -295,6 +291,7 @@ export class MeetupService {
         }
       }
     } catch (err) {
+      console.warn(err)
       response = {
         ok: 0,
         code: 500,

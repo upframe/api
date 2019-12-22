@@ -125,7 +125,6 @@ export class Mail {
    */
   public async sendMeetupInvitation(
     meetupID: string,
-    meetupTime: date,
     message: string | undefined
   ): Promise<APIerror | number> {
     let error: APIerror
@@ -184,37 +183,28 @@ export class Mail {
       const data: Email = {
         from: 'team@upframe.io',
         to: mentor.email,
-        subject: `${mentee.name} invited you for a meetup`,
+        subject: `${mentee.name} invited you to a meetup`,
       }
 
-      const UTCdate = moment
-        .utc(meetup.start)
-        .utcOffset(mentor.timeoffset ? mentor.timeoffset : 0)
-      const beautifulDate = ` ${UTCdate.format('dddd')}, ${UTCdate.format(
-        'MMMM'
-      )} ${UTCdate.format('D')}`
-      const beautifulTime = `${UTCdate.format('H')}h`
-
-      const slotTimeZone = await database.query(
-        'SELECT mentorTZ FROM timeSlots WHERE mentorUID = ?',
-        meetup.mentorUID
-      )
-      const getTimeZone = () => {
-        if (slotTimeZone.mentorTZ) {
-          return slotTimeZone.mentorTZ
-        }
-        return 'Europ/Berlin'
-      }
-      const timeZone = getTimeZone()
+      const date = new Date(meetup.start).toLocaleString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'Europe/Berlin',
+      })
+      const time = new Date(meetup.start).toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Berlin',
+      })
 
       const placeholders: any = {
         MENTOR: mentorFirstName,
         USER: mentee.name,
         EMAIL: mentee.email,
         LOCATION: meetup.location,
-        DATE: beautifulDate,
-        TIME: beautifulTime,
-        TZ: timeZone,
+        DATE: date,
+        TIME: time,
         MID: meetupID,
         MEETUPTYPE: 'video call',
       }
@@ -222,7 +212,7 @@ export class Mail {
       if (message) {
         placeholders.MESSAGE = message
 
-        data.html = this.getTemplate('mentorRequest/compiled', placeholders)
+        data.html = this.getTemplate('mentorRequest', placeholders)
       } else {
         data.html = this.getTemplate('meetupInvitation', placeholders)
       }
@@ -235,6 +225,7 @@ export class Mail {
           else throw 1
         })
     } catch (err) {
+      console.warn(err)
       if (err.api) return err
       else return 1
     }
