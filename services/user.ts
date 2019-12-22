@@ -5,6 +5,8 @@ import * as path from 'path'
 
 import { logger, database, oauth } from '.'
 import { sql, format } from '../utils'
+import { fromEntries } from '../utils/object'
+import { fields as userFields } from '../models/users'
 
 export class UserService {
   constructor() {
@@ -103,7 +105,12 @@ export class UserService {
       ok: 1,
     }
 
-    const json: any = Object.assign({}, req.body)
+    const json: any = Object.assign(
+      {},
+      fromEntries(
+        Object.entries(req.body).filter(([k]) => userFields.includes(k))
+      )
+    )
 
     try {
       let uid: string
