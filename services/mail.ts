@@ -1,4 +1,5 @@
 import '../env'
+require('string.prototype.matchall').shim()
 
 import * as crypto from 'crypto'
 import * as fs from 'fs'
@@ -32,6 +33,25 @@ export class Mail {
     args: { [k: string]: string | undefined } = {}
   ) {
     let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
+    ;[...file.matchAll(/<!-- ([A-Z]+)-START -->/g)].forEach(
+      ({
+        0: { length: startLength },
+        1: match,
+        index: startIndex = Infinity,
+      }) => {
+        file = file.replace(
+          file.substring(startIndex, startIndex + startLength),
+          ''
+        )
+        const {
+          0: { length: endLength },
+          index: endIndex = Infinity,
+        } = file.match(`<!-- ${match}-END -->`) as RegExpMatchArray
+        file = file.replace(file.substring(endIndex, endIndex + endLength), '')
+        if (!args[match])
+          file = file.replace(file.substring(startIndex, endIndex), '')
+      }
+    )
     Object.entries(args)
       .filter(([, v]) => v)
       .forEach(([k, v]) => {
@@ -199,20 +219,19 @@ export class Mail {
         timeZone: 'Europe/Berlin',
       })
 
-      data.html = this.getTemplate(
-        meetup.message ? 'mentorRequest' : 'meetupInvitation',
-        {
-          MENTOR: mentorFirstName,
-          USER: mentee.name,
-          EMAIL: mentee.email,
-          LOCATION: meetup.location,
-          DATE: date,
-          TIME: time,
-          MID: meetupID,
-          MEETUPTYPE: 'video call',
-          MESSAGE: meetup.message,
-        }
-      )
+      data.html = this.getTemplate('mentorRequest', {
+        MENTOR: mentorFirstName,
+        USER: mentee.name,
+        EMAIL: mentee.email,
+        LOCATION: meetup.location,
+        DATE: date,
+        TIME: time,
+        MID: meetupID,
+        MEETUPTYPE: 'video call',
+        MESSAGE: meetup.message,
+      })
+
+      data.html.search(/<!--/)
 
       return this.mailgun
         .messages()
