@@ -271,23 +271,9 @@ export class MeetupService {
               throw error
             }
 
-            // Record RequestMeetup event
             analytics.meetupRequest(meetup, mentor, newUser)
 
-            // send email
-            result = await mail.sendMeetupInvitation(meetup.mid)
-            if (result.api) throw result
-            else if (result) {
-              error = {
-                api: true,
-                code: 500,
-                message: 'Could not send meetup request email',
-                friendlyMessage:
-                  'Could not send meetup request email to mentor',
-              }
-
-              throw error
-            }
+            await mail.sendMeetupInvitation(meetup.mid)
           }
         }
       }
