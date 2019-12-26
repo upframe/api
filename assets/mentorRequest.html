@@ -1,154 +1,72 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="X-UA-Compatible" content="ie=edge"></head><body style="color:#202020;font-display:swap;font-family:Poppins,sans-serif;font-weight:400;margin:0"><div id="main" ><table id="main" style="align-items:center;display:flex;"><tbody class="wrapper" style="margin:0 auto;border-radius:10px; border:1px solid #C9CFD4;border-radius:10px;max-width:500px;padding:50px 50px"><tr id="logo"><td><img src="https://beta.upframe.io/emailLogo.png" alt="Upframe" title="Upframe" style="display:block;margin:0 auto 20px auto" width="100" height="100"></td></tr><tr><td><p style="font-size:16px;line-height:2rem;margin:0 0 1.5rem 0">Hi MENTOR,<br><br>We're reaching out to let you know <a target="_blank noreferrer" href="mailto:EMAIL" class="link" style="color:#202020; text-decoration:underline;">USER</a> invited you to a <a target="_blank noreferrer" href="LOCATION" class="link" style="text-decoration:underline;color:#202020; ">MEETUPTYPE</a> on DATE at TIME (TZ Time).<br></p></td></tr><tr><td><p style="font-size:16px;line-height:2rem;color:#202020;:0 0 1.5rem 0"><strong>USER left you a message:</strong></p><p class="textarea" style="background-color:#f0f1f5;border-radius:.25rem;font-size:16px;line-height:2rem;margin-bottom:2.5rem;margin-top:0;padding:10px">MESSAGE</p></td></tr><tr class="btn-column" style="display:flex"><td class="btn-wrapper" style="margin:0 auto; display:flex;"><a target="_blank noreferrer" href="https://connect.upframe.io/meetup/confirm/MID" style="margin:0 auto;text-decoration:none"><div class="btn btn-cancel" style="background-color:#fff;text-align:center;border:1px solid #ff004b;border-radius:5px;color:#ff004b;cursor:pointer;font-weight:600;margin:15px;outline:0;padding:10px;width:6rem">cancel</div> </a><a target="_blank noreferrer" href="https://connect.upframe.io/meetup/confirm/MID" style="margin:0 auto;text-decoration:none"><div class="btn btn-accept" style="background-color:#ff004b;text-align:center;border:none;border-radius:5px;color:#fff;cursor:pointer;font-weight:600;margin:15px;outline:0;padding:10px;width:6rem">Accept</div></a></td></tr></tbody></table></div></body></html>
-
-<!-- ------------------------to create the inline css in the HTML: https://foundation.zurb.com/emails/inliner-v2.html --------------------- -->
-
-<!-- ------------------------the original html --------------------- -->
-<!-- <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Poppins&display=swap');
 
-
-  <link href="https://fonts.googleapis.com/css?family=Poppins:400,600" rel="stylesheet">
-
+    tbody {
+      border-color: #fff0;
+    }
+  </style>
 </head>
 
 <body>
-  <div id="main">
-    <table>
-      <tbody>
-        <tr id='logo'>
-          <td class='textalign-center'>
-            <img src='https://beta.upframe.io/emailLogo.png' alt='Upframe' title='Upframe' style='display: block' width='203' height='41'></img>
-          </td>    
-        </tr>
-
-        <tr>
-          <td>
-            <p>Hi MENTOR,<br><br> We're reaching out to let you know  <a target='_blank noreferrer' href="mailto:EMAIL">USER</a> invited
-            you to a <a target='_blank noreferrer' href='LOCATION'>MEETUPTYPE</a> on DATE at TIME(TZ time)<br>
-
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <p><strong>USER left you a message:</strong></p>
-            <p class= 'textarea'MESSAGE</p>
-          </td>
-        </tr>
-        
-        <tr class='btn-column'>
-          <td class='btn-wrapper'>
-            <a target='_blank noreferrer' href='https://connect.upframe.io/meetup/confirm/MID'>
-              <div class='btn btn-cancel'>cancel</div>
-            </a>
-            <a target='_blank noreferrer' href='https://connect.upframe.io/meetup/confirm/MID'>
-              <div class='btn btn-accept'>Accept</div>
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <table border="1" cellpadding="0" cellspacing="0" width="600" align="center"
+    style="border-color: #c9cfd4; border-style: solid; border-radius: 10px; font-size: 16px;">
+    <tr>
+      <td align="center" valign="top">
+        <table border="0" cellpadding="0" cellspacing="20">
+          <tr>
+            <td align="center">
+              <img src="https://beta.upframe.io/emailLogo.png" alt="Logo"
+                title="Logo" width="80" height="80"
+                style="display: block;"></img>
+            </td>
+          </tr>
+          <tr>
+            <td width="500"
+              style="font-family: 'Poppins', sans-serif; line-height: 26px; letter-spacing: 0.16px;">
+              <p>Hi MENTOR,</p>
+              <p style="margin-top: 30px;">We're reaching out to let you know <a
+                  target="_blank noreferrer" href="mailto:EMAIL"
+                  style="color: #000000;">USER</a>
+                invited you to a <a target="_blank noreferrer" href="LOCATION"
+                  style="color: #000000;">video call</a> on DATE at TIME <abbr
+                  title="Central European Time"
+                  style="color: #000000; text-decoration: none;">CET</abbr>.
+              </p>
+              <!-- MESSAGE-START -->
+              <p style="margin-top: 30px;">
+                <b style="color: #000000;">USER left you a message:</b>
+              </p>
+              <p
+                style="background-color: #f7f9fa; color: #000000; padding: 20px; border-radius: 10px; margin-left: -5px; margin-right: -5px;">
+                MESSAGE
+              </p>
+              <!-- MESSAGE-END -->
+            </td>
+          </tr>
+        </table>
+        <table cellpadding="0" cellspacing="20">
+          <tr>
+            <td width="160" align="center"
+              style="font-family: 'Poppins', sans-serif; letter-spacing: 0.16px;">
+              <a
+                style="display: block; width: 137px; height: 51px; line-height: 51px; font-size: 14px; font-weight: bold; color: #ff205c; text-decoration: none; text-align: center; border-style: solid; border-width: 1px; border-color: #ff205c; border-radius: 5px; cursor: pointer;">Cancel</a>
+            </td>
+            <td width="160" align="center">
+              <a target="_blank noreferrer"
+                href="https://connect.upframe.io/meetup/confirm/MID"
+                style="display: block; width: 137px; height: 51px; line-height: 51px; font-size: 14px; font-weight: bold; color: #ffffff; text-decoration: none; text-align: center; background-color: #ff205c; border-radius: 5px; cursor: pointer;">Accept</a>
+              </t>
+          </tr>
+          <tr height="50"></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
-</html> -->  
 
-<!--  ------------------------the original css --------------------- -->
-
-<!-- <style>
-    html,
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      font-display: swap;
-      font-weight: 400;
-      color: #202020;
-      
-    }
-    
-    p {
-      line-height: 2rem;
-      font-size: 16px ;
-      color: #202020;
-
-    }
-
-    .link{
-      color:#202020
-      text-decoration: underline;
-    }
-
-    .wrapper {
-      margin:0 auto; 
-      border:1px solid #C9CFD4;
-      border-radius:10px;
-      max-width:500px;
-      padding:50px 50px;
-    }
-    
-    #main {
-      align-items:center;
-      display:flex;
-    }
-
-    p.textarea {
-      background-color: #f0f1f5;
-      margin-top: 0rem;
-      margin-bottom: 2.5rem;
-      padding: 10px;
-      border-radius: 0.25rem;
-    }
-    
-    div#main {
-      padding: 10px;
-    }
-    
-    table #logo img {
-      display: block;
-      margin: 0 auto 20px auto;
-    }
-
-    table p:first-of-type {
-      margin: 0 0 1.5rem 0;
-    }
-
-    .btn-column{
-      display: flex;
-      
-    }
-
-    .btn-wrapper{
-      margin: 0 auto;
-    }
-
-    .btn {
-      text-align:center;
-      width: 6rem;
-      font-weight: 600;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      outline: none;
-      margin: 10px;
-    }
-
-    .btn-accept{
-      background-color: #ff004b;
-      color: #fff;
-    }
-
-    .btn-cancel{
-      background-color:#fff;
-      color: #ff004b;
-      border: 1px solid #ff004b;
-    }
-    @media screen and (max-width:600px) {
-    table {
-      border:none;
-    }
-}
-
-  </style> -->
+</html>

@@ -42,23 +42,18 @@ export function createSQLqueryFromJSON(
  * @param {object} json
  */
 function createInsertQuery(table: string, json: object): [string, string[]] {
-  let sqlQuery: string = `INSERT INTO ${table}(`
-  const params: string[] = []
+  let query = `INSERT INTO ${table} (${Object.keys(
+    Array.isArray(json) ? json[0] : json
+  ).join()}) VALUES ${(Array.isArray(json) ? json : [json])
+    .map(
+      v =>
+        `(${Array(Object.values(v).length)
+          .fill('?')
+          .join()})`
+    )
+    .join()}`
 
-  // add property names from JSON
-  for (const prop of Object.keys(json)) {
-    sqlQuery += prop + ','
-  }
-  sqlQuery = sqlQuery.slice(0, -1) + ') VALUES('
-
-  // add ? as placeholders to VALUES list
-  for (const prop of Object.keys(json)) {
-    sqlQuery += '?,'
-    params.push(json[prop])
-  }
-  sqlQuery = sqlQuery.slice(0, -1) + ')'
-
-  return [sqlQuery, params]
+  return [query, (Array.isArray(json) ? json : [json]).flatMap(Object.values)]
 }
 
 /**
