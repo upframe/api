@@ -29,7 +29,7 @@ function setRouters(): void {
     auth.getGoogleUrl(req, res)
   })
 
-  router.get('/oservices.authcode', (req, res) => {
+  router.get('/oauthcode', (req, res) => {
     auth.receiveOauthCode(req, res)
   })
 
