@@ -1,5 +1,4 @@
 import '../env'
-require('string.prototype.matchall').shim()
 
 import * as crypto from 'crypto'
 import * as fs from 'fs'
