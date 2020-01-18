@@ -112,6 +112,9 @@ interface Account {
   googleRefreshToken?: string
 
   timeoffset?: number
+
+  emailNotifications?: boolean | Buffer
+  availabilityReminder?: 'monthly' | 'weekly' | 'off'
 }
 
 interface Mentor extends Account {
@@ -133,6 +136,7 @@ interface Slot {
   start: Date | string
   end: Date | string
   recurrency: string
+  timezone?: string
 }
 
 /* Mailer */

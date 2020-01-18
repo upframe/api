@@ -2,6 +2,9 @@ import * as crypto from 'crypto'
 import moment from 'moment'
 import { google, calendar_v3 } from 'googleapis'
 import { database, analytics, oauth } from '../services'
+import * as sql from './sql'
+
+let googleCalendar: calendar_v3.Calendar
 
 export function init() {
   googleCalendar = google.calendar({
@@ -12,105 +15,62 @@ export function init() {
   })
 }
 
-let googleCalendar: calendar_v3.Calendar
-
 export async function addSlots(slots: Slot[], mentor: Mentor) {
-  const sqlQuery = 'SELECT insertUpdateSlotv2(?, ?, ?, ?, ?)'
+  if (!slots || slots.length === 0) return
+  if (
+    slots
+      .flatMap(({ start, end }) => [start, end])
+      .some(date => new Date(date).toISOString() !== date)
+  )
+    throw Error('dates must be ISO strings')
 
-  for (const slot of slots) {
-    // calculate how many hours are between slot end and slot start
-    // and determine how many 2h slots and 1h slots fill this better
-    const hourDiff: number = moment(slot.end).diff(slot.start, 'hours')
-    let twoHourSlots: number = Math.floor(hourDiff / 2)
-    let oneHourSlots: number = Math.floor(hourDiff - twoHourSlots * 2)
+  slots = slots.map(({ start, end, ...slot }) => ({
+    sid: crypto.randomBytes(20).toString('hex'),
+    start,
+    end,
+    mentorUID: mentor.uid,
+    recurrency: slot.recurrency || 'UNIQUE',
+  }))
 
-    // determine directly how many 30-min slots can fill
-    let halfHourSlots: number =
-      moment(slot.end)
-        .subtract(hourDiff, 'hours')
-        .diff(slot.start, 'minutes') / 30
-
-    const it = moment(slot.start)
-    const itStart = moment(slot.start)
-    let mode: number = 2,
-      running: Boolean = true
-
-    while (running) {
-      if (twoHourSlots) {
-        it.add('2', 'hours')
-        twoHourSlots--
-      } else if (oneHourSlots) {
-        it.add('1', 'hours')
-        mode = 1
-        oneHourSlots--
-      } else if (halfHourSlots) {
-        it.add('30', 'minutes')
-        mode = 0
-        halfHourSlots--
-      } else {
-        running = false
-        break
-      }
-
-      const newSlot: Slot = {
-        sid: crypto.randomBytes(20).toString('hex'),
-        start: itStart.toISOString(),
-        end: it.toISOString(),
-        mentorUID: mentor.uid,
-        recurrency: slot.recurrency,
-      }
-
-      // save event in mentor's Google Calendar
-      if (mentor.googleAccessToken) {
-        await googleCalendar.events.insert({
-          calendarId: mentor.upframeCalendarId,
-          requestBody: {
-            summary: 'Upframe Free Time Slot',
-            start: {
-              dateTime: moment(newSlot.start).toISOString(),
-            },
-            end: {
-              dateTime: moment(newSlot.end).toISOString(),
-            },
-            description: 'Nice slot',
-            id: newSlot.sid,
-          },
-        })
-      }
-
-      // set next slot starting time
-      if (mode === 2) itStart.add('2', 'hours')
-      else if (mode === 1) itStart.add('1', 'hour')
-      else if (mode === 0) itStart.add('30', 'minutes')
-
-      // save slot to database
-      await database.query(sqlQuery, [
-        newSlot.sid,
-        newSlot.mentorUID,
-        newSlot.start,
-        newSlot.end,
-        newSlot.recurrency,
-      ])
-
-      analytics.mentorAddSlots(mentor, newSlot)
-    }
-  }
+  await Promise.all([
+    database.query(...sql.createSQLqueryFromJSON('INSERT', 'timeSlots', slots)),
+    ...(mentor.googleAccessToken
+      ? [
+          slots.map(slot =>
+            googleCalendar.events.insert({
+              calendarId: '',
+              requestBody: {
+                start: { dateTime: slot.start as string },
+                end: { dateTime: slot.end as string },
+                description: '',
+                id: '',
+              },
+            })
+          ),
+        ]
+      : []),
+    ...slots.map(slot => analytics.mentorAddSlots(mentor, slot)),
+  ])
 }
 
-export async function deleteSlots(slots: string[], mentor: Mentor) {
-  const sqlQuery = 'SELECT deleteSlot(?, ?)'
-
-  for (const slotId of slots) {
-    googleCalendar.events.delete({
-      calendarId: mentor.upframeCalendarId,
-      eventId: slotId,
-    })
-
-    await database.query(sqlQuery, [slotId, mentor.uid])
-  }
-
-  analytics.mentorRemoveSlots(mentor)
-}
+export const deleteSlots = async (slots: string[], mentor: Mentor) =>
+  Promise.all([
+    database.query(
+      `DELETE FROM timeSlots WHERE sid IN (${Array(slots.length)
+        .fill('?')
+        .join()})`,
+      slots
+    ),
+    ...(mentor.googleAccessToken
+      ? slots.map(eventId =>
+          googleCalendar.events.delete({
+            calendarId: mentor.upframeCalendarId,
+            eventId,
+          })
+        )
+      : []),
+    analytics.mentorRemoveSlots(mentor),
+  ])
 
 export async function getSlots(mentorUid: string, start: Date, end: Date) {
   const slots = await database.query(

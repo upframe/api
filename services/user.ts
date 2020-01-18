@@ -5,6 +5,8 @@ import * as path from 'path'
 
 import { logger, database, oauth } from '.'
 import { sql, format } from '../utils'
+import { fromEntries } from '../utils/object'
+import { fields as userFields } from '../models/users'
 
 export class UserService {
   constructor() {
@@ -37,6 +39,9 @@ export class UserService {
 
         throw error
       }
+
+      user.emailNotifications =
+        (user.emailNotifications as Buffer).lastIndexOf(1) !== -1
 
       user.pictures = format.pictures(
         await database.query(
@@ -100,12 +105,20 @@ export class UserService {
       ok: 1,
     }
 
-    const json = Object.assign({}, req.body)
+    const json: any = Object.assign(
+      {},
+      fromEntries(
+        Object.entries(req.body).filter(([k]) => userFields.includes(k))
+      )
+    )
 
     try {
       let uid: string
       if (!req.jwt || !req.jwt.uid) throw 403
       else uid = req.jwt.uid
+
+      if ('emailNotifications' in json)
+        json.emailNotifications = json.emailNotifications ? 1 : 0
 
       const [sqlQuery, params] = sql.createSQLqueryFromJSON(
         'UPDATE',

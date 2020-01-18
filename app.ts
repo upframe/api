@@ -1,3 +1,6 @@
+require('string.prototype.matchall').shim()
+require('array.prototype.flatmap').shim()
+
 import './env'
 
 import express from 'express'

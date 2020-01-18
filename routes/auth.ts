@@ -29,9 +29,11 @@ function setRouters(): void {
     auth.getGoogleUrl(req, res)
   })
 
-  router.get('/oservices.authcode', (req, res) => {
+  router.get('/oauthcode', (req, res) => {
     auth.receiveOauthCode(req, res)
   })
+
+  router.delete('/delete', auth.verifyToken, auth.deleteAccount)
 }
 
 export function init(): express.Router {

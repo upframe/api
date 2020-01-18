@@ -3,9 +3,10 @@ import '../env'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 import mailgun, { Mailgun } from 'mailgun-js'
-import moment from 'moment'
 import { database } from '.'
 import { logger } from '../utils'
+
+const timeZone = 'Europe/Berlin'
 
 export class Mail {
   private mailgun!: Mailgun
@@ -28,14 +29,35 @@ export class Mail {
     }
   }
 
-  public getTemplate(name: string, args: any) {
+  public getTemplate(
+    name: string,
+    args: { [k: string]: string | undefined } = {}
+  ) {
     let file = fs.readFileSync(`./assets/${name}.html`, 'utf8')
-    if (!args) throw new Error('Undefined props')
-    for (const prop of Object.keys(args)) {
-      // undefined prop
-      if (!args[prop]) throw new Error(`Undefined prop ${prop}`)
-      file = file.replace(new RegExp(prop, 'g'), args[prop])
-    }
+    ;[...file.matchAll(/<!-- ([A-Z]+)-START -->/g)].forEach(
+      ({
+        0: { length: startLength },
+        1: match,
+        index: startIndex = Infinity,
+      }) => {
+        file = file.replace(
+          file.substring(startIndex, startIndex + startLength),
+          ''
+        )
+        const {
+          0: { length: endLength },
+          index: endIndex = Infinity,
+        } = file.match(`<!-- ${match}-END -->`) as RegExpMatchArray
+        file = file.replace(file.substring(endIndex, endIndex + endLength), '')
+        if (!args[match])
+          file = file.replace(file.substring(startIndex, endIndex), '')
+      }
+    )
+    Object.entries(args)
+      .filter(([, v]) => v)
+      .forEach(([k, v]) => {
+        file = file.replace(new RegExp(k, 'g'), v as string)
+      })
     return file
   }
 
@@ -119,203 +141,57 @@ export class Mail {
 
   /**
    * @description Sends meetup invite notification to mentor by email
-   * @param {string} meetupID
-   * @param {string} message
+   * @param {string} meetupId
    */
-  public async sendMeetupInvitation(
-    meetupID: string,
-    message: string | undefined
-  ): Promise<APIerror | number> {
-    let error: APIerror
-
-    try {
-      // get meetup by id
-      const meetup: Meetup = await database.query(
-        'SELECT * FROM meetups WHERE mid = ?',
-        meetupID
-      )
-      if (!meetup || !Object.keys(meetup).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Meetup not found',
-          friendlyMessage: 'The meetup was not found',
-        }
-
-        throw error
-      }
-
-      // get mentee name
-      const mentee = await database.query(
-        'SELECT name, email FROM users WHERE uid = ?',
-        meetup.menteeUID
-      )
-      if (!mentee || !Object.keys(mentee).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Mentee not found',
-          friendlyMessage: 'The mentee was not found',
-        }
-
-        throw error
-      }
-
-      // get mentor name and email
-      const mentor: Mentor = await database.query(
-        'SELECT name, email, timeoffset FROM users WHERE uid = ?',
-        meetup.mentorUID
-      )
-      if (!mentor || !Object.keys(mentor).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Mentor not found',
-          friendlyMessage: 'The mentor was not found',
-        }
-
-        throw error
-      }
-      const mentorFirstName = mentor.name.split(' ')[0]
-
-      const data: Email = {
-        from: 'team@upframe.io',
-        to: mentor.email,
-        subject: `${mentee.name} invited you for a meetup`,
-      }
-
-      const UTCdate = moment
-        .utc(meetup.start)
-        .utcOffset(mentor.timeoffset ? mentor.timeoffset : 0)
-      const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format(
-        'MMMM(dddd)'
-      )}`
-      const beautifulTime = `${UTCdate.format('h:mma')}`
-
-      const placeholders: any = {
-        MENTOR: mentorFirstName,
-        USER: mentee.name,
-        EMAIL: mentee.email,
-        LOCATION: meetup.location,
-        DATE: beautifulDate,
-        TIME: beautifulTime,
-        MID: meetupID,
-        MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
-      }
-
-      if (message) {
-        placeholders.MESSAGE = message
-
-        data.html = this.getTemplate('meetupInvitationMessage', placeholders)
-      } else {
-        data.html = this.getTemplate('meetupInvitation', placeholders)
-      }
-
-      return this.mailgun
-        .messages()
-        .send(data)
-        .then(res => {
-          if (res.message !== '' && res.id !== '') return 0
-          else throw 1
-        })
-    } catch (err) {
-      if (err.api) return err
-      else return 1
-    }
+  public async sendMeetupInvitation(meetupId: string) {
+    await this.sendMeetupEmail(meetupId, 'request')
   }
 
   /**
    * @description Sends meetup confirmation notification to mentee by email
-   * @param {String} meetupID
+   * @param {String} meetupId
    */
-  public async sendMeetupConfirmation(
-    meetupID: string
-  ): Promise<APIerror | number> {
-    let error: APIerror
+  public async sendMeetupConfirmation(meetupId: string) {
+    await this.sendMeetupEmail(meetupId, 'confirm')
+  }
 
-    try {
-      // get meetup by id
-      const meetup: Meetup = await database.query(
-        'SELECT * FROM meetups WHERE mid = ?',
-        meetupID
-      )
-      if (!meetup || !Object.keys(meetup).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Meetup not found',
-        }
+  private async sendMeetupEmail(meetupId: string, type: 'request' | 'confirm') {
+    const meetup = await this.getMeetup(meetupId)
+    const [mentee, mentor] = await Promise.all(
+      [meetup.menteeUID, meetup.mentorUID].map(this.getUser)
+    )
 
-        throw error
-      }
-
-      // get mentee email
-      const mentee: User = await database.query(
-        'SELECT name, email, timeoffset FROM users WHERE uid = ?',
-        meetup.menteeUID
-      )
-      if (!mentee || !Object.keys(mentee).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Mentee not found',
-        }
-
-        throw error
-      }
-
-      // get mentor name
-      const mentor = await database.query(
-        'SELECT name, timeoffset FROM users WHERE uid = ?',
-        meetup.mentorUID
-      )
-      if (!mentor || !Object.keys(mentor).length) {
-        error = {
-          api: true,
-          code: 404,
-          message: 'Mentor not found',
-        }
-
-        throw error
-      }
-
-      const data: Email = {
-        from: 'team@upframe.io',
+    const info = {
+      request: {
+        to: mentor.email,
+        subject: `${mentee.name} invited you to a meetup`,
+        template: 'mentorRequest',
+        refMail: mentee.email,
+      },
+      confirm: {
         to: mentee.email,
         subject: `${mentor.name} accepted to meetup with you`,
-      }
+        template: 'meetupConfirmation',
+        refMail: mentor.email,
+      },
+    }
 
-      const UTCdate = moment
-        .utc(meetup.start)
-        .utcOffset(mentee.timeoffset ? mentee.timeoffset : 0)
-
-      const beautifulDate = `${UTCdate.format('Do')} of ${UTCdate.format(
-        'MMMM(dddd)'
-      )}`
-      const beautifulTime = `${UTCdate.format('h:mma')}`
-
-      const placeholders = {
+    await this.mailgun.messages().send({
+      from: 'team@upframe.io',
+      to: info[type].to,
+      subject: info[type].subject,
+      html: this.getTemplate(info[type].template, {
         USER: mentee.name,
         MENTOR: mentor.name,
+        DATE: this.formatDate(meetup.start),
+        TIME: this.formatTime(meetup.start),
+        KEYCODE: mentor.keycode,
+        MID: meetupId,
+        EMAIL: info[type].refMail,
+        MESSAGE: meetup.message,
         LOCATION: meetup.location,
-        DATE: beautifulDate,
-        TIME: beautifulTime,
-        MID: meetupID,
-        MEETUPTYPE: meetup.location.includes('talky.io') ? 'call' : 'coffee',
-      }
-      data.html = this.getTemplate('meetupConfirmation', placeholders)
-
-      return this.mailgun
-        .messages()
-        .send(data)
-        .then(res => {
-          if (res.message !== '' && res.id !== '') return 0
-          else throw 1
-        })
-    } catch (err) {
-      if (err.api) return err
-      else return 1
-    }
+      }),
+    })
   }
 
   /**
@@ -348,7 +224,7 @@ export class Mail {
         MESSAGE: menteeMessage,
       }
 
-      data.html = this.getTemplate('timeSlotRequest', placeholders)
+      data.html = this.getTemplate('message', placeholders)
 
       return this.mailgun
         .messages()
@@ -362,4 +238,50 @@ export class Mail {
       else return 1
     }
   }
+
+  private async getUser(uid) {
+    const user: Mentor = await database.query(
+      'SELECT * FROM users WHERE uid = ?',
+      uid
+    )
+    if (!user || !Object.keys(user).length)
+      throw {
+        api: true,
+        code: 404,
+        message: 'User not found',
+        friendlyMessage: 'The user was not found',
+      }
+
+    return user
+  }
+  private async getMeetup(id) {
+    const meetup: Meetup = await database.query(
+      'SELECT * FROM meetups WHERE mid = ?',
+      id
+    )
+    if (!meetup || !Object.keys(meetup).length)
+      throw {
+        api: true,
+        code: 404,
+        message: 'Meetup not found',
+        friendlyMessage: 'The meetup was not found',
+      }
+
+    return meetup
+  }
+
+  private formatDate = (date: string | Date) =>
+    new Date(date).toLocaleString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      timeZone,
+    })
+  private formatTime = (date: string | Date) =>
+    new Date(date).toLocaleString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: false,
+      timeZone,
+    })
 }

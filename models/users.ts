@@ -21,4 +21,6 @@ export const fields: string[] = [
   'upframeCalendarId',
   'newsfeed',
   'timeoffset',
+  'emailNotifications',
+  'availabilityReminder',
 ]
