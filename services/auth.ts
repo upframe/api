@@ -9,6 +9,13 @@ import { sql } from '../utils'
 import { logger } from '../utils'
 import { database, analytics, mail, oauth } from '.'
 
+const exists = async params =>
+  Object.keys(
+    await database.query(
+      ...sql.createSQLqueryFromJSON('SELECT', 'users', params)
+    )
+  ).length > 0
+
 export class AuthService {
   constructor() {
     logger.verbose('Auth service loaded')
@@ -158,87 +165,86 @@ export class AuthService {
   }
 
   public async register(req: ApiRequest, res: express.Response) {
-    // We wait 2 seconds for each register as a way to protect ourselves against
-    // bruteforce attacks. Using extra time makes them virtually impossible.
-    setTimeout(() => {
-      const json = Object.assign({}, req.body)
-      let response: ApiResponse = {
-        code: 200,
-        ok: 1,
-      }
-      let error: APIerror
+    const json = Object.assign({}, req.body)
+    let response: ApiResponse = {
+      code: 200,
+      ok: 1,
+    }
+    let error: APIerror
 
-      try {
-        if (
-          !json.email ||
-          !json.password ||
-          !json.name ||
-          !json.developerPass ||
-          !json.type
-        ) {
-          error = {
-            api: true,
-            code: 400,
-            message: 'Unsufficient fields to perform a register request',
-            friendlyMessage: 'There is a field missing in the request.',
-          }
-
-          throw error
+    try {
+      if (
+        !json.email ||
+        !json.password ||
+        !json.name ||
+        !json.developerPass ||
+        !json.type
+      ) {
+        error = {
+          api: true,
+          code: 400,
+          message: 'Unsufficient fields to perform a register request',
+          friendlyMessage: 'There is a field missing in the request.',
         }
 
-        if (json.developerPass !== process.env.SUPERSECRETDEVPASSWORD) {
-          error = {
-            api: true,
-            code: 401,
-            message: 'Wrong developer pass',
-            friendlyMessage: 'Unauthorized access',
-          }
-
-          throw error
-        }
-
-        const removeKey = 'developerPass'
-        delete json[removeKey]
-
-        // hash password
-        const salt = bcrypt.genSaltSync(10)
-        json.password = bcrypt.hashSync(json.password, salt)
-        // generate keycode
-        json.keycode = json.name
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(new RegExp(' ', 'g'), '.')
-          .toLowerCase()
-        // generate unique account id
-        json.uid = crypto.randomBytes(20).toString('hex')
-
-        const [sqlQuery, params] = sql.createSQLqueryFromJSON(
-          'INSERT',
-          'users',
-          json
-        )
-        database.query(sqlQuery, params)
-      } catch (err) {
-        response = {
-          ok: 0,
-          code: 500,
-        }
-
-        // check if it's a mysql error
-        if (err.errno === 1062 && err.sqlState === '23000') {
-          response.message = 'There is already an account using that email'
-        }
-
-        // check API errors
-        if (err.api) {
-          response.code = err.code
-          ;(response.message = err.message),
-            (response.friendlyMessage = err.friendlyMessage)
-        }
+        throw error
       }
 
-      res.status(response.code).json(response)
-    }, 2000)
+      if (json.developerPass !== process.env.SUPERSECRETDEVPASSWORD) {
+        error = {
+          api: true,
+          code: 401,
+          message: 'Wrong developer pass',
+          friendlyMessage: 'Unauthorized access',
+        }
+
+        throw error
+      }
+
+      if (await exists({ email: json.email }))
+        throw { code: 500, api: true, message: 'email in use' }
+
+      if (await exists({ keycode: json.keycode }))
+        throw { code: 500, api: true, message: 'name in use' }
+
+      json.keycode = json.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(new RegExp(' ', 'g'), '.')
+        .toLowerCase()
+
+      delete json.developerPass
+
+      const salt = bcrypt.genSaltSync(10)
+      json.password = bcrypt.hashSync(json.password, salt)
+      json.uid = crypto.randomBytes(20).toString('hex')
+
+      const [sqlQuery, params] = sql.createSQLqueryFromJSON(
+        'INSERT',
+        'users',
+        json
+      )
+      database.query(sqlQuery, params)
+    } catch (err) {
+      response = {
+        ok: 0,
+        code: 500,
+      }
+
+      // check if it's a mysql error
+      if (err.errno === 1062 && err.sqlState === '23000') {
+        response.message = 'There is already an account using that email'
+      }
+
+      // check API errors
+      if (err.api) {
+        response.code = err.code
+        ;(response.message = err.message),
+          (response.friendlyMessage = err.friendlyMessage)
+      }
+    }
+
+    res.status(response.code).json(response)
   }
 
   public async deleteAccount(req: ApiRequest, res: express.Response) {
@@ -397,6 +403,9 @@ export class AuthService {
           throw error
         }
 
+        if (await exists({ email: emailChangeRequest.email }))
+          throw { code: 500, api: true, message: 'email in use' }
+
         let sqlQuery: string = 'UPDATE users SET email = ? WHERE email = ?'
         let params: string[] = [req.body.email, emailChangeRequest.email]
         await database.query(sqlQuery, params)
@@ -440,6 +449,8 @@ export class AuthService {
           response.code = err
           response.message = 'Token is invalid'
         }
+
+        if (err.message) response.message = err.message
       }
     } else {
       try {
