@@ -204,14 +204,14 @@ export class AuthService {
       if (await exists({ email: json.email }))
         throw { code: 500, api: true, message: 'email in use' }
 
-      if (await exists({ keycode: json.keycode }))
-        throw { code: 500, api: true, message: 'name in use' }
-
       json.keycode = json.name
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(new RegExp(' ', 'g'), '.')
         .toLowerCase()
+
+      if (await exists({ keycode: json.keycode }))
+        throw { code: 500, api: true, message: 'name in use' }
 
       delete json.developerPass
 
