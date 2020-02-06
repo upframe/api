@@ -153,13 +153,14 @@ export class MentorService {
     let error: APIerror
 
     try {
-      let sqlQuery = `SELECT users.uid, name, role, company, bio, tags, keycode, profilePic, profilePictures.*
+      let sqlQuery = `SELECT name, role, company, bio, tags, keycode, profilePic, profilePictures.*, users.uid
         FROM users
         LEFT JOIN profilePictures ON users.uid = profilePictures.uid
         WHERE type = 'mentor' AND newsfeed = 'Y'
         ORDER BY RAND()`
 
       const mentorList = await database.query(sqlQuery)
+
       if (!Object.keys(mentorList).length) {
         error = {
           api: true,

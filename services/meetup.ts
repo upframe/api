@@ -416,7 +416,6 @@ export class MeetupService {
         (mentor.googleAccessToken || mentor.googleRefreshToken) &&
         mentor.upframeCalendarId
       ) {
-        // refresh access token
         oauth.setCredentials({
           access_token: mentor.googleAccessToken,
           refresh_token: mentor.googleRefreshToken,
@@ -447,24 +446,29 @@ export class MeetupService {
           })
         }
       } else {
-        // add event to upframe calendar
-        const {
-          upframeCalendarId,
-          googleAccessToken,
-          googleRefreshToken,
-        } = await database.query(
-          ...sql.createSQLqueryFromJSON('SELECT', 'users', {
-            uid: 'abcd547307dc86bd12dfe960542e922702188a12',
+        try {
+          // add event to upframe calendar
+          const {
+            upframeCalendarId,
+            googleAccessToken,
+            googleRefreshToken,
+          } = await database.query(
+            ...sql.createSQLqueryFromJSON('SELECT', 'users', {
+              uid: 'abcd547307dc86bd12dfe960542e922702188a12',
+            })
+          )
+          oauth.setCredentials({
+            access_token: googleAccessToken,
+            refresh_token: googleRefreshToken,
           })
-        )
-        oauth.setCredentials({
-          access_token: googleAccessToken,
-          refresh_token: googleRefreshToken,
-        })
-        await googleCalendar.events.insert({
-          calendarId: upframeCalendarId,
-          requestBody: event,
-        })
+          await googleCalendar.events.insert({
+            calendarId: upframeCalendarId,
+            requestBody: event,
+          })
+        } catch (e) {
+          console.warn("couldn't add event to upframe calendard")
+          console.log(e)
+        }
       }
     } catch (err) {
       console.warn(err)

@@ -9,12 +9,9 @@ function setRouters(): void {
     meetup.get(req, res)
   })
 
-  router.post(
-    '/',
-    /*auth.verifyToken,*/ (req, res) => {
-      meetup.create(req, res)
-    }
-  )
+  router.post('/', (req, res) => {
+    meetup.create(req, res)
+  })
 
   router.get('/confirm', auth.verifyToken, auth.isMentor, (req, res) => {
     meetup.confirm(req, res)
