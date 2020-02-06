@@ -403,7 +403,7 @@ export class AuthService {
           throw error
         }
 
-        if (await exists({ email: emailChangeRequest.email }))
+        if (await exists({ email: req.body.email }))
           throw { code: 500, api: true, message: 'email in use' }
 
         let sqlQuery: string = 'UPDATE users SET email = ? WHERE email = ?'
@@ -440,6 +440,7 @@ export class AuthService {
         params = [req.body.token]
         await database.query(sqlQuery, params)
       } catch (err) {
+        console.warn(err)
         response = {
           ok: 0,
           code: 500,
